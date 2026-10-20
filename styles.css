@@ -54,6 +54,9 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 /* ------------------------------------------------------------------ home */
 .home { max-width: 980px; margin: 0 auto; padding-block: 12px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .home-hint { margin: 0 0 8px; text-align: center; color: var(--ink-2); font-size: 14px; }
+.ver-pill { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: rgba(51, 214, 242, .12); color: var(--accent); font-size: 12px; font-weight: 700; white-space: nowrap; }
+.toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 80; padding: 10px 16px; border-radius: 10px; background: #1d2a40; color: #fff; font-size: 14px; font-weight: 700; box-shadow: 0 6px 24px rgba(0, 0, 0, .45); transition: opacity .6s; }
+.toast.out { opacity: 0; }
 .deck-wrap { margin: 0 auto; max-width: 760px; }
 /* On a computer, let the flight deck use the screen: wider, up to about 1400 px. */
 @media (min-width: 1100px) { .home { max-width: 1480px; } .deck-wrap { max-width: min(1400px, 100%); } }

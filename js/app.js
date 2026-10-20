@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.3.2';
+  var VERSION = '0.3.3';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -54,7 +54,7 @@
     var ecam = { ewd: DISP.renderEWD(s, { lines: [], memo: [] }), sd: DISP.renderSD(s, 'CRUISE', null) };
     document.getElementById('view').innerHTML =
       '<section class="home">' +
-      '<p class="home-hint">Tap any panel to expand it.</p>' +
+      '<p class="home-hint">Tap any panel to expand it. <span class="ver-pill">Version ' + VERSION + '</span></p>' +
       '<div class="deck-wrap">' + DECK.build({ ecam: ecam }) + '</div>' +
       '<p class="disclaimer">Training aid only. Panels are drawings of the A320 flight deck; some overhead panels also offer a real A319 photo (Linus Follert, CC BY-SA 2.0).</p>' +
       '</section>';
@@ -131,7 +131,7 @@
       }
     }
   }
-  function closePanel() { PV = null; renderPanelView(); }
+  function closePanel() { PV = null; renderPanelView(); applyPendingUpdate(); }
   // Drawing (default) or the real photo, where one exists for this panel.
   function setPanelMode(mode) {
     var photo = mode === 'photo' && PHOTO && PHOTO.panels[PV.id];
@@ -275,7 +275,7 @@
     if (!el) return;
     switch (el.getAttribute('data-act')) {
       case 'menu': drawerOpen = true; renderDrawer(); break;
-      case 'closeDrawer': drawerOpen = false; renderDrawer(); break;
+      case 'closeDrawer': drawerOpen = false; renderDrawer(); applyPendingUpdate(); break;
       case 'search': searchOpen = true; renderSearch(); break;
       case 'closeSearch': searchOpen = false; renderSearch(); break;
       case 'open': openPanel(el.getAttribute('data-id'), null); break;
@@ -303,6 +303,42 @@
     return false;
   };
 
+  /* -------------------------------------------------------- auto update */
+  // The published site carries version.json. When it names a newer version
+  // than the one running, the page reloads itself (waiting until no panel,
+  // menu or search is open). Script URLs carry ?v=VERSION, so the reload
+  // fetches the new files rather than cached ones.
+  var pendingUpdate = null;
+  function store(k, v) { try { if (v === undefined) return sessionStorage.getItem(k); if (v === null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, v); } catch (e) { return null; } }
+  function checkUpdate() {
+    if (!/^https?:/.test(location.protocol) || !window.fetch) return;
+    fetch('version.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (!j || !j.version || j.version === VERSION) return;
+      // Already reloaded for this version in the last 11 minutes: the site's
+      // cached copy (up to 10 minutes) is still catching up.
+      var last = (store('ecam-reload-for') || '').split('|');
+      if (last[0] === j.version && Date.now() - +last[1] < 11 * 60 * 1000) return;
+      pendingUpdate = j.version;
+      applyPendingUpdate();
+    }).catch(function () {});
+  }
+  function applyPendingUpdate() {
+    if (!pendingUpdate || PV || drawerOpen || searchOpen) return;
+    store('ecam-reload-for', pendingUpdate + '|' + Date.now()); store('ecam-updated-from', VERSION);
+    location.reload();
+  }
+  function showUpdatedNote() {
+    var from = store('ecam-updated-from');
+    if (!from || from === VERSION) return;
+    store('ecam-updated-from', null); store('ecam-reload-for', null);
+    var t = document.createElement('div');
+    t.className = 'toast'; t.setAttribute('role', 'status');
+    t.textContent = 'Updated to version ' + VERSION;
+    document.body.appendChild(t);
+    setTimeout(function () { t.classList.add('out'); }, 3500);
+    setTimeout(function () { t.remove(); }, 4200);
+  }
+
   function boot() {
     document.getElementById('app').innerHTML =
       '<header class="appbar">' +
@@ -316,6 +352,10 @@
       '<div id="search" class="search" hidden></div>' +
       '<div id="pv" class="pv" hidden></div>';
     renderHome();
+    showUpdatedNote();
+    setTimeout(checkUpdate, 1500);
+    setInterval(checkUpdate, 5 * 60 * 1000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) checkUpdate(); });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();
