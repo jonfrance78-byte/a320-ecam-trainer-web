@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.3.7';
+  var VERSION = '0.3.8';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -15,7 +15,7 @@
     ['Aft overhead', ['ELT', 'CB', 'AFTBOTTOM', 'AUDIOSW', 'MAINT', 'DLS']],
     ['Overhead panel', ['FIRE', 'HYD', 'FUEL', 'ELEC', 'AIR', 'ANTIICE', 'CABPRESS', 'LOWER', 'PA', 'ADIRS', 'FLTCTL1', 'EVAC', 'EMERELEC', 'GPWS', 'RCDR', 'OXY', 'CALLS', 'WIPERL', 'ACP3', 'FLTCTL2', 'CARGO', 'VENT', 'MANSTART', 'WIPERR']],
     ['Glareshield', ['GSL', 'EFISL', 'FCU', 'EFISR', 'GSR']],
-    ['Main instrument panel', ['LATL', 'ISISP', 'AUTOBRK', 'CLOCK', 'LGLEVER', 'DCDU1', 'DCDU2', 'LATR']],
+    ['Main instrument panel', ['LATL', 'ISISP', 'AUTOBRK', 'CLOCK', 'LGLEVER', 'DCDU1', 'DCDU2']],
     ['Pedestal', ['MCDU1', 'SWITCHING', 'ECP', 'MCDU2', 'RMP1', 'RMP2', 'ACP1', 'ACP2', 'THR', 'ENGPED', 'FLOODL', 'WXR', 'FLOODR', 'ATC', 'SPDBRK', 'RUDTRIM', 'FLAPS', 'DOOR', 'PRINTER', 'PARKBRK', 'GRAVITY']],
     ['Side consoles', ['CONSL', 'CONSR']]
   ];

@@ -148,35 +148,31 @@
   }
 
   /* Glareshield and main instrument panel, laid out from photos/lower. The
-   * pilots' PFDs and NDs (EFIS) fill the top row; the centre panel (ISIS, E/WD,
-   * SD, gear, autobrake, clock, DCDUs) is drawn larger in a row below them.
-   * Returns the bottom edge of the main panel. */
-  var EFIS_S = 150, CTR_SCALE = 1.4, CTR_TOP = 1400;
+   * Captain's PFD and ND fill the left half; the centre panel (ISIS, E/WD, SD,
+   * gear, autobrake, clock, DCDUs) is drawn larger on the right, in place of
+   * the F/O's displays. Returns the bottom edge of the main panel. */
+  var EFIS_S = 150, CTR_SCALE = 1.45, CTR_X = 466;
   function mainPanel(ecam) {
     add('<path d="M14 1222 L14 1150 Q16 1128 60 1124 L840 1124 Q884 1128 886 1150 L886 1222 Z" class="dk-glare"/>');
     panel('GSL', 29, 1132); panel('EFISL', 142, 1132); panel('FCU', 315, 1132); panel('EFISR', 588, 1132); panel('GSR', 761, 1132);
-    var bottom = CTR_TOP + 219 * CTR_SCALE + 8;
+    var bottom = 1228 + 219 * CTR_SCALE + 8;
     add('<path d="M12 1222 L888 1222 L888 ' + bottom + ' L12 ' + bottom + ' Z" class="dk-mip"/>');
     l(12, 1223, 888, 1223, 'dk-mip-edge');
-    // EFIS row: lateral panel, PFD and ND on each side
-    panel('LATL', 18, 1228, 0.8); panel('LATR', 786, 1228, 0.8);
+    panel('LATL', 18, 1228, 0.8);
     screen(pfd, 123, 1233, EFIS_S, 'l'); screen(nd, 287, 1233, EFIS_S, 'l');
-    screen(nd, 463, 1233, EFIS_S, 'r'); screen(pfd, 627, 1233, EFIS_S, 'r');
-    c(66, 1350, 14, 'dk-vent'); c(66, 1350, 9, 'dk-vent-in'); c(834, 1350, 14, 'dk-vent'); c(834, 1350, 9, 'dk-vent-in');
+    c(66, 1350, 14, 'dk-vent'); c(66, 1350, 9, 'dk-vent-in');
     // Centre panel, scaled up about its own layout (drawn from x 309, y 1228)
-    add('<g transform="translate(450 ' + CTR_TOP + ') scale(' + CTR_SCALE + ') translate(-450 -1228)">');
+    add('<g transform="translate(' + CTR_X + ' 1228) scale(' + CTR_SCALE + ') translate(-309 -1228)">');
     ecamScreen(402, 1233, 96, ecam.ewd);
     ecamScreen(402, 1346, 96, ecam.sd);
     panel('ISISP', 309, 1228); panel('DCDU1', 309, 1401);
     panel('AUTOBRK', 507, 1228); panel('CLOCK', 507, 1293, 0.7); panel('LGLEVER', 507, 1343); panel('DCDU2', 507, 1401);
     add('</g>');
-    // Knee panels either side of the centre panel: pull-out table, air outlet, loudspeaker grille.
-    [22, 662].forEach(function (x) {
-      r(x + 8, CTR_TOP + 10, 200, 9, 'dk-recess', 3); r(x + 18, CTR_TOP + 13, 180, 3, 'dk-rail', 1.5);
-      r(x, CTR_TOP + 34, 216, 130, 'dk-knee', 5);
-    });
-    c(64, bottom - 64, 16, 'dk-vent'); c(64, bottom - 64, 10, 'dk-vent-in'); c(836, bottom - 64, 16, 'dk-vent'); c(836, bottom - 64, 10, 'dk-vent-in');
-    grille(104, bottom - 118, 132, 104); grille(664, bottom - 118, 132, 104);
+    // Knee panel under the Captain's displays: pull-out table, air outlet, loudspeaker grille.
+    r(30, 1400, 404, 9, 'dk-recess', 3); r(44, 1403, 376, 3, 'dk-rail', 1.5);
+    r(110, 1420, 330, bottom - 1434, 'dk-knee', 5);
+    c(60, bottom - 52, 18, 'dk-vent'); c(60, bottom - 52, 11, 'dk-vent-in');
+    grille(22, 1420, 78, bottom - 1500);
     return bottom;
   }
   function grille(x, y, w, h) {
