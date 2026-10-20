@@ -299,17 +299,19 @@
   };
 
   P.GPWS = {
-    title: '', name: 'GPWS', w: 168, h: 34, sys: null,
+    title: '', name: 'GPWS', w: 168, h: 46, sys: null,
     desc: 'Ground proximity warning system inhibits.',
     items: [
-      lb(84, 6.5, 'GPWS', 5.6),
-      pb(30, 24, 'TERR', 'FAULT', 'OFF', 'OFF inhibits terrain awareness and the predictive terrain alerts.', { s: 16 }),
-      pb(58, 24, 'SYS', 'FAULT', 'OFF', 'OFF inhibits all GPWS basic mode warnings. FAULT: GPWS failure.', { s: 16 }),
-      pb(90, 24, 'G/S\nMODE', '', 'OFF', 'OFF inhibits the glide slope mode alert.', { s: 16 }),
-      pb(117, 24, 'FLAP\nMODE', '', 'OFF', 'OFF inhibits the "too low flaps" warning, used for landing with abnormal flaps.', { s: 16 }),
-      pb(144, 24, 'LDG\nFLAP 3', '', 'ON', 'ON: tells the GPWS that FLAP 3 is the landing configuration.', { s: 16 })
+      lb(84, 8.6, 'GPWS', 5.2), ln([[10, 6.6], [70, 6.6]]), ln([[98, 6.6], [158, 6.6]]),
+      ln([[42, 13], [42, 42]]),
+      pb(24, 34, 'TERR', 'FAULT', 'OFF', 'OFF inhibits terrain awareness and the predictive terrain alerts.', { s: 14 }),
+      pb(62, 34, 'SYS', 'FAULT', 'OFF', 'OFF inhibits all GPWS basic mode warnings. FAULT: GPWS failure.', { s: 14 }),
+      pb(92, 34, 'G/S\nMODE', '', 'OFF', 'OFF inhibits the glide slope mode alert.', { s: 14 }),
+      pb(122, 34, 'FLAP\nMODE', '', 'OFF', 'OFF inhibits the "too low flaps" warning, used for landing with abnormal flaps (for example CONF 3 with the flaps lost).', { s: 14 }),
+      pb(152, 34, 'LDG\nFLAP 3', '', 'ON', 'ON: tells the GPWS that FLAP 3 is the landing configuration.', { s: 14 })
     ]
   };
+
 
   P.RCDR = {
     title: '', name: 'RCDR', w: 168, h: 38, sys: null,
