@@ -470,3 +470,5 @@ body.drill-on .home, body.drill-on .pv-card { padding-bottom: 150px; }
 .opt.right { border-color: #3fe060; background: rgba(63, 224, 96, .14); } .opt.wrong { border-color: #e8483c; background: rgba(232, 72, 60, .14); } .opt.dim { opacity: .55; }
 .m-explain { margin: 12px 0 0; font-size: 14px; line-height: 1.45; }
 .m-score { margin: 4px 0 10px; font: 700 40px var(--font-mono); color: var(--accent); }
+.hot.flash .hot-ring { animation: ewd-flash 1.5s ease-out; }
+@keyframes ewd-flash { 0%, 60% { fill: rgba(51, 214, 242, .18); stroke: rgba(51, 214, 242, .95); } 100% { fill: rgba(51, 214, 242, 0); stroke: rgba(51, 214, 242, 0); } }

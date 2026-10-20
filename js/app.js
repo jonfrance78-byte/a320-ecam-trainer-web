@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.5.2';
+  var VERSION = '0.5.3';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -407,16 +407,25 @@
   // Called after anything the trainee does.
   function drillCheck() {
     if (!DR || DR.phase !== 'run') return;
-    var st = DR.f.steps[DR.i], moved = false;
+    var st = DR.f.steps[DR.i], moved = false, acted = false;
     while (st && (st.k === 'master' || st.k === 'act' || st.k === 'task') && stepMet(st)) {
       DR.done[DR.i] = true;
-      if (st.k === 'act') { if (st.fx) st.fx(DR.s); if (st.clears) st.ctls.forEach(function (c) { setFault(c, false); }); DR.flash = st.item + ' ' + st.val + ': ' + (st.why || 'done.'); }
+      if (st.k === 'act') { acted = true; if (st.fx) st.fx(DR.s); if (st.clears) st.ctls.forEach(function (c) { setFault(c, false); }); DR.flash = st.item + ' ' + st.val + ': ' + (st.why || 'done.'); }
       if (st.k === 'master') DR.flash = 'Warning acknowledged. Now read the ECAM procedure on the E/WD.';
       if (st.k === 'task') DR.flash = st.info || null;
       DR.i++; moved = true;
       st = DR.f.steps[DR.i];
     }
     if (moved) advance(); else renderDrill();
+    // An ECAM action done in an expanded panel: flip back to the flight deck and the E/WD.
+    if (acted && PV && !PV.disp) { var pv = PV; setTimeout(function () { if (PV === pv) { closePanel(); showEcam(); } }, 650); }
+  }
+  function showEcam() {
+    var g = document.querySelector('.hot[data-panel="EWD"]');
+    if (!g) return;
+    g.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    g.classList.add('flash');
+    setTimeout(function () { var g2 = document.querySelector('.hot[data-panel="EWD"]'); if (g2) g2.classList.remove('flash'); }, 1600);
   }
   // A press on a procedure control before its turn is a sequence error.
   function drillPress(panel, i) {
