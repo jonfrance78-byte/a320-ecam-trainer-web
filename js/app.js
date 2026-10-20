@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.5.4';
+  var VERSION = '0.5.5';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -392,6 +392,7 @@
       else return finish();
     } else if (f.steps[DR.i].k === 'quiz') { DR.phase = 'quiz'; showModal('quiz', { q: f.steps[DR.i] }); }
     renderDrill(); refreshHome();
+    if (PV && !PV.disp) renderStage();
   }
   function stepMet(st) {
     if (st.k === 'master') return !masterLit();
@@ -427,9 +428,11 @@
   // During a drill an expanded panel shows the E/WD message area, so the procedure
   // stays in view while the trainee works the panel.
   function miniEwd() {
-    if (!DR || !DR.s || DR.f.level < 2 || PV.disp || !(DR.phase === 'run' || DR.phase === 'quiz' || DR.phase === 'clr1')) return '';
-    return '<div class="pv-ewd' + (Date.now() - (DR.pulse || 0) < 1300 ? ' flash' : '') + '" aria-label="E/WD procedure">' + DISP.renderEWD(DR.s, ewdView()).replace('viewBox="0 0 320 320"', 'viewBox="0 188 320 132"') + '</div>' +
-      '<div class="pv-ewd-bar"><button class="btn sm" data-act="backEcam">Back to ECAM</button></div>';
+    if (!DR || !DR.s || DR.f.level < 2 || PV.disp || DR.phase === 'done') return '';
+    var bar = '<div class="pv-ewd-bar"><button class="btn sm" data-act="backEcam">Back to ECAM</button></div>';
+    // Once the actions are done the procedure box goes; the button stays.
+    if (!(DR.phase === 'run' || DR.phase === 'quiz')) return bar;
+    return '<div class="pv-ewd' + (Date.now() - (DR.pulse || 0) < 1300 ? ' flash' : '') + '" aria-label="E/WD procedure">' + DISP.renderEWD(DR.s, ewdView()).replace('viewBox="0 0 320 320"', 'viewBox="0 188 320 132"') + '</div>' + bar;
   }
   function showEcam() {
     var g = document.querySelector('.hot[data-panel="EWD"]');
