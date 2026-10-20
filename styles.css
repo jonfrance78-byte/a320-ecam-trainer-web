@@ -84,6 +84,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .pn-tick { stroke: #f1ece4; stroke-width: .6; }
 .pn-pos { fill: #ece6dc; font-weight: 700; }
 .pn-pos.cur { fill: #fff; }
+.pn-pos.dim { opacity: .45; }
 
 .pb-bezel { fill: url(#g-bezel); }
 .pb-cap { fill: url(#g-cap); stroke: #050708; stroke-width: .4; }
@@ -397,3 +398,5 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .mic-dot { fill: #b8c0c8; }
 .mic-coil { fill: none; stroke: #c9cfd5; stroke-width: .7; }
 .mic-ptt { fill: #8d969e; }
+.tog-chrome { fill: url(#g-chrome); stroke: #4b555d; stroke-width: .3; }
+.tog-chrome-tip { fill: url(#g-metal); stroke: #4b555d; stroke-width: .3; }

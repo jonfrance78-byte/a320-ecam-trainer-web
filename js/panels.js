@@ -764,9 +764,18 @@
     var span = it.round ? 11 : 13, top = y - span / 2;
     it.pos.forEach(function (p, i) {
       var py = n === 1 ? y : top + i * span / (n - 1);
-      o += text(x + (it.round ? 9 : 7), py + 1.3, p, 'pn-pos' + (i === cur ? ' cur' : ''), 3.2, 'start');
+      o += text(x + (it.round ? 9 : 7), py + 1.3, p, 'pn-pos' + (i === cur ? ' cur' : (it.bat ? ' dim' : '')), 3.2, 'start');
     });
     var ty = cur < 0 ? y : (n === 1 ? y : top + cur * span / (n - 1));
+    if (it.bat) {
+      // Bat-handle toggle: a chrome lever that points clearly at the selected position.
+      var up = ty < y, ly = y + (up ? -1 : 1) * 6.4;
+      o += '<circle cx="' + (x + 0.5) + '" cy="' + (y + 0.9) + '" r="3.6" class="shadow"/><circle cx="' + x + '" cy="' + y + '" r="3.4" class="tog-base"/><circle cx="' + x + '" cy="' + y + '" r="1.6" class="tog-hole"/>';
+      o += '<path d="M' + (x - 1.1) + ' ' + y + ' L' + (x - 1.7) + ' ' + ly + ' L' + (x + 1.7) + ' ' + ly + ' L' + (x + 1.1) + ' ' + y + ' Z" class="tog-chrome"/>';
+      o += '<ellipse cx="' + x + '" cy="' + ly + '" rx="2.2" ry="1.6" class="tog-chrome-tip"/>';
+      if (!it.noname) o += nameLines(x, y - span / 2 - 4.5, it.name, 4.2);
+      return o;
+    }
     if (it.round) {
       o += '<circle cx="' + (x + 0.6) + '" cy="' + (y + 1.2) + '" r="7.4" class="shadow"/>';
       o += '<circle cx="' + x + '" cy="' + y + '" r="7.2" class="rnd-rim"/><circle cx="' + x + '" cy="' + y + '" r="6.2" class="tog-boss"/>';
@@ -963,6 +972,7 @@
     else if (it.k === 'lever') { w = 18; h = 44; }
     else if (it.k === 'win' || it.k === 'disp') { w = it.w + 4; h = it.inl ? 26 : 16; }
     else if (it.k === 'part') { w = it.w; h = it.h; }
+    if (it.hit) { w = it.hit[0]; h = it.hit[1]; }
     else if (it.k === 'slide') { w = (it.hw || 9) + 10; h = Math.abs(it.y1 - it.y0) + 16; return '<rect x="' + (it.x - w / 2) + '" y="' + (Math.min(it.y0, it.y1) - 8) + '" width="' + w + '" height="' + h + '" rx="3" class="ctl-hit"/>'; }
     return '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="3" class="ctl-hit"/>';
   }

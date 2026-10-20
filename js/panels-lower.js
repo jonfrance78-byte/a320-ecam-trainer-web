@@ -12,7 +12,7 @@
   function raw(svg) { return { k: 'raw', svg: svg }; }
   function part(x, y, w, h, name, info, art, o) { return Object.assign({ k: 'part', x: x, y: y, w: w, h: h, name: name, info: info, art: art }, o || {}); }
   // Pushbutton with its legend on the cap and a light bar above (FCU, EFIS, RMP).
-  function cap(x, y, name, info, o) { return pb(x, y, name, '', '', info, Object.assign({ bar: true, capText: true, s: 9, w: 16 }, o || {})); }
+  function cap(x, y, name, info, o) { return pb(x, y, name, '', '', info, Object.assign({ bar: true, capText: true, noFrame: true, s: 9, w: 16 }, o || {})); }
   // Momentary key with its legend on the cap (MCDU, ECAM control panel).
   function key(x, y, name, info, o) { return pb(x, y, name, '', '', info, Object.assign({ rect: true, s: 7, w: 11 }, o || {})); }
   function rect(x, y, w, h, cls, rx) { return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (rx || 0) + '" class="' + cls + '"/>'; }
@@ -321,8 +321,8 @@
       cap(15, 53, 'NAV', 'Back-up radio navigation (under a clear guard on the aircraft): lets the RMPs tune the VOR, ILS and ADF if both FMGCs fail. The green light shows it is selected.', { s: 7, w: 11 }),
       cap(30, 53, 'VOR', 'With NAV selected: the standby window tunes a VOR, and shows its course.', { s: 7, w: 11, group: 'nav' }),
       cap(43, 53, 'ILS', 'With NAV selected: the standby window tunes the ILS, and shows its course.', { s: 7, w: 11, group: 'nav' }),
-      cap(69, 53, 'ADF', 'With NAV selected: the standby window tunes the ADF.', { s: 7, w: 11, group: 'nav' }),
-      tog(80, 53, 'RMP ' + n, ['ON', 'OFF'], 0, 'Switches RMP ' + n + ' on or off. At OFF the panel goes dark: the frequency windows and the selection lights go out, and its keys do nothing.', { noname: true, power: 1 })
+      cap(64, 53, 'ADF', 'With NAV selected: the standby window tunes the ADF.', { s: 7, w: 11, group: 'nav' }),
+      tog(80, 53, 'RMP ' + n, ['ON', 'OFF'], 0, 'Switches RMP ' + n + ' on or off. At OFF the panel goes dark: the frequency windows and the selection lights go out, and its keys do nothing.', { noname: true, power: 1, bat: true, hit: [16, 24] })
     ];
     // RMP keys sit flush in the panel, without the white frame of overhead pushbuttons.
     return items.map(function (it) { return it.k === 'pb' || it.k === 'ann' ? Object.assign({ noFrame: true }, it) : it; });
