@@ -40,7 +40,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
   padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px));
   background: var(--night-2); border-bottom: 1px solid var(--line);
 }
-.appbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; padding-block: 10px; }
+.appbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; padding-block: 10px; transition: transform .25s ease; }
+.appbar.away { transform: translateY(calc(-100% - env(safe-area-inset-top, 0px))); }
 .appbar-title {
   flex: 1; min-width: 0; margin: 0; text-align: center;
   font: 500 clamp(18px, 4.6vw, 26px)/1.15 var(--font-head); letter-spacing: .01em;

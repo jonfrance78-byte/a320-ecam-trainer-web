@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.3.8';
+  var VERSION = '0.3.9';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -339,6 +339,24 @@
     setTimeout(function () { t.remove(); }, 4200);
   }
 
+  // The title bar slides away while scrolling down the deck and comes back on
+  // scrolling up (or near the top), leaving more room for the panels.
+  function hideBarOnScroll() {
+    var bar = document.querySelector('.appbar'), lastY = window.scrollY, ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(function () {
+        var y = window.scrollY, dy = y - lastY;
+        if (y < 60 || drawerOpen || searchOpen) bar.classList.remove('away');
+        else if (dy > 6) bar.classList.add('away');
+        else if (dy < -6) bar.classList.remove('away');
+        if (Math.abs(dy) > 6 || y < 60) lastY = y;
+        ticking = false;
+      });
+    }, { passive: true });
+  }
+
   function boot() {
     document.getElementById('app').innerHTML =
       '<header class="appbar">' +
@@ -353,6 +371,7 @@
       '<div id="pv" class="pv" hidden></div>';
     renderHome();
     showUpdatedNote();
+    hideBarOnScroll();
     setTimeout(checkUpdate, 1500);
     setInterval(checkUpdate, 5 * 60 * 1000);
     document.addEventListener('visibilitychange', function () { if (!document.hidden) checkUpdate(); });
