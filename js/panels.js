@@ -566,6 +566,7 @@
       '<linearGradient id="g-stick" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3a424b"/><stop offset=".35" stop-color="#20262c"/><stop offset="1" stop-color="#0f1216"/></linearGradient>' +
       '<radialGradient id="g-tiller" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#4a525a"/><stop offset=".6" stop-color="#1c2025"/><stop offset="1" stop-color="#0b0d0f"/></radialGradient>' +
       '<linearGradient id="g-mic" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6c747d"/><stop offset=".4" stop-color="#a7afb8"/><stop offset="1" stop-color="#5a626b"/></linearGradient>' +
+      '<pattern id="p-knurl" width="1.4" height="1.4" patternUnits="userSpaceOnUse"><rect width="1.4" height="1.4" fill="#16191c"/><circle cx=".7" cy=".7" r=".42" fill="#2f353a"/></pattern>' +
       '<filter id="f-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation=".9"/></filter>' +
       '<filter id="f-soft" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.2"/></filter>' +
       '</defs>';
@@ -838,7 +839,7 @@
   function slidePos(it, i) { return it.ys ? it.ys[i] : it.pos.length < 2 ? it.y0 : it.y0 + i * (it.y1 - it.y0) / (it.pos.length - 1); }
   function drawSlide(it, st) {
     var x = it.x, cur = st.cur != null ? st.cur : it.cur, o = '', hw = it.hw || 9, side = it.side || 'r';
-    o += '<rect x="' + (x - 2.4) + '" y="' + (it.y0 - 4) + '" width="4.8" height="' + (it.y1 - it.y0 + 8) + '" rx="2.4" class="slot"/>';
+    if (it.style !== 'gear') o += '<rect x="' + (x - 2.4) + '" y="' + (it.y0 - 4) + '" width="4.8" height="' + (it.y1 - it.y0 + 8) + '" rx="2.4" class="slot"/>';
     it.pos.forEach(function (p, i) {
       var py = slidePos(it, i), lbl = it.labels ? it.labels[i] : p;
       if (side !== 'n') {
@@ -848,10 +849,17 @@
     });
     var y = slidePos(it, cur);
     if (it.style === 'gear') {
-      o += '<rect x="' + (x - 1.8) + '" y="' + Math.min(y, it.y0) + '" width="3.6" height="' + Math.abs(y - it.y0 + 0.01) + '" class="lever-rod"/>';
-      o += '<circle cx="' + (x + 0.8) + '" cy="' + (y + 1.4) + '" r="7.4" class="shadow"/><circle cx="' + x + '" cy="' + y + '" r="7" class="gear-knob"/>';
-      for (var g = 0; g < 360; g += 20) { var a = polar(x, y, 7, g), b = polar(x, y, 5.6, g); o += '<line x1="' + a[0] + '" y1="' + a[1] + '" x2="' + b[0] + '" y2="' + b[1] + '" class="knurl"/>'; }
-      o += '<circle cx="' + x + '" cy="' + y + '" r="4" class="gear-hub"/>';
+      // A320 gear lever handle: two knurled discs side by side (a wheel seen
+      // edge on) on a knurled stem that runs down to the pivot.
+      var hh2 = 23, top2 = y - hh2 / 2, stemTop = y + hh2 / 2 - 3, stemBot = it.y1 + hh2 / 2;
+      if (stemBot - stemTop > 2) o += '<rect x="' + (x - 2.6) + '" y="' + stemTop + '" width="6.4" height="' + (stemBot - stemTop) + '" rx="1" class="gear-stem"/>' +
+        '<line x1="' + (x + 0.6) + '" y1="' + (stemTop + 2) + '" x2="' + (x + 0.6) + '" y2="' + (stemBot - 1) + '" class="gear-stem-line"/>';
+      o += '<rect x="' + (x - 5) + '" y="' + (top2 + 1.6) + '" width="12" height="' + hh2 + '" rx="2.8" class="shadow"/>';
+      o += '<rect x="' + (x - 1.4) + '" y="' + (top2 + 3) + '" width="2.8" height="' + (hh2 - 6) + '" class="gear-hub2"/>';
+      [x - 6.4, x + 0.9].forEach(function (dx) {
+        o += '<rect x="' + dx + '" y="' + top2 + '" width="5.5" height="' + hh2 + '" rx="2.75" class="gear-disc"/>';
+        o += '<path d="M' + (dx + 0.9) + ' ' + (top2 + 3) + ' Q' + (dx + 0.5) + ' ' + (top2 + hh2 / 2) + ' ' + (dx + 0.9) + ' ' + (top2 + hh2 - 3) + '" class="gear-disc-hi"/>';
+      });
     } else if (it.style === 'thr') {
       o += '<rect x="' + (x - hw / 2 + 0.8) + '" y="' + (y - 7) + '" width="' + hw + '" height="16" rx="2.4" class="shadow"/>';
       o += '<path d="M' + (x - hw / 2) + ' ' + (y + 6) + ' v-12 q0 -3 3 -3 h' + (hw - 6) + ' q3 0 3 3 v12 z" class="thr-hd"/>';
@@ -973,7 +981,7 @@
     else if (it.k === 'win' || it.k === 'disp') { w = it.w + 4; h = it.inl ? 26 : 16; }
     else if (it.k === 'part') { w = it.w; h = it.h; }
     if (it.hit) { w = it.hit[0]; h = it.hit[1]; }
-    else if (it.k === 'slide') { w = (it.hw || 9) + 10; h = Math.abs(it.y1 - it.y0) + 16; return '<rect x="' + (it.x - w / 2) + '" y="' + (Math.min(it.y0, it.y1) - 8) + '" width="' + w + '" height="' + h + '" rx="3" class="ctl-hit"/>'; }
+    else if (it.k === 'slide') { var pad = it.style === 'gear' ? 12 : 8; w = (it.hw || 9) + 10; h = Math.abs(it.y1 - it.y0) + 2 * pad; return '<rect x="' + (it.x - w / 2) + '" y="' + (Math.min(it.y0, it.y1) - pad) + '" width="' + w + '" height="' + h + '" rx="3" class="ctl-hit"/>'; }
     return '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="3" class="ctl-hit"/>';
   }
   function ctlName(it) {

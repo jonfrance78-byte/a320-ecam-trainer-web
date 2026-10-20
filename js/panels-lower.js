@@ -251,7 +251,7 @@
       raw(rect(8, 4, 34, 49, 'plate-in', 3) + t(33, 10, 'UP', 3.4, 'pn-pos') +
         '<path d="M33 12 l-2.6 4 h1.6 v9 h2 v-9 h1.6 z" class="pn-arrow"/>' +
         '<path d="M33 46 l-2.6 -4 h1.6 v-11 h2 v11 h1.6 z" class="pn-arrow"/>' + t(33, 50.6, 'DOWN', 3.4, 'pn-pos')),
-      { k: 'slide', x: 18, y0: 13, y1: 44, pos: ['UP', 'DOWN'], cur: 0, side: 'n', style: 'gear', name: 'Landing gear lever', noname: true, info: 'Landing gear lever. UP retracts and DOWN extends the gear with the green hydraulic system, through the LGCIUs. On the ground a safety interlock stops it being moved up.' },
+      { k: 'slide', x: 18, y0: 17, y1: 39, pos: ['UP', 'DOWN'], cur: 0, side: 'n', style: 'gear', hw: 14, name: 'Landing gear lever', noname: true, info: 'Landing gear lever. UP retracts and DOWN extends the gear with the green hydraulic system, through the LGCIUs. On the ground a safety interlock stops it being moved up.' },
       raw(t(66, 7, 'TERR ON ND', 3)),
       pb(66, 17, 'TERR ON ND', '', 'ON:w', 'Shows the EGPWS terrain picture on the F/O\'s ND instead of the weather radar (ON lit). Terrain shows automatically with a terrain caution or warning.', { s: 10, noname: true }),
       part(64, 40, 32, 28, 'Brake triple indicator', 'Brake pressure triple indicator for the alternate (yellow) brakes: accumulator pressure on top, left and right brake pressure below, in PSI x 1000. It shows the parking brake pressure on the ground and reads zero with normal braking.', brakeArt(64, 40), { kindName: 'Indicator' })
