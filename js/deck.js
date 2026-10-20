@@ -193,20 +193,26 @@
     for (var i = 0; i < 2; i++) for (var k = 0; k < 12; k++) l(318 + i * 144 + k * 10, 2039, 318 + i * 144 + k * 10, 2047, 'dk-footrest-rib');
   }
 
+  // The pedestal is drawn larger than the panels above it, so its small
+  // controls read well; the side consoles sit beside its lower part.
+  var PED_SCALE = 1.45, PED_TOP = 1456;
   function build(opts) {
     out = [];
-    add('<svg viewBox="6 6 888 2058" class="deck" role="group" aria-label="A320 flight deck overview. Tap a panel to expand it.">');
+    add('');
     add(PN.defs());
     var aftBottom = aftOverhead();
     var shift = fwdOverhead(aftBottom + 18) + 12 - 1128;
-    var viewH = 2058 + shift;
+    var bottom = PED_TOP + (2058 - PED_TOP) * PED_SCALE + shift;
     add('<g transform="translate(0 ' + shift.toFixed(1) + ')">');
     mainPanel(opts.ecam);
-    panel('CONSL', 22, 1500); panel('CONSR', 648, 1500);
+    add('<g transform="translate(450 ' + PED_TOP + ') scale(' + PED_SCALE + ') translate(-450 -' + PED_TOP + ')">');
     pedestal();
     add('</g>');
+    var consY = PED_TOP + (1838 - PED_TOP) * PED_SCALE;
+    panel('CONSL', 18, consY, 0.95); panel('CONSR', 663.5, consY, 0.95);
+    add('</g>');
     add('</svg>');
-    out[0] = out[0].replace('viewBox="6 6 888 2058"', 'viewBox="16 6 868 ' + viewH.toFixed(0) + '"');
+    out[0] = '<svg viewBox="16 6 868 ' + bottom.toFixed(0) + '" class="deck" role="group" aria-label="A320 flight deck overview. Tap a panel to expand it.">';
     return out.join('');
   }
 
