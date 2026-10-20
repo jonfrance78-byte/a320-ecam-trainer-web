@@ -213,21 +213,45 @@
     ]
   };
 
+  // Brake triple indicator as in photos/lower: octagonal plate, round dial,
+  // ACCU PRESS scale on top (0-4) and the two BRAKES scales below (3-0-3).
   function brakeArt(x, y) {
-    var o = rect(x - 16, y - 13, 32, 28, 'scr-bezel', 2) + '<circle cx="' + x + '" cy="' + (y + 1) + '" r="11" class="gauge-face"/>';
-    for (var a = -60; a <= 60; a += 30) { var p1 = polar(x, y - 3, 9, a), p2 = polar(x, y - 3, 7.4, a); o += line(p1[0], p1[1], p2[0], p2[1], 'gauge-tick'); }
-    o += t(x, y - 6.5, 'ACCU', 2) + line(x, y - 3, x - 1, y - 10.5, 'gauge-needle');
-    o += line(x - 4, y + 7, x - 9, y + 3, 'gauge-needle') + line(x + 4, y + 7, x + 9, y + 3, 'gauge-needle');
-    o += t(x - 6, y + 11, 'L', 2.2) + t(x + 6, y + 11, 'R', 2.2) + t(x, y + 13.6, 'BRAKES', 2.2) + t(x, y + 16.6, 'PSI x 1000', 1.8);
+    var o = '', R = 12.6, arc = function (cx, cy, r, a0, a1, cls) {
+      var p0 = polar(cx, cy, r, a0), p1 = polar(cx, cy, r, a1);
+      return '<path d="M' + p0[0] + ' ' + p0[1] + ' A' + r + ' ' + r + ' 0 0 ' + (a1 > a0 ? 1 : 0) + ' ' + p1[0] + ' ' + p1[1] + '" class="' + cls + '"/>';
+    };
+    o += '<path d="M' + (x - 8) + ' ' + (y - 15) + ' h16 l7 7 v16 l-7 7 h-16 l-7 -7 v-16 z" class="gauge-plate"/>';
+    o += '<circle cx="' + x + '" cy="' + y + '" r="' + R + '" class="gauge-face"/>';
+    // ACCU PRESS: arc about a centre below the dial, 0 at the left, 4 at the right
+    var ax = x, ay = y + 6, ar = 11;
+    o += arc(ax, ay, ar, -38, 38, 'gauge-arc') + arc(ax, ay, ar, 14, 22, 'gauge-green');
+    for (var k = 0; k <= 4; k++) { var a = -38 + k * 19, p1 = polar(ax, ay, ar, a), p2 = polar(ax, ay, ar - 1.4, a); o += line(p1[0], p1[1], p2[0], p2[1], 'gauge-tick'); }
+    var l0 = polar(ax, ay, ar + 1.8, -40), l4 = polar(ax, ay, ar + 1.8, 40);
+    o += t(l0[0], l0[1] + 0.8, '0', 1.9, 'gauge-num') + t(l4[0], l4[1] + 0.8, '4', 1.9, 'gauge-num');
+    o += t(x - 6, y - 7, 'ACCU', 1.9, 'gauge-num') + t(x + 6, y - 7, 'PRESS', 1.9, 'gauge-num');
+    var an = polar(ax, ay, ar - 0.6, 18);
+    o += line(ax, ay - 7.5, an[0], an[1], 'gauge-needle');
+    // BRAKES: left 3 .. 0 and right 0 .. 3, zero at the bottom centre
+    [[-1, x - 4.6], [1, x + 4.6]].forEach(function (q) {
+      var s2 = q[0], cx = q[1], cy = y + 3, r = 6;
+      o += arc(cx, cy, r, s2 < 0 ? -80 : 80, s2 < 0 ? -160 : 160, 'gauge-arc');
+      o += arc(cx, cy, r, s2 < 0 ? -130 : 130, s2 < 0 ? -160 : 160, 'gauge-green');
+      var e3 = polar(cx, cy, r + 1.6, s2 < 0 ? -78 : 78);
+      o += t(e3[0], e3[1] + 0.8, '3', 1.9, 'gauge-num');
+      var n = polar(cx, cy, r - 0.5, s2 < 0 ? -158 : 158);
+      o += line(cx, cy, n[0], n[1], 'gauge-needle');
+    });
+    o += t(x, y + 9.4, '0', 1.9, 'gauge-num') + t(x, y + 11.4, 'BRAKES', 1.7, 'gauge-num') + t(x, y + 13, 'PSI x 1000', 1.2, 'gauge-num');
     return o;
   }
   P.LGLEVER = {
     title: '', name: 'Gear lever', w: 84, h: 56, sys: 'WHEEL',
     desc: 'Landing gear lever, the F/O\'s TERR ON ND pushbutton and the brake pressure triple indicator.',
     items: [
-      raw(rect(10, 5, 24, 47, 'plate-in', 3) + t(30, 10, 'UP', 3, 'pn-pos') + '<path d="M30 12 v8 M28.4 14 l1.6 -2 l1.6 2" class="pn-arc"/>' + t(30, 50, 'DOWN', 3, 'pn-pos') + '<path d="M30 46 v-8 M28.4 44 l1.6 2 l1.6 -2" class="pn-arc"/>'),
-      { k: 'slide', x: 19, y0: 13, y1: 44, pos: ['UP', 'DOWN'], cur: 0, side: 'n', style: 'gear', name: 'Landing gear lever', noname: true, info: 'Landing gear lever. UP retracts and DOWN extends the gear with the green hydraulic system, through the LGCIUs. On the ground a safety interlock stops it being moved up.' },
-      ann(38, 9, 'Gear red arrow', '▼:r', '', 'Red arrow: lights with the red LDG GEAR NOT DOWN warning, when the gear is not down and locked in a landing configuration.', { s: 7, noname: true }),
+      raw(rect(8, 4, 34, 49, 'plate-in', 3) + t(33, 10, 'UP', 3.4, 'pn-pos') +
+        '<path d="M33 12 l-2.6 4 h1.6 v9 h2 v-9 h1.6 z" class="pn-arrow"/>' +
+        '<path d="M33 46 l-2.6 -4 h1.6 v-11 h2 v11 h1.6 z" class="pn-arrow"/>' + t(33, 50.6, 'DOWN', 3.4, 'pn-pos')),
+      { k: 'slide', x: 18, y0: 13, y1: 44, pos: ['UP', 'DOWN'], cur: 0, side: 'n', style: 'gear', name: 'Landing gear lever', noname: true, info: 'Landing gear lever. UP retracts and DOWN extends the gear with the green hydraulic system, through the LGCIUs. On the ground a safety interlock stops it being moved up.' },
       raw(t(66, 7, 'TERR ON ND', 3)),
       pb(66, 17, 'TERR ON ND', '', 'ON:w', 'Shows the EGPWS terrain picture on the F/O\'s ND instead of the weather radar (ON lit). Terrain shows automatically with a terrain caution or warning.', { s: 10, noname: true }),
       part(64, 40, 32, 28, 'Brake triple indicator', 'Brake pressure triple indicator for the alternate (yellow) brakes: accumulator pressure on top, left and right brake pressure below, in PSI x 1000. It shows the parking brake pressure on the ground and reads zero with normal braking.', brakeArt(64, 40), { kindName: 'Indicator' })
