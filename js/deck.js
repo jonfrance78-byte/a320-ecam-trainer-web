@@ -9,7 +9,7 @@
   'use strict';
 
   var PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
-  var out;
+  var out, STATES = {};
   function add(s) { out.push(s); }
   function r(x, y, w, h, cls, rx) { add('<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" class="' + cls + '"' + (rx ? ' rx="' + rx + '"' : '') + '/>'); }
   function c(x, y, rad, cls) { add('<circle cx="' + x + '" cy="' + y + '" r="' + rad + '" class="' + cls + '"/>'); }
@@ -28,13 +28,14 @@
       return p.h * s;
     }
     add('<g class="hot" data-panel="' + id + '" tabindex="0" role="button" aria-label="Expand ' + label + ' panel" transform="translate(' + x + ' ' + y + ')' + (s !== 1 ? ' scale(' + s + ')' : '') + '">');
-    add(PN.render(id));
+    add(PN.render(id, { states: STATES[id] }));
     add('<rect width="' + p.w + '" height="' + p.h + '" rx="3" class="hot-ring"/>');
-    // ECAM control panel: its page keys (drawn above the highlight, so clicks reach them)
-    // change the system display page on the deck itself.
+    // Keys that work on the deck itself (drawn above the highlight, so clicks reach them):
+    // the ECAM page keys change the SD page; MASTER WARN/CAUT and CLR serve the failure drills.
     p.items.forEach(function (it) {
-      if (!it.sdPage && !it.sdAll) return;
-      add('<rect x="' + (it.x - it.w / 2 - 1) + '" y="' + (it.y - it.s / 2 - 1) + '" width="' + (it.w + 2) + '" height="' + (it.s + 2) + '" rx="1" class="sdkey" data-sd="' + (it.sdAll ? 'ALL' : it.sdPage) + '"><title>' + (it.sdAll ? 'ALL pages' : it.sdPage + ' page') + '</title></rect>');
+      if (!it.sdPage && !it.sdAll && !it.deckKey) return;
+      var key = it.deckKey || (it.sdAll ? 'ALL' : it.sdPage), w = it.w || it.s;
+      add('<rect x="' + (it.x - w / 2 - 1) + '" y="' + (it.y - it.s / 2 - 1) + '" width="' + (w + 2) + '" height="' + (it.s + 2) + '" rx="1" class="sdkey" data-sd="' + key + '"><title>' + (it.deckKey ? (it.name || key) : it.sdAll ? 'ALL pages' : it.sdPage + ' page') + '</title></rect>');
     });
     add('</g>');
     return p.h * s;
@@ -162,7 +163,7 @@
   // drawn from y 1456 and moved to just below the main panel.
   var PED_SCALE = 1.45, PED_Y = 1456;
   function build(opts) {
-    out = [];
+    out = []; STATES = opts.states || {};
     add('');
     add(PN.defs());
     var aftBottom = aftOverhead();

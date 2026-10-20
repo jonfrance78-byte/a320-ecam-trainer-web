@@ -1,12 +1,12 @@
 /* A320 ECAM Trainer: app shell.
  * Home is the flight deck overview; tapping a panel expands it full screen.
- * The menu and search list the panels. Training content comes later.
+ * The menu lists the failure drills (js/failures.js) and the panels.
  */
 (function () {
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.4.1';
+  var VERSION = '0.5.0';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -46,7 +46,10 @@
   var SD_ORDER = ['ENG', 'BLEED', 'PRESS', 'ELEC', 'HYD', 'FUEL', 'APU', 'COND', 'DOOR', 'WHEEL', 'F/CTL'];
   var SD_NAMES = { ENG: 'engine', BLEED: 'bleed', PRESS: 'cabin pressure', ELEC: 'electrical', HYD: 'hydraulic', FUEL: 'fuel', APU: 'APU', COND: 'air conditioning', DOOR: 'door/oxygen', WHEEL: 'wheel', 'F/CTL': 'flight controls', STS: 'STATUS' };
   var sdPage = null;
-  function sdSvg() { return DISP.renderSD(cruiseState(), sdPage || 'CRUISE', null); }
+  function sdSvg() {
+    var sts = DR && DR.s && (DR.phase === 'stsq' || DR.phase === 'clr2' || DR.phase === 'done') ? DR.f.sts : null;
+    return DISP.renderSD(liveState(), sdPage || 'CRUISE', sts);
+  }
   function setSd(key) {
     if (key === 'ALL') sdPage = SD_ORDER[(SD_ORDER.indexOf(sdPage) + 1) % SD_ORDER.length];
     else sdPage = sdPage === key ? null : key;
@@ -55,6 +58,7 @@
     renderHome();
     window.scrollTo(0, y);
     if (PV) renderStage();
+    drillCheck();
     return sdPage ? 'The system display shows the ' + SD_NAMES[sdPage] + ' page.' : 'Back to the automatic page (CRUISE).';
   }
 
@@ -87,12 +91,12 @@
 
   /* ----------------------------------------------------------------- home */
   function renderHome() {
-    var s = cruiseState();
-    var ecam = { ewd: DISP.renderEWD(s, { lines: [], memo: [] }), sd: sdSvg(), pfd: DISP.renderPFD(s), nd: DISP.renderND(s) };
+    var s = liveState();
+    var ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: DISP.renderPFD(s), nd: DISP.renderND(s) };
     document.getElementById('view').innerHTML =
       '<section class="home">' +
       '<p class="home-hint">Tap any panel to expand it. <span class="ver-pill">Version ' + VERSION + '</span></p>' +
-      '<div class="deck-wrap">' + DECK.build({ ecam: ecam }) + '</div>' +
+      '<div class="deck-wrap">' + DECK.build({ ecam: ecam, states: PSTATE }) + '</div>' +
       '<p class="disclaimer">Training aid only. Panels are drawings of the A320 flight deck; some overhead panels also offer a real A319 photo (Linus Follert, CC BY-SA 2.0).</p>' +
       '</section>';
   }
@@ -157,6 +161,7 @@
     setPanelMode(PN.P[id] ? 'draw' : 'photo');
     drawerOpen = false; searchOpen = false; renderDrawer(); renderSearch();
     renderPanelView();
+    drillCheck();
     var stage = document.querySelector('#pv .pv-svg');
     if (fromEl && stage && stage.animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       var a = fromEl.getBoundingClientRect(), b = stage.getBoundingClientRect();
@@ -168,11 +173,13 @@
       }
     }
   }
-  function closePanel() { PV = null; renderPanelView(); applyPendingUpdate(); }
+  function closePanel() { PV = null; renderPanelView(); refreshHome(); applyPendingUpdate(); }
   // Drawing (default) or the real photo, where one exists for this panel.
   function setPanelMode(mode) {
     var photo = mode === 'photo' && PHOTO && PHOTO.panels[PV.id];
-    PV.photo = photo || null; PV.states = {}; PV.selected = null; PV.note = null;
+    PV.photo = photo || null; PV.selected = null; PV.note = null;
+    // Drawn panels keep their switch positions (and failure lights) between visits.
+    PV.states = photo || PV.disp ? {} : (PSTATE[PV.id] || (PSTATE[PV.id] = {}));
     PV.items = photo ? photoItems(PV.id) : (PV.disp ? [] : PN.P[PV.id].items);
     if (photo) PV.items.forEach(function (it, i) { if (it.photoLit) PV.states[i] = { lit: it.photoLit }; });
   }
@@ -206,8 +213,8 @@
     }).join('') + '</div>';
   }
   function dispSvg(id) {
-    var s = cruiseState();
-    return id === 'PFD' ? DISP.renderPFD(s) : id === 'ND' ? DISP.renderND(s) : id === 'EWD' ? DISP.renderEWD(s, { lines: [], memo: [] }) : sdSvg();
+    var s = liveState();
+    return id === 'PFD' ? DISP.renderPFD(s) : id === 'ND' ? DISP.renderND(s) : id === 'EWD' ? DISP.renderEWD(s, ewdView()) : sdSvg();
   }
   function renderStage() {
     var p = getP(PV.id);
@@ -236,7 +243,7 @@
       '<header class="pv-bar"><button class="icon-btn" data-act="closePanel" aria-label="Back to flight deck">' + ICON.back + '</button>' +
       '<h2 class="appbar-title">' + esc(panelName(PV.id)) + '</h2><span class="icon-btn-spacer"></span></header>' +
       '<div class="pv-stage" id="pv-stage"></div>' +
-      (PHOTO && PHOTO.panels[PV.id] && PN.P[PV.id] ? '<div class="seg pv-switch" role="radiogroup" aria-label="View">' +
+      (PHOTO && PHOTO.panels[PV.id] && PN.P[PV.id] && !DR ? '<div class="seg pv-switch" role="radiogroup" aria-label="View">' +
         '<button role="radio" aria-checked="' + !PV.photo + '" class="seg-btn' + (PV.photo ? '' : ' on') + '" data-act="pvmode" data-mode="draw">Drawing</button>' +
         '<button role="radio" aria-checked="' + !!PV.photo + '" class="seg-btn' + (PV.photo ? ' on' : '') + '" data-act="pvmode" data-mode="photo">Photo (A319)</button></div>' : '') +
       (PV.photo ? '<p class="pv-credit">' + creditHtml() + '</p>' : '') +
@@ -250,8 +257,13 @@
   function pressCtl(i) {
     var it = PV.items[i];
     if (!it) return;
-    PV.note = PN.pressItems(PV.items, i, PV.states);
+    if (!PV.photo) drillPress(PV.id, i);
+    if (it.master && !PV.photo) PV.note = pressMaster(it.master) || 'Lights only with a warning or caution.';
+    else if (it.clrKey && DR && DR.s) { PN.pressItems(PV.items, i, PV.states); pressClr(); PV.note = DR && DR.flash; }
+    else PV.note = PN.pressItems(PV.items, i, PV.states);
     if (it.sdPage || it.sdAll) PV.note = setSd(it.sdAll ? 'ALL' : it.sdPage);
+    if (!PV) return;
+    if (!PV.photo) drillCheck();
     PV.selected = i;
     renderStage();
     if (PV.states[i] && PV.states[i].down) {
@@ -269,6 +281,284 @@
     if (g) g.focus({ preventScroll: true });
   }
 
+  /* ------------------------------------------------------ failure drills */
+  // A drill runs on the flight deck: the failure lights the master light and
+  // FAULT lights, shows its procedure on the E/WD and its page on the SD, and
+  // the trainee works it on the real panels. See js/failures.js.
+  var FAIL = window.ECAM_FAILURES;
+  var PSTATE = {};   // control states of the drawn panels, kept between visits
+  var DR = null;     // the running drill
+  var BEST = {};
+  try { BEST = JSON.parse(localStorage.getItem('ecam-best') || '{}'); } catch (e) { BEST = {}; }
+  function liveState() { return DR && DR.s ? DR.s : cruiseState(); }
+  function refreshHome() { var y = window.scrollY; renderHome(); window.scrollTo(0, y); }
+
+  function ctlIndex(c) {
+    var items = PN.P[c[0]].items, n = 0;
+    for (var i = 0; i < items.length; i++) if (items[i].name === c[1] && ++n === c[2]) return i;
+    return -1;
+  }
+  function ctlState(c) { var p = PSTATE[c[0]] || (PSTATE[c[0]] = {}), i = ctlIndex(c); return p[i] || (p[i] = {}); }
+  function bits(c) { return PN.litBits(ctlState(c).lit, PN.P[c[0]].items[ctlIndex(c)]); }
+  function setBits(c, b) {
+    var it = PN.P[c[0]].items[ctlIndex(c)];
+    ctlState(c).lit = b.up && b.lo ? 'both' : b.up ? 'up' : b.lo ? 'lo' : (it.lit ? 'none' : null);
+  }
+  function setFault(c, on) { var b = bits(c); b.up = on; setBits(c, b); }
+  function masters(type, on) {
+    ['GSL', 'GSR'].forEach(function (id) {
+      PN.P[id].items.forEach(function (it, i) {
+        if (it.master !== type) return;
+        var p = PSTATE[id] || (PSTATE[id] = {});
+        p[i] = Object.assign({}, p[i], { lit: on ? 'both' : null });
+      });
+    });
+  }
+  function masterLit() {
+    return ['GSL', 'GSR'].some(function (id) {
+      return PN.P[id].items.some(function (it, i) { return it.master && PSTATE[id] && PSTATE[id][i] && PSTATE[id][i].lit === 'both'; });
+    });
+  }
+
+  // Aural alerts: continuous repetitive chime (warnings) and single chime (cautions).
+  var audio = null, crcTimer = null, muted = false;
+  try { muted = localStorage.getItem('ecam-mute') === '1'; } catch (e) { muted = false; }
+  function tone(f, t0, d) {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      var o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + t0;
+      o.frequency.value = f; o.type = 'sine'; o.connect(g); g.connect(audio.destination);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.start(t); o.stop(t + d + 0.05);
+    } catch (e) { /* no audio */ }
+  }
+  function chime(level) {
+    stopChime();
+    if (muted) return;
+    if (level === 3) { var ring = function () { tone(988, 0, 0.35); tone(784, 0.4, 0.45); }; ring(); crcTimer = setInterval(ring, 1100); }
+    else tone(880, 0, 0.9);
+  }
+  function stopChime() { if (crcTimer) clearInterval(crcTimer); crcTimer = null; }
+
+  function fmtAct(item, val) {
+    var base = '-' + item, dots = 29 - base.length - val.length;
+    return dots >= 2 ? base + new Array(dots + 1).join('.') + val : base + ' ' + val;
+  }
+  function ewdView() {
+    if (!DR || !DR.s) return { lines: [], memo: [] };
+    var f = DR.f, out = [], cls = f.level === 3 ? 'r' : 'a';
+    if (f.level >= 2 && (DR.phase === 'run' || DR.phase === 'clr1' || DR.phase === 'quiz')) {
+      var w = f.sysWord, rest = f.title.indexOf(w) === 0 ? f.title.slice(w.length) : ' ' + f.title;
+      out.push({ parts: [{ s: w, u: true, c: cls }, { s: rest, c: cls }] });
+      f.steps.forEach(function (st, i) {
+        if (st.k === 'act' && !DR.done[i]) out.push({ text: fmtAct(st.item, st.val), cls: 'c' });
+        if (st.k === 'note') out.push({ text: st.text, cls: st.c });
+      });
+    }
+    var showSts = !!f.sts && (DR.phase === 'stsq' || DR.phase === 'clr2' || DR.phase === 'done');
+    return { lines: out, memo: f.level >= 2 ? (f.memo || []) : [], sts: showSts };
+  }
+
+  function startEntry(entry) {
+    drawerOpen = false; renderDrawer();
+    var ids = Array.isArray(entry.drill) ? entry.drill : [entry.drill];
+    if (ids.length > 1) { showModal('choose', { entry: entry, ids: ids }); return; }
+    brief(ids[0]);
+  }
+  function brief(id) {
+    stopDrill(true);
+    DR = { f: FAIL.DRILLS[id], phase: 'brief' };
+    showModal('brief');
+  }
+  function begin() {
+    var f = DR.f;
+    PSTATE = {};
+    if (PV) closePanel();
+    DR.s = cruiseState(); DR.i = 0; DR.done = {}; DR.mist = []; DR.right = 0; DR.asked = 0; DR.flash = null; DR.t0 = Date.now();
+    if (f.setup) f.setup(DR.s);
+    (f.lights || []).forEach(function (c) { setFault(c, true); });
+    if (f.level >= 2) { masters(f.level === 3 ? 'W' : 'C', true); chime(f.level); }
+    sdPage = f.sd || null; PN.LIVE.sdPage = sdPage; PN.LIVE.clr = false;
+    DR.phase = 'run';
+    hideModal();
+    advance();
+  }
+  // Moves past steps that need nothing from the trainee; opens quizzes.
+  function advance() {
+    var f = DR.f;
+    while (DR.i < f.steps.length && f.steps[DR.i].k === 'note') { DR.done[DR.i] = true; DR.i++; }
+    if (DR.i >= f.steps.length) {
+      if (f.level >= 2) { DR.phase = 'clr1'; PN.LIVE.clr = true; DR.flash = DR.flash || 'All actions done.'; }
+      else return finish();
+    } else if (f.steps[DR.i].k === 'quiz') { DR.phase = 'quiz'; showModal('quiz', { q: f.steps[DR.i] }); }
+    renderDrill(); refreshHome();
+  }
+  function stepMet(st) {
+    if (st.k === 'master') return !masterLit();
+    if (st.k === 'act') return bits(st.ctl).lo === st.sel;
+    if (st.k === 'task') {
+      var w = st.want;
+      if (w.sd) return sdPage === w.sd;
+      if (w.panel) return !!PV && PV.id === w.panel;
+      if (w.ctl) return bits(w.ctl).lo === w.sel;
+    }
+    return false;
+  }
+  // Called after anything the trainee does.
+  function drillCheck() {
+    if (!DR || DR.phase !== 'run') return;
+    var st = DR.f.steps[DR.i], moved = false;
+    while (st && (st.k === 'master' || st.k === 'act' || st.k === 'task') && stepMet(st)) {
+      DR.done[DR.i] = true;
+      if (st.k === 'act') { if (st.fx) st.fx(DR.s); if (st.clears) setFault(st.ctl, false); DR.flash = st.item + ' ' + st.val + ': ' + (st.why || 'done.'); }
+      if (st.k === 'master') DR.flash = 'Warning acknowledged. Now read the ECAM procedure on the E/WD.';
+      if (st.k === 'task') DR.flash = st.info || null;
+      DR.i++; moved = true;
+      st = DR.f.steps[DR.i];
+    }
+    if (moved) advance(); else renderDrill();
+  }
+  // A press on a procedure control before its turn is a sequence error.
+  function drillPress(panel, i) {
+    if (!DR || DR.phase !== 'run') return;
+    var f = DR.f, cur = f.steps[DR.i];
+    f.steps.forEach(function (st, k) {
+      if (st.k !== 'act' || DR.done[k] || k === DR.i || st.ctl[0] !== panel || ctlIndex(st.ctl) !== i) return;
+      var msg = st.item + ' before ' + (cur.k === 'act' ? cur.item + ' ' + cur.val : cur.k === 'master' ? 'acknowledging the warning' : 'the step before it');
+      if (DR.mist.indexOf(msg) < 0) DR.mist.push(msg);
+      DR.flash = 'Out of sequence: ' + msg + '. Follow the ECAM order.';
+    });
+  }
+  function pressMaster(type) {
+    var lit = masterLit();
+    if (lit) { masters('W', false); masters('C', false); stopChime(); }
+    drillCheck();
+    return lit ? 'Light out' + (type === 'W' ? ' and the chime silenced.' : '.') : null;
+  }
+  function pressClr() {
+    if (!DR || !DR.s) return null;
+    var f = DR.f;
+    if (DR.phase === 'run') {
+      var msg = 'CLR pressed before the actions were complete';
+      if (DR.mist.indexOf(msg) < 0) DR.mist.push(msg);
+      DR.flash = 'Not yet: finish the ECAM actions, then clear.';
+    } else if (DR.phase === 'clr1') {
+      PN.LIVE.clr = false;
+      if (f.sts) { sdPage = 'STS'; PN.LIVE.sdPage = 'STS'; DR.phase = 'stsq'; DR.flash = 'STATUS shows on the SD. Review it.'; if (f.statusQ) showModal('quiz', { q: f.statusQ }); else afterStatusQ(); }
+      else finish();
+    } else if (DR.phase === 'clr2') finish();
+    renderDrill(); refreshHome(); if (PV) renderStage();
+    return 'CLR';
+  }
+  function afterStatusQ() { DR.phase = 'clr2'; PN.LIVE.clr = true; renderDrill(); refreshHome(); }
+  function answer(k) {
+    var m = MODAL.data, correct = m.order[k] === 0;
+    if (m.answered != null) return;
+    m.answered = k; DR.asked++; if (correct) DR.right++;
+    showModal('quiz', m);
+  }
+  function quizDone() {
+    hideModal();
+    if (DR.phase === 'quiz') { DR.done[DR.i] = true; DR.i++; DR.phase = 'run'; advance(); drillCheck(); }
+    else if (DR.phase === 'stsq') afterStatusQ();
+  }
+  function finish() {
+    var f = DR.f, acts = f.steps.filter(function (s) { return s.k === 'act' || s.k === 'task'; }).length;
+    var total = acts + DR.asked, score = acts - Math.min(acts, DR.mist.length) + DR.right;
+    DR.pct = total ? Math.round(score / total * 100) : 100;
+    DR.phase = 'done'; PN.LIVE.clr = false; stopChime();
+    if (f.sts) { sdPage = null; PN.LIVE.sdPage = null; }
+    BEST[f.id] = Math.max(BEST[f.id] || 0, DR.pct);
+    try { localStorage.setItem('ecam-best', JSON.stringify(BEST)); } catch (e) { /* not saved */ }
+    renderDrill(); refreshHome();
+    showModal('debrief');
+  }
+  // Back to a normal aircraft.
+  function stopDrill(quiet) {
+    stopChime();
+    DR = null; PSTATE = {}; PN.LIVE.clr = false; sdPage = null; PN.LIVE.sdPage = null;
+    if (!quiet) { hideModal(); if (PV) closePanel(); renderDrill(); refreshHome(); }
+  }
+
+  function taskText() {
+    var f = DR.f, st = f.steps[DR.i];
+    if (DR.phase === 'clr1') return 'Actions complete. Press CLR on the ECAM control panel (pedestal) to clear the ' + (f.level === 3 ? 'warning' : 'caution') + '.';
+    if (DR.phase === 'stsq') return 'Review the STATUS page on the SD.';
+    if (DR.phase === 'clr2') return 'STATUS reviewed. Press CLR again to clear it.';
+    if (DR.phase === 'done') return 'Drill complete.';
+    if (!st) return '';
+    if (st.k === 'master') return 'Press the flashing MASTER ' + (f.level === 3 ? 'WARN' : 'CAUT') + ' on the glareshield to ' + (f.level === 3 ? 'silence the chime' : 'acknowledge the caution') + '.';
+    if (st.k === 'act') return 'ECAM action: ' + st.item + ' ' + st.val + ' (overhead ' + panelName(st.ctl[0]) + ' panel).';
+    if (st.k === 'task') return st.text;
+    return '';
+  }
+  function renderDrill() {
+    var el = document.getElementById('drill');
+    if (!DR || !DR.s) { el.hidden = true; document.body.classList.remove('drill-on'); return; }
+    var f = DR.f, acts = f.steps.filter(function (s) { return s.k === 'act' || s.k === 'task' || s.k === 'master'; }).length;
+    var done = f.steps.filter(function (s, i) { return DR.done[i] && (s.k === 'act' || s.k === 'task' || s.k === 'master'); }).length;
+    el.innerHTML = '<div class="drill-top"><span class="dot dot-' + ['w', 'w', 'a', 'r'][f.level] + '"></span><b class="drill-title">' + esc(f.title) + '</b>' +
+      '<span class="drill-prog">' + done + '/' + acts + '</span>' +
+      '<button class="icon-btn sm" data-act="mute" aria-label="' + (muted ? 'Unmute' : 'Mute') + ' aural alerts">' + (muted ? '🔇' : '🔊') + '</button>' +
+      '<button class="icon-btn sm" data-act="stopDrill" aria-label="Stop the drill">' + ICON.close + '</button></div>' +
+      '<p class="drill-task">' + esc(taskText()) + '</p>' +
+      (DR.flash ? '<p class="drill-flash">' + esc(DR.flash) + '</p>' : '');
+    el.hidden = false; document.body.classList.add('drill-on');
+  }
+
+  // Briefing, chooser, questions and debrief share one modal.
+  var MODAL = { kind: null, data: null };
+  function shuffle(n) { var a = []; for (var i = 0; i < n; i++) a.push(i); for (var j = n - 1; j > 0; j--) { var r = Math.floor(Math.random() * (j + 1)), t = a[j]; a[j] = a[r]; a[r] = t; } return a; }
+  function showModal(kind, data) {
+    MODAL.kind = kind; MODAL.data = data || null;
+    var el = document.getElementById('modal'), f = DR && DR.f, h = '';
+    if (kind === 'choose') {
+      h = '<p class="eyebrow">Choose a failure</p><h2 class="m-title">' + esc(data.entry.title) + '</h2><ul class="plist">' + data.ids.map(function (id) {
+        var d = FAIL.DRILLS[id];
+        return '<li><button class="plink" data-act="brief" data-id="' + id + '"><span><span class="dot dot-' + ['w', 'w', 'a', 'r'][d.level] + '"></span> ' + esc(d.title) + '</span><small>' + esc(d.brief) + '</small></button></li>';
+      }).join('') + '</ul><div class="m-btns"><button class="btn" data-act="closeModal">Cancel</button></div>';
+    } else if (kind === 'brief') {
+      h = '<p class="eyebrow">' + (f.level === 1 ? 'Lesson' : f.level === 3 ? 'Warning · level 3' : 'Caution · level 2') + ' · ' + esc(f.phase || '') + '</p>' +
+        '<h2 class="m-title">' + esc(f.title) + '</h2><p>' + esc(f.brief) + '</p>' +
+        '<h3 class="m-h">Background</h3><ul class="m-list">' + f.learn.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>' +
+        '<p class="small">' + (f.level === 1 ? 'Follow the tasks in the bar at the bottom of the screen.' : 'The failure appears on the flight deck. Work it as the PM: acknowledge the master light, read the procedure on the E/WD, do each action on the real panel, then clear with CLR on the ECAM control panel.') + ' Simplified for training; follow the FCOM and your operator\'s procedures.</p>' +
+        (BEST[f.id] != null ? '<p class="small">Your best: ' + BEST[f.id] + '%</p>' : '') +
+        '<div class="m-btns"><button class="btn" data-act="cancelDrill">Cancel</button><button class="btn primary" data-act="beginDrill">Start</button></div>';
+    } else if (kind === 'quiz') {
+      var q = data.q;
+      data.order = data.order || shuffle(q.options.length);
+      var ans = data.answered;
+      h = '<p class="eyebrow">Question</p><h2 class="m-title q">' + esc(q.q) + '</h2><div class="m-opts">' + data.order.map(function (oi, k) {
+        var c = ans == null ? '' : oi === 0 ? ' right' : k === ans ? ' wrong' : ' dim';
+        return '<button class="opt' + c + '" data-act="answer" data-k="' + k + '"' + (ans != null ? ' disabled' : '') + '>' + esc(q.options[oi]) + '</button>';
+      }).join('') + '</div>' +
+        (ans != null ? '<p class="m-explain"><b>' + (data.order[ans] === 0 ? 'Correct.' : 'Not quite.') + '</b> ' + esc(q.explain) + '</p><div class="m-btns"><button class="btn primary" data-act="quizDone">Continue</button></div>' : '');
+    } else if (kind === 'debrief') {
+      var secs = Math.round((Date.now() - DR.t0) / 1000);
+      h = '<p class="eyebrow">Debrief</p><h2 class="m-title">' + esc(f.title) + '</h2>' +
+        '<p class="m-score">' + DR.pct + '%</p>' +
+        '<ul class="m-list"><li>Questions: ' + DR.right + ' of ' + DR.asked + ' right</li>' +
+        '<li>' + (DR.mist.length ? 'Sequence errors: ' + DR.mist.length : f.level === 1 ? 'All tasks done' : 'Actions done in the ECAM order') + '</li>' +
+        DR.mist.map(function (m) { return '<li class="bad">' + esc(m) + '</li>'; }).join('') +
+        '<li>Time: ' + Math.floor(secs / 60) + ' min ' + (secs % 60) + ' s</li></ul>' +
+        '<div class="m-btns"><button class="btn" data-act="stopDrill">Back to normal</button><button class="btn primary" data-act="againDrill">Run again</button></div>';
+    }
+    el.innerHTML = '<div class="m-card" role="dialog" aria-modal="true">' + h + '</div>';
+    el.hidden = false;
+  }
+  function hideModal() { MODAL.kind = null; var el = document.getElementById('modal'); el.hidden = true; el.innerHTML = ''; }
+
+  function failureMenu() {
+    return '<h3 class="drawer-h">Failures</h3>' + FAIL.CATEGORIES.map(function (c, ci) {
+      var live = c[1].filter(function (e) { return e.drill; }).length;
+      return '<details class="cat"' + (DR && FAIL.CATEGORIES[ci][1].some(function (e) { return e.drill && [].concat(e.drill).indexOf(DR.f.id) >= 0; }) ? ' open' : '') + '><summary>' + esc(c[0]) + (live ? '' : ' <small>coming soon</small>') + '</summary><ul class="flist">' + c[1].map(function (e, ei) {
+        var best = e.drill ? [].concat(e.drill).map(function (id) { return BEST[id]; }).filter(function (v) { return v != null; }) : [];
+        return '<li><button class="fitem' + (e.drill ? '' : ' off') + '" data-act="entry" data-c="' + ci + '" data-e="' + ei + '"' + (e.drill ? '' : ' disabled') + '><span class="dot dot-' + e.lvl + '"></span>' + esc(e.title) +
+          (best.length ? '<small>' + Math.max.apply(null, best) + '%</small>' : '') + '</button></li>';
+      }).join('') + '</ul></details>';
+    }).join('');
+  }
+
   /* ------------------------------------------------------ menu and search */
   function panelLinks(ids) {
     return '<ul class="plist">' + ids.map(function (id) {
@@ -282,6 +572,7 @@
     el.innerHTML = '<nav class="drawer-card" aria-label="Menu">' +
       '<div class="drawer-top"><span class="drawer-brand">A320 ECAM Trainer</span><button class="icon-btn" data-act="closeDrawer" aria-label="Close menu">' + ICON.close + '</button></div>' +
       '<button class="drawer-link" data-act="closeDrawer">Flight deck overview</button>' +
+      failureMenu() + '<h3 class="drawer-h">Panels</h3>' +
       GROUPS.map(function (g) { return '<h3 class="drawer-h">' + esc(g[0]) + '</h3>' + panelLinks(g[1]); }).join('') +
       '<h3 class="drawer-h">Photo credits</h3><p class="drawer-note">Overhead panels: ' + creditHtml() + ' The straightened crops are shared under the same licence.</p>' +
       '<p class="drawer-note">Training aid only. Other panels are simplified drawings; follow the FCOM and your operator\'s procedures.</p>' +
@@ -323,7 +614,13 @@
     var ctlEl = e.target.closest('.ctl');
     if (ctlEl && PV) { pressCtl(+ctlEl.getAttribute('data-ctl')); return; }
     var sdKey = e.target.closest('.sdkey');
-    if (sdKey && !PV) { setSd(sdKey.getAttribute('data-sd')); return; }
+    if (sdKey && !PV) {
+      var key = sdKey.getAttribute('data-sd'), hot = sdKey.closest('.hot');
+      // Master lights and CLR act on the deck during a drill; otherwise the tap opens the panel.
+      if (key === 'MW' || key === 'MC') { if (masterLit()) { pressMaster(key === 'MW' ? 'W' : 'C'); refreshHome(); } else openPanel(hot.getAttribute('data-panel'), hot); return; }
+      if (key === 'CLR') { if (!pressClr()) openPanel(hot.getAttribute('data-panel'), hot); return; }
+      setSd(key); return;
+    }
     var hotEl = e.target.closest('.hot');
     if (hotEl) { openPanel(hotEl.getAttribute('data-panel'), hotEl); return; }
     if (e.target.id === 'scrim') { drawerOpen = false; searchOpen = false; renderDrawer(); renderSearch(); return; }
@@ -337,11 +634,22 @@
       case 'open': openPanel(el.getAttribute('data-id'), null); break;
       case 'closePanel': closePanel(); break;
       case 'sdpage': setSd(el.getAttribute('data-sd')); break;
+      case 'entry': startEntry(FAIL.CATEGORIES[+el.getAttribute('data-c')][1][+el.getAttribute('data-e')]); break;
+      case 'brief': brief(el.getAttribute('data-id')); break;
+      case 'beginDrill': begin(); break;
+      case 'cancelDrill': stopDrill(); break;
+      case 'closeModal': hideModal(); break;
+      case 'answer': answer(+el.getAttribute('data-k')); break;
+      case 'quizDone': quizDone(); break;
+      case 'againDrill': var id = DR.f.id; brief(id); begin(); break;
+      case 'stopDrill': stopDrill(); break;
+      case 'mute': muted = !muted; try { localStorage.setItem('ecam-mute', muted ? '1' : '0'); } catch (err) { /* ignore */ } if (muted) stopChime(); renderDrill(); break;
       case 'pvmode': if (PV) { setPanelMode(el.getAttribute('data-mode')); renderPanelView(); } break;
     }
   });
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
+      if (MODAL.kind && MODAL.kind !== 'quiz') { if (MODAL.kind === 'brief') stopDrill(); else hideModal(); return; }
       if (searchOpen || drawerOpen) { searchOpen = false; drawerOpen = false; renderSearch(); renderDrawer(); }
       else if (PV) closePanel();
       return;
@@ -355,6 +663,7 @@
 
   // Android Back button (see android/): close what is open; false means leave the app.
   window.appBack = function () {
+    if (MODAL.kind && MODAL.kind !== 'quiz') { if (MODAL.kind === 'brief') stopDrill(); else hideModal(); return true; }
     if (searchOpen || drawerOpen) { searchOpen = false; drawerOpen = false; renderSearch(); renderDrawer(); return true; }
     if (PV) { closePanel(); return true; }
     return false;
@@ -380,7 +689,7 @@
     }).catch(function () {});
   }
   function applyPendingUpdate() {
-    if (!pendingUpdate || PV || drawerOpen || searchOpen) return;
+    if (!pendingUpdate || PV || drawerOpen || searchOpen || DR) return;
     store('ecam-reload-for', pendingUpdate + '|' + Date.now()); store('ecam-updated-from', VERSION);
     location.reload();
   }
@@ -425,7 +734,9 @@
       '<div id="scrim" class="scrim" hidden></div>' +
       '<div id="drawer" class="drawer" hidden></div>' +
       '<div id="search" class="search" hidden></div>' +
-      '<div id="pv" class="pv" hidden></div>';
+      '<div id="pv" class="pv" hidden></div>' +
+      '<div id="drill" class="drill" hidden aria-live="polite"></div>' +
+      '<div id="modal" class="modal" hidden></div>';
     renderHome();
     showUpdatedNote();
     hideBarOnScroll();

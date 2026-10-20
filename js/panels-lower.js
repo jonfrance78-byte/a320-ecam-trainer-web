@@ -23,8 +23,8 @@
   function glareEnd(side) {
     var capt = side === 'L', lx = capt ? 30 : 80, cx = capt ? 80 : 30;
     return [
-      ann(lx, 27, 'MASTER WARN', 'MASTER:r', 'WARN:r', 'Flashes red with a level 3 warning (a red ECAM warning), with the continuous repetitive chime or a specific aural. Press it to silence the aural and put the light out. The overspeed and stall warnings carry on until the condition ends.', { s: 20, noname: true }),
-      ann(lx, 53, 'MASTER CAUT', 'MASTER:a', 'CAUT:a', 'Steady amber with a level 2 caution (an amber ECAM caution) and a single chime. Press it to put the light out.', { s: 20, noname: true }),
+      ann(lx, 27, 'MASTER WARN', 'MASTER:r', 'WARN:r', 'Flashes red with a level 3 warning (a red ECAM warning), with the continuous repetitive chime or a specific aural. Press it to silence the aural and put the light out. The overspeed and stall warnings carry on until the condition ends.', { s: 20, noname: true, master: 'W', deckKey: 'MW' }),
+      ann(lx, 53, 'MASTER CAUT', 'MASTER:a', 'CAUT:a', 'Steady amber with a level 2 caution (an amber ECAM caution) and a single chime. Press it to put the light out.', { s: 20, noname: true, master: 'C', deckKey: 'MC' }),
       rnd(cx, 26, 'CHRONO', 'Starts, stops and resets the chronometer shown at the bottom left of the ' + (capt ? 'Captain\'s' : 'F/O\'s') + ' ND.', { s: 13 }),
       lb(cx, 46, 'SIDE STICK PRIORITY', 3.6),
       ann(cx, 62, 'SIDE STICK PRIORITY', capt ? 'CAPT:g' : 'F/O:g', capt ? '→:r' : '←:r',
@@ -321,10 +321,10 @@
       return key(38 + (i % 6) * 14, 23 + Math.floor(i / 6) * 10, q[0], 'Shows the ' + q[1] + ' system page on the system display (it lights while that page shows). Press again to go back to the automatic page.', { s: 7, w: 11, sdPage: q[0] });
     })).concat([
       key(108, 33, 'ALL', 'Hold to scroll through all the system pages, one per second, and release on the page wanted. Here each press shows the next page.', { s: 7, w: 11, sdAll: true }),
-      key(38, 44, 'CLR', 'Clears the ECAM warning or caution once its actions are done, then the STATUS page. Lit while there is something to clear.', { s: 7, w: 11 }),
+      key(38, 44, 'CLR', 'Clears the ECAM warning or caution once its actions are done, then the STATUS page. Lit while there is something to clear.', { s: 7, w: 11, deckKey: 'CLR', clrKey: true }),
       key(66, 44, 'STS', 'Shows the STATUS page: limitations, inoperative systems and approach procedures. Press again to clear it.', { s: 7, w: 11, sdPage: 'STS' }),
       key(80, 44, 'RCL', 'Recall: shows warnings and cautions that were cleared with CLR or cancelled with EMER CANC. With nothing to recall, NORMAL shows for 5 s.', { s: 7, w: 11 }),
-      key(108, 44, 'CLR', 'Second CLR pushbutton, same function.', { s: 7, w: 11 })
+      key(108, 44, 'CLR', 'Second CLR pushbutton, same function.', { s: 7, w: 11, deckKey: 'CLR', clrKey: true })
     ])
   };
 

@@ -43,7 +43,7 @@
 
   var P = {};
   // Live state shared with the app (the system display page shown).
-  var LIVE = { sdPage: null };
+  var LIVE = { sdPage: null, clr: false };
 
   /* Forward and aft overhead panels. Layouts follow reference photos of the
    * A320 overhead (centre column 300 units wide, side columns 168). */
@@ -636,6 +636,7 @@
     var s = it.s || 20, h = s / 2, x = it.x, y = it.y, o = '', bw = it.w || s, bh = bw / 2;
     var lit = st.lit === 'none' ? null : (st.lit != null ? st.lit : (it.lit ? 'lo' : null));
     if (it.sdPage) lit = LIVE.sdPage === it.sdPage ? 'lo' : null; // ECAM page key: lit while its page shows
+    if (it.clrKey) lit = LIVE.clr ? 'lo' : null; // CLR: lit while there is something to clear
     o += '<rect x="' + (x - bh - 1.2) + '" y="' + (y - h - 0.4) + '" width="' + (bw + 3.6) + '" height="' + (s + 3.6) + '" rx="2" class="shadow"/>';
     if (!it.rect && !it.noFrame) o += '<rect x="' + (x - bh - 2.3) + '" y="' + (y - h - 2.3) + '" width="' + (bw + 4.6) + '" height="' + (s + 4.6) + '" rx="2.2" class="pb-frame"/>';
     if (it.k === 'pb' || it.guard) o += '<rect x="' + (x - bh - 1.4) + '" y="' + (y - h - 1.4) + '" width="' + (bw + 2.8) + '" height="' + (s + 2.8) + '" rx="1.8" class="pb-bezel"/>';
@@ -654,7 +655,7 @@
     } else if (it.rect && it.blankCap) {
       // no legend (MCDU line select keys)
     } else if (it.rect) {
-      if (it.sdPage && lit) o += '<rect x="' + (x - bh + 0.6) + '" y="' + (y - h + 0.6) + '" width="' + (bw - 1.2) + '" height="' + (s - 1.2) + '" rx="1" class="ecp-glow"/>';
+      if ((it.sdPage || it.clrKey) && lit) o += '<rect x="' + (x - bh + 0.6) + '" y="' + (y - h + 0.6) + '" width="' + (bw - 1.2) + '" height="' + (s - 1.2) + '" rx="1" class="ecp-glow"/>';
       var rl = it.name.split('\n'), rs = Math.min(fs * 0.95, 3.4);
       rl.forEach(function (t, i) { o += text(x, y + rs * 0.36 + (i - (rl.length - 1) / 2) * (rs + 0.5), t, 'pb-rect' + (lit ? ' on' : ''), rs); });
     } else if (it.up && it.lo) {

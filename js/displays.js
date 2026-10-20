@@ -297,9 +297,9 @@
       o += rc(x - 4, 240, 8, 44, 'sw', 1) + fillRect(x - 2.5, 276, 5, 7, 'fa') + ln(x, 274, x, 274 - 32 * lvl, lo ? 'sa' : 'sg', 2.4);
       if (lo) o += t(x + 10, 270, 'LO', 'a', 9);
     });
-    var gPump = h.G.pump === 'off' ? 'off' : (s.eng[0].running && !s.eng[0].firePb && h.G.rsvr !== 'lo' && !h.G.leak ? 'on' : 'lo');
-    var yPump = h.Y.pump === 'off' ? 'off' : (s.eng[1].running && !s.eng[1].firePb && h.Y.rsvr !== 'lo' && !h.Y.leak ? 'on' : 'lo');
-    var bPump = h.B.p >= 1450 || s.elec.ac[0] || s.elec.ac[1] ? 'on' : 'lo';
+    var gPump = h.G.pump === 'off' ? 'off' : (s.eng[0].running && !s.eng[0].firePb && h.G.rsvr !== 'lo' && !h.G.leak && !h.G.fail ? 'on' : 'lo');
+    var yPump = h.Y.pump === 'off' ? 'off' : (s.eng[1].running && !s.eng[1].firePb && h.Y.rsvr !== 'lo' && !h.Y.leak && !h.Y.fail ? 'on' : 'lo');
+    var bPump = h.B.pump === 'off' ? 'off' : (!h.B.fail && h.B.rsvr !== 'lo' && (s.elec.ac[0] || s.elec.ac[1]) ? 'on' : 'lo');
     function pump(x, y, st) {
       var c = st === 'on' ? 'sg' : 'sa', b = fillRect(x - 10, y, 20, 20, 'screen') + rc(x - 10, y, 20, 20, c, 1.4);
       return b + (st === 'on' ? ln(x, y + 2, x, y + 18, 'sg', 2) : st === 'lo' ? t(x, y + 14, 'LO', 'a', 9, 'middle') : ln(x - 7, y + 10, x + 7, y + 10, 'sa', 2));
