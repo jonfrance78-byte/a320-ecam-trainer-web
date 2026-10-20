@@ -115,9 +115,10 @@
     l(cx, y + s - 20, cx, y + s - 6, 'dk-yline');
     glass(x, y, s, s);
   }
-  function nd(x, y, s) {
-    var cx = x + s / 2, cy = y + s - 16, R = s * 0.62;
+  function nd(x, y, s, uid) {
+    var cx = x + s / 2, cy = y + s - 16, R = s * 0.62, id = 'ndclip' + uid;
     r(x - 5, y - 5, s + 10, s + 10, 'dk-bezel', 3); r(x, y, s, s, 'dk-screen', 1);
+    add('<clipPath id="' + id + '"><rect x="' + x + '" y="' + y + '" width="' + s + '" height="' + s + '"/></clipPath><g clip-path="url(#' + id + ')">');
     add('<path d="M' + (cx - R * 0.94) + ' ' + (cy - R * 0.34) + ' A ' + R + ' ' + R + ' 0 0 1 ' + (cx + R * 0.94) + ' ' + (cy - R * 0.34) + '" class="dk-arc"/>');
     add('<path d="M' + (cx - R * 0.47) + ' ' + (cy - R * 0.17) + ' A ' + R / 2 + ' ' + R / 2 + ' 0 0 1 ' + (cx + R * 0.47) + ' ' + (cy - R * 0.17) + '" class="dk-arc dk-arc-dash"/>');
     for (var a = -60; a <= 60; a += 10) {
@@ -132,6 +133,7 @@
     add('<path d="M' + (cx - 7) + ' ' + (cy + 1) + ' l7 -3 l7 3 M' + cx + ' ' + (cy - 7) + ' L' + cx + ' ' + (cy + 6) + '" class="dk-acft"/>');
     tx(x + 4, y + 8, 'GS 452 TAS 468', 'dk-ndtxtw', 3.4, 'start'); tx(x + 4, y + 14, '275/42', 'dk-ndtxtg', 3.4, 'start');
     tx(x + s - 4, y + 8, 'BIBOS', 'dk-ndtxtw', 3.6, 'end'); tx(x + s - 4, y + 14, '036° 21NM', 'dk-ndtxtg', 3.4, 'end');
+    add('</g>');
     glass(x, y, s, s);
   }
   function ecamScreen(x, y, s, svgStr) {
@@ -141,31 +143,41 @@
   }
 
   // Displays are drawn at 116 units and scaled to the screen size used here.
-  var DS = 96;
-  function screen(fn, x, y, uid) {
-    add('<g transform="translate(' + x + ' ' + y + ') scale(' + (DS / 116).toFixed(4) + ')">'); fn(0, 0, 116, uid); add('</g>');
+  function screen(fn, x, y, size, uid) {
+    add('<g transform="translate(' + x + ' ' + y + ') scale(' + (size / 116).toFixed(4) + ')">'); fn(0, 0, 116, uid); add('</g>');
   }
 
-  /* Glareshield and main instrument panel, laid out from photos/lower. */
+  /* Glareshield and main instrument panel, laid out from photos/lower. The
+   * pilots' PFDs and NDs (EFIS) fill the top row; the centre panel (ISIS, E/WD,
+   * SD, gear, autobrake, clock, DCDUs) is drawn larger in a row below them.
+   * Returns the bottom edge of the main panel. */
+  var EFIS_S = 150, CTR_SCALE = 1.4, CTR_TOP = 1400;
   function mainPanel(ecam) {
     add('<path d="M14 1222 L14 1150 Q16 1128 60 1124 L840 1124 Q884 1128 886 1150 L886 1222 Z" class="dk-glare"/>');
     panel('GSL', 29, 1132); panel('EFISL', 142, 1132); panel('FCU', 315, 1132); panel('EFISR', 588, 1132); panel('GSR', 761, 1132);
-    add('<path d="M12 1222 L888 1222 L888 1460 L12 1460 Z" class="dk-mip"/>');
+    var bottom = CTR_TOP + 219 * CTR_SCALE + 8;
+    add('<path d="M12 1222 L888 1222 L888 ' + bottom + ' L12 ' + bottom + ' Z" class="dk-mip"/>');
     l(12, 1223, 888, 1223, 'dk-mip-edge');
-    panel('LATL', 18, 1228, 74 / 120); panel('LATR', 808, 1228, 74 / 120);
-    screen(pfd, 99, 1233, 'l'); screen(nd, 205, 1233, 'l');
-    screen(nd, 599, 1233, 'r'); screen(pfd, 705, 1233, 'r');
-    ecamScreen(402, 1233, DS, ecam.ewd);
-    ecamScreen(402, 1346, DS, ecam.sd);
+    // EFIS row: lateral panel, PFD and ND on each side
+    panel('LATL', 18, 1228, 0.8); panel('LATR', 786, 1228, 0.8);
+    screen(pfd, 123, 1233, EFIS_S, 'l'); screen(nd, 287, 1233, EFIS_S, 'l');
+    screen(nd, 463, 1233, EFIS_S, 'r'); screen(pfd, 627, 1233, EFIS_S, 'r');
+    c(66, 1350, 14, 'dk-vent'); c(66, 1350, 9, 'dk-vent-in'); c(834, 1350, 14, 'dk-vent'); c(834, 1350, 9, 'dk-vent-in');
+    // Centre panel, scaled up about its own layout (drawn from x 309, y 1228)
+    add('<g transform="translate(450 ' + CTR_TOP + ') scale(' + CTR_SCALE + ') translate(-450 -1228)">');
+    ecamScreen(402, 1233, 96, ecam.ewd);
+    ecamScreen(402, 1346, 96, ecam.sd);
     panel('ISISP', 309, 1228); panel('DCDU1', 309, 1401);
     panel('AUTOBRK', 507, 1228); panel('CLOCK', 507, 1293, 0.7); panel('LGLEVER', 507, 1343); panel('DCDU2', 507, 1401);
-    // Knee panels under the PFD and ND: pull-out table and air outlet, loudspeaker grille.
-    [[94, 212], [594, 212]].forEach(function (q) {
-      r(q[0] + 10, 1352, q[1] - 20, 8, 'dk-recess', 3); r(q[0] + 18, 1354, q[1] - 36, 3, 'dk-rail', 1.5);
-      r(q[0] + 4, 1376, q[1] - 8, 76, 'dk-knee', 4);
+    add('</g>');
+    // Knee panels either side of the centre panel: pull-out table, air outlet, loudspeaker grille.
+    [22, 662].forEach(function (x) {
+      r(x + 8, CTR_TOP + 10, 200, 9, 'dk-recess', 3); r(x + 18, CTR_TOP + 13, 180, 3, 'dk-rail', 1.5);
+      r(x, CTR_TOP + 34, 216, 130, 'dk-knee', 5);
     });
-    c(52, 1340, 13, 'dk-vent'); c(52, 1340, 8, 'dk-vent-in'); c(848, 1340, 13, 'dk-vent'); c(848, 1340, 8, 'dk-vent-in');
-    grille(20, 1372, 62, 80); grille(818, 1372, 62, 80);
+    c(64, bottom - 64, 16, 'dk-vent'); c(64, bottom - 64, 10, 'dk-vent-in'); c(836, bottom - 64, 16, 'dk-vent'); c(836, bottom - 64, 10, 'dk-vent-in');
+    grille(104, bottom - 118, 132, 104); grille(664, bottom - 118, 132, 104);
+    return bottom;
   }
   function grille(x, y, w, h) {
     r(x, y, w, h, 'dk-grille', 4);
@@ -194,24 +206,25 @@
   }
 
   // The pedestal is drawn larger than the panels above it, so its small
-  // controls read well; the side consoles sit beside its lower part.
-  var PED_SCALE = 1.45, PED_TOP = 1456;
+  // controls read well; the side consoles sit beside its lower part. It is
+  // drawn from y 1456 and moved to just below the main panel.
+  var PED_SCALE = 1.45, PED_Y = 1456;
   function build(opts) {
     out = [];
     add('');
     add(PN.defs());
     var aftBottom = aftOverhead();
     var shift = fwdOverhead(aftBottom + 18) + 12 - 1128;
-    var bottom = PED_TOP + (2058 - PED_TOP) * PED_SCALE + shift;
     add('<g transform="translate(0 ' + shift.toFixed(1) + ')">');
-    mainPanel(opts.ecam);
-    add('<g transform="translate(450 ' + PED_TOP + ') scale(' + PED_SCALE + ') translate(-450 -' + PED_TOP + ')">');
+    var pedTop = mainPanel(opts.ecam) - 4;
+    add('<g transform="translate(450 ' + pedTop + ') scale(' + PED_SCALE + ') translate(-450 -' + PED_Y + ')">');
     pedestal();
     add('</g>');
-    var consY = PED_TOP + (1838 - PED_TOP) * PED_SCALE;
+    var consY = pedTop + (1838 - PED_Y) * PED_SCALE;
     panel('CONSL', 18, consY, 0.95); panel('CONSR', 663.5, consY, 0.95);
     add('</g>');
     add('</svg>');
+    var bottom = pedTop + (2058 - PED_Y) * PED_SCALE + shift;
     out[0] = '<svg viewBox="16 6 868 ' + bottom.toFixed(0) + '" class="deck" role="group" aria-label="A320 flight deck overview. Tap a panel to expand it.">';
     return out.join('');
   }
