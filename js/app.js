@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.5.1';
+  var VERSION = '0.5.2';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -395,7 +395,7 @@
   }
   function stepMet(st) {
     if (st.k === 'master') return !masterLit();
-    if (st.k === 'act') return bits(st.ctl).lo === st.sel;
+    if (st.k === 'act') return st.ctls.every(function (c) { return st.press ? !!ctlState(c).down : bits(c).lo === st.sel; });
     if (st.k === 'task') {
       var w = st.want;
       if (w.sd) return sdPage === w.sd;
@@ -410,7 +410,7 @@
     var st = DR.f.steps[DR.i], moved = false;
     while (st && (st.k === 'master' || st.k === 'act' || st.k === 'task') && stepMet(st)) {
       DR.done[DR.i] = true;
-      if (st.k === 'act') { if (st.fx) st.fx(DR.s); if (st.clears) setFault(st.ctl, false); DR.flash = st.item + ' ' + st.val + ': ' + (st.why || 'done.'); }
+      if (st.k === 'act') { if (st.fx) st.fx(DR.s); if (st.clears) st.ctls.forEach(function (c) { setFault(c, false); }); DR.flash = st.item + ' ' + st.val + ': ' + (st.why || 'done.'); }
       if (st.k === 'master') DR.flash = 'Warning acknowledged. Now read the ECAM procedure on the E/WD.';
       if (st.k === 'task') DR.flash = st.info || null;
       DR.i++; moved = true;
@@ -423,7 +423,7 @@
     if (!DR || DR.phase !== 'run') return;
     var f = DR.f, cur = f.steps[DR.i];
     f.steps.forEach(function (st, k) {
-      if (st.k !== 'act' || DR.done[k] || k === DR.i || st.ctl[0] !== panel || ctlIndex(st.ctl) !== i) return;
+      if (st.k !== 'act' || DR.done[k] || k === DR.i || !st.ctls.some(function (c) { return c[0] === panel && ctlIndex(c) === i; })) return;
       var msg = st.item + ' before ' + (cur.k === 'act' ? cur.item + ' ' + cur.val : cur.k === 'master' ? 'acknowledging the warning' : 'the step before it');
       if (DR.mist.indexOf(msg) < 0) DR.mist.push(msg);
       DR.flash = 'Out of sequence: ' + msg + '. Follow the ECAM order.';
@@ -488,7 +488,7 @@
     if (DR.phase === 'done') return 'Drill complete.';
     if (!st) return '';
     if (st.k === 'master') return 'Press the flashing MASTER ' + (f.level === 3 ? 'WARN' : 'CAUT') + ' on the glareshield to ' + (f.level === 3 ? 'silence the chime' : 'acknowledge the caution') + '.';
-    if (st.k === 'act') return 'ECAM action: ' + st.item + ' ' + st.val + ' (overhead ' + panelName(st.ctl[0]) + ' panel).';
+    if (st.k === 'act') return 'ECAM action: ' + st.item + ' ' + st.val + '. ' + (st.hint || 'Overhead ' + panelName(st.ctls[0][0]) + ' panel.');
     if (st.k === 'task') return st.text;
     return '';
   }

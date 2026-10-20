@@ -449,11 +449,13 @@
     if (!sts || (!sts.left.length && !sts.inop.length)) {
       return o + t(96, 150, 'NORMAL', 'g', 12, 'middle') + ln(196, 34, 196, 272, 'sw', 1.5) + footer(s);
     }
-    sts.left.forEach(function (l, i) { o += t(8, 44 + i * 14, l[0], l[1], 10, null, ' xml:space="preserve"'); });
+    // Long STATUS pages (dual failures) are spaced closer to fit above the footer.
+    var dl = Math.min(14, 236 / Math.max(1, sts.left.length)), di = Math.min(14, 220 / Math.max(1, sts.inop.length));
+    sts.left.forEach(function (l, i) { o += t(6, 42 + i * dl, l[0], l[1], dl < 13 ? 9 : 10, null, ' xml:space="preserve"'); });
     o += ln(196, 30, 196, 272, 'sw', 1.5);
     if (sts.inop.length) {
       o += ul(204, 44, 'INOP SYS', 'w', 10);
-      sts.inop.forEach(function (l, i) { o += t(204, 60 + i * 14, l, 'a', 10); });
+      sts.inop.forEach(function (l, i) { o += t(204, 60 + i * di, l, 'a', di < 13 ? 9 : 10); });
     }
     return o + footer(s);
   }

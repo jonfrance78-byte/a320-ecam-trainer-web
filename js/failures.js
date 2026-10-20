@@ -10,8 +10,9 @@
  *
  * Step kinds:
  *   master  press the lit MASTER WARN or MASTER CAUT
- *   act     an ECAM action line, done by setting a panel control
- *           (ctl: [panel, control name, nth], sel: the selection legend lit, e.g. OFF)
+ *   act     an ECAM action line, done by setting panel controls
+ *           (ctls: [[panel, control name, nth]...], sel: the selection legend lit, e.g. OFF;
+ *           press: a momentary control to press, e.g. RAT MAN ON)
  *   note    an ECAM line that needs no action
  *   task    a lesson task (want: { sd: page } or { panel: id } or { ctl, sel })
  *   quiz    a knowledge check (the correct answer first; options are shuffled)
@@ -19,13 +20,16 @@
 (function () {
   'use strict';
 
-  function A(item, val, ctl, o) { return Object.assign({ k: 'act', item: item, val: val, ctl: ctl, sel: true }, o || {}); }
+  // ctls: the panel controls that make up the action (all set for it to count). press: a
+  // momentary control that only has to be pressed.
+  function A(item, val, ctls, o) { return Object.assign({ k: 'act', item: item, val: val, ctls: Array.isArray(ctls[0]) ? ctls : [ctls], sel: true }, o || {}); }
   function N(text, c) { return { k: 'note', text: text, c: c || 'c' }; }
   function T(text, want, info) { return { k: 'task', text: text, want: want, info: info }; }
   function Q(q, correct, wrong, explain) { return { k: 'quiz', q: q, options: [correct].concat(wrong), explain: explain }; }
   var MASTER = { k: 'master' };
 
   // HYD overhead panel controls
+  var RAT = ['HYD', 'RAT MAN ON', 1];
   var G_PUMP = ['HYD', 'ENG 1\nPUMP', 1], B_PUMP = ['HYD', 'ELEC\nPUMP', 1], PTU = ['HYD', 'PTU', 1], Y_PUMP = ['HYD', 'ENG 2\nPUMP', 1], Y_ELEC = ['HYD', 'ELEC\nPUMP', 2];
   function ptuOff(s) { s.hyd.ptu = 'off'; s.hyd.ptuActive = false; }
 
@@ -141,52 +145,69 @@
         'The landing gear uses green only, so normal extension and normal braking are available.')
     },
 
+    // HYD G+B and G+Y follow the FCOM procedures the owner supplied (PRO-ABN-HYD).
     'hyd-gb': {
       title: 'HYD G+B SYS LO PR', sysWord: 'HYD', level: 3, sd: 'HYD', phase: 'Cruise · FL350',
-      brief: 'In cruise. A green leak empties the green reservoir, and the blue electric pump fails. Only yellow remains.',
-      learn: HYD_LEARN.concat(['With G+B lost: alternate law, both ailerons and the left elevator lost (roll by spoilers 2 and 4), slats lost, flaps slow, gear by gravity, braking on the yellow (alternate) system.']),
+      brief: 'In cruise. The green reservoir empties (a leak) and the blue electric pump fails. Green and blue pressure fall below 1450 PSI; only yellow remains.',
+      learn: HYD_LEARN.concat([
+        'The alert triggers when green and blue are both at or below 1450 PSI, and resets at 1750 PSI.',
+        'With G+B lost: alternate law (protections lost), both ailerons, the left elevator, spoilers 1, 3 and 5 and the slats are lost; flaps are slow, the gear is gravity extended and only yellow (alternate) braking remains.',
+        'Green lost by low level may also bring a separate HYD PTU FAULT alert asking for the PTU off.']),
       setup: function (s) { var g = s.hyd.G; g.rsvr = 'lo'; g.qty = 0.05; g.leak = true; g.p = 0; s.hyd.B.fail = true; s.hyd.B.p = 0; s.fctl.law = 'ALTN'; },
-      lights: [G_PUMP, B_PUMP, PTU],
-      memo: [{ t: 'LAND ASAP', c: 'a' }],
+      lights: [G_PUMP, B_PUMP],
       steps: [
         MASTER,
-        A('PTU', 'OFF', PTU, { clears: true, fx: ptuOff, why: 'With the green reservoir empty the PTU would only overheat.' }),
-        A('GREEN ENG 1 PUMP', 'OFF', G_PUMP, { clears: true, fx: function (s) { s.hyd.G.pump = 'off'; }, why: 'Protects the engine pump from running dry.' }),
-        A('BLUE ELEC PUMP', 'OFF', B_PUMP, { clears: true, fx: function (s) { s.hyd.B.pump = 'off'; }, why: 'Protects the failed pump.' }),
-        N('MANEUVER WITH CARE'),
+        N('LAND ASAP', 'a'),
+        A('RAT', 'MAN ON', [RAT], { press: true, hint: 'RAT MAN ON is guarded: lift the guard, then press it.',
+          fx: function (s) { s.elec.rat = true; },
+          why: 'With the blue electric pump lost, the RAT is the other way to pressurise blue. Keep at least 140 kt with the RAT out.' }),
+        A('AFFECTED PUMPS', 'OFF', [G_PUMP, B_PUMP], { clears: true, hint: 'GREEN ENG 1 PUMP and BLUE ELEC PUMP, overhead HYD panel.',
+          fx: function (s) { s.hyd.G.pump = 'off'; s.hyd.B.pump = 'off'; },
+          why: 'Switching off the pumps of the lost systems protects them.' }),
+        N('MANEUVER WITH CARE'), N('FOR GO-AROUND:', 'w'), N(' MAX PITCH 15 DEG'), N(' THR LVR.......TOGA THEN MCT'), N('FUEL CONSUMPT INCRSD'), N('FMS PRED UNRELIABLE'),
+        Q('Why is the RAT deployed in this procedure?', 'The blue electric pump has failed, so the RAT is the other source for blue',
+          ['To power the green system', 'To supply the emergency generator only', 'It is always deployed with a dual hydraulic failure'],
+          'The line only appears if HYD B ELEC PUMP LO PR. With the RAT out, keep the speed above 140 kt (MIN RAT SPD).'),
         Q('How is roll controlled with green and blue lost?', 'By spoilers 2 and 4 (yellow)', ['By the ailerons on yellow', 'By the rudder only', 'By spoiler 3'],
-          'The ailerons are G+B, so both are lost. Spoilers 2 and 4 are yellow and give roll control.'),
-        Q('Which high-lift devices are still available?', 'Flaps only, slowly', ['Slats only, slowly', 'Slats and flaps, slowly', 'Neither'],
-          'Slats are G+B, so they are lost. Flaps are G+Y, so they move slowly on yellow.')
+          'Both ailerons are G+B, so they are lost (L+R AIL on INOP SYS). Spoilers 2 and 4 are yellow and give roll control.')
       ],
-      sts: { left: [['MAX SPEED.........320 KT', 'c'], ['MANEUVER WITH CARE', 'c'], ['APPR PROC', 'w'], ['L/G.......GRVTY EXTN', 'c'], ['FLAPS SLOW', 'g'], ['ALTN BRK ONLY', 'g']],
-        inop: ['G+B HYD', 'F/CTL PROT', 'AILERONS', 'L ELEV', 'SLATS', 'SPLR 1+3+5', 'NORM BRK', 'REVERSER 1'] },
-      statusQ: Q('How will the gear be extended?', 'Gravity extension (green is lost)', ['Normally, on yellow', 'Normally, on blue', 'With the RAT'],
-        'The gear is green only. Use the gravity extension handcrank.')
+      sts: { left: [['MIN RAT SPD.........140 KT', 'c'], ['MAX SPEED........320/.77', 'c'], ['MANEUVER WITH CARE', 'c'], ['SPD BRK.......DO NOT USE', 'c'],
+        ['FOR GA: MAX PITCH 15 DEG', 'c'], ['FUEL CONSUMPT INCRSD', 'c'], ['APPR PROC DUAL HYD LO PR', 'w'], ['-A/THR...............OFF', 'c'], ['FOR LDG.......FLAP LVR 3', 'c'],
+        ['GPWS LDG FLAP 3.......ON', 'c'], ['WHEN SPD 200 KT:', 'w'], ['-L/G GRVTY PROC...APPLY', 'c'], ['APPR SPD.....VREF+30 KT', 'c'], ['LDG DIST PROC.....APPLY', 'c'],
+        ['ALTN LAW: PROT LOST', 'a'], ['WHEN L/G DN: DIRECT LAW', 'a'], ['FMS PRED UNRELIABLE', 'c'], ['FLAPS SLOW', 'g']],
+        inop: ['G+B HYD', 'F/CTL PROT', 'L ELEV', 'L+R AIL', 'SPLR 1+3+5', 'SLATS', 'AP 1+2', 'AUTO BRK', 'NORM BRK', 'L/G RETRACT', 'REVERSER 1', 'G ENG 1 PUMP', 'B ELEC PUMP', 'YAW DAMPER 1', 'CAT 2', 'GLS AUTOLAND'] },
+      statusQ: Q('Why does the STATUS ask for the gear to be extended at 200 kt?', 'To revert sooner to direct law, which gives better pitch control below 200 kt',
+        ['Because the gear is slow to extend by gravity', 'To reduce the landing distance', 'Because flaps cannot be extended with the gear up'],
+        'With one elevator and all slats lost, direct law (from gear extension) gives better pitch control than alternate law below 200 kt. The gear uses L/G GRVTY PROC, and APPR SPD is VREF + 30 kt.')
     },
 
     'hyd-gy': {
       title: 'HYD G+Y SYS LO PR', sysWord: 'HYD', level: 3, sd: 'HYD', phase: 'Cruise · FL350',
-      brief: 'In cruise. Green and yellow pressure are lost together. Only blue remains.',
-      learn: HYD_LEARN.concat(['With G+Y lost: alternate law, THS frozen, flaps lost, slats slow, gear by gravity, braking on the yellow accumulator only.']),
+      brief: 'In cruise. The green and yellow reservoirs both empty: green and yellow pressure fall below 1450 PSI. Only blue remains.',
+      learn: HYD_LEARN.concat([
+        'The alert triggers when green and yellow are both at or below 1450 PSI, and resets at 1750 PSI.',
+        'With G+Y lost: alternate law (protections lost), stabilizer and flaps lost, slats slow, spoilers 1, 2, 4 and 5 and both reversers lost, no anti-skid or nose wheel steering, gear by gravity, braking on the yellow accumulator only (7 full applications).',
+        'If the yellow loss is only its engine pump (HYD Y ENG 2 PUMP LO PR), ECAM also asks for the YELLOW ELEC PUMP ON.']),
       setup: function (s) { var g = s.hyd.G, y = s.hyd.Y; g.rsvr = y.rsvr = 'lo'; g.qty = y.qty = 0.05; g.leak = y.leak = true; g.p = y.p = 0; s.fctl.law = 'ALTN'; },
       lights: [G_PUMP, Y_PUMP, PTU],
-      memo: [{ t: 'LAND ASAP', c: 'a' }],
       steps: [
         MASTER,
-        A('PTU', 'OFF', PTU, { clears: true, fx: ptuOff, why: 'Nothing to transfer between two depressurised systems; the PTU would only overheat.' }),
-        A('GREEN ENG 1 PUMP', 'OFF', G_PUMP, { clears: true, fx: function (s) { s.hyd.G.pump = 'off'; }, why: 'Protects the engine pump.' }),
-        A('YELLOW ENG 2 PUMP', 'OFF', Y_PUMP, { clears: true, fx: function (s) { s.hyd.Y.pump = 'off'; }, why: 'Protects the engine pump.' }),
-        N('MANEUVER WITH CARE'),
-        Q('Which pitch control is lost when green and yellow are both lost?', 'The THS (stabiliser)', ['The left elevator', 'The right elevator', 'Both elevators'],
-          'The THS is powered by green and yellow, so it freezes. Both elevators remain on blue.'),
-        Q('How many spoilers per wing remain available?', 'One (spoiler 3, blue)', ['None', 'Two', 'All five'],
-          'Spoilers 1 and 5 are green and 2 and 4 are yellow, so only spoiler 3 (blue) remains on each wing.')
+        N('LAND ASAP', 'a'),
+        A('PTU', 'OFF', [PTU], { clears: true, fx: ptuOff, why: 'Nothing to transfer between two depressurised systems; the PTU would only overheat.' }),
+        A('AFFECTED PUMPS', 'OFF', [G_PUMP, Y_PUMP], { clears: true, hint: 'GREEN ENG 1 PUMP and YELLOW ENG 2 PUMP, overhead HYD panel.',
+          fx: function (s) { s.hyd.G.pump = 'off'; s.hyd.Y.pump = 'off'; }, why: 'Protects the engine pumps of the lost systems.' }),
+        N('MANEUVER WITH CARE'), N('FOR GO-AROUND:', 'w'), N(' MAX PITCH 15 DEG'), N(' THR LVR.......TOGA THEN MCT'), N('FUEL CONSUMPT INCRSD'), N('FMS PRED UNRELIABLE'),
+        Q('Which pitch control is lost when green and yellow are both lost?', 'The stabilizer (THS)', ['The left elevator', 'The right elevator', 'Both elevators'],
+          'The THS is powered by green and yellow, so it is lost (STABILIZER on INOP SYS). Both elevators remain on blue.'),
+        Q('What is the go-around technique with this failure?', 'Max pitch 15 deg, thrust levers TOGA then MCT', ['Normal go-around, TOGA only', 'Max pitch 10 deg, FLX/MCT', 'Go-around is not allowed'],
+          'The procedure limits pitch to 15 degrees and asks for TOGA then MCT. The line is not shown with one engine inoperative.')
       ],
-      sts: { left: [['MAX SPEED.........320 KT', 'c'], ['MANEUVER WITH CARE', 'c'], ['APPR PROC', 'w'], ['L/G.......GRVTY EXTN', 'c'], ['SLATS SLOW', 'g'], ['BRK Y ACCU ONLY', 'g']],
-        inop: ['G+Y HYD', 'F/CTL PROT', 'FLAPS', 'STABILIZER', 'NORM BRK', 'AUTO BRK', 'SPLR 1+2+4+5', 'REVERSERS'] },
-      statusQ: Q('Which flight control law applies with green and yellow lost?', 'Alternate law, then direct law with the gear down', ['Normal law', 'Direct law at all times', 'Mechanical backup'],
-        'G+Y loss leads to alternate law. As usual in alternate law, it reverts to direct law when the landing gear is extended.')
+      sts: { left: [['MAX SPEED........320/.77', 'c'], ['MAX BRK PR........1000 PSI', 'c'], ['MANEUVER WITH CARE', 'c'], ['FOR GA: MAX PITCH 15 DEG', 'c'], ['APPR PROC DUAL HYD LO PR', 'w'],
+        ['FOR LDG.......FLAP LVR 3', 'c'], ['GPWS FLAP MODE.......OFF', 'c'], ['WHEN CONF 3 AND VAPP:', 'w'], ['-L/G GRVTY PROC...APPLY', 'c'], ['APPR SPD.....VREF+30 KT', 'c'],
+        ['LDG DIST PROC.....APPLY', 'c'], ['ALTN LAW: PROT LOST', 'a'], ['WHEN L/G DN: DIRECT LAW', 'a'], ['BRK Y ACCU PR ONLY', 'c'], ['FUEL CONSUMPT INCRSD', 'c'], ['FMS PRED UNRELIABLE', 'c'], ['SLATS SLOW', 'g']],
+        inop: ['G+Y HYD', 'F/CTL PROT', 'STABILIZER', 'REVERSER 1+2', 'SPLR 1+2+4+5', 'FLAPS', 'YAW DAMPER', 'AP 1+2', 'ANTI SKID', 'N/W STRG', 'NORM BRK', 'AUTO BRK', 'L/G RETRACT', 'CARGO DOOR', 'CAT 2', 'GLS AUTOLAND'] },
+      statusQ: Q('When does the STATUS ask for the gravity gear extension?', 'When in CONF 3 and stabilised at VAPP', ['At 200 kt', 'Before descent', 'At 1000 ft AGL'],
+        'Being stabilised at VAPP before selecting the gear down lets the aircraft be trimmed for the approach (the stabilizer is lost). APPR SPD is VREF + 30 kt on the A319/A320, VREF + 35 kt on the A321.')
     }
   };
   Object.keys(DRILLS).forEach(function (id) { DRILLS[id].id = id; });
