@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.5.5';
+  var VERSION = '0.5.6';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -349,10 +349,13 @@
     var f = DR.f, out = [], cls = f.level === 3 ? 'r' : 'a';
     if (f.level >= 2 && (DR.phase === 'run' || DR.phase === 'clr1' || DR.phase === 'quiz')) {
       var w = f.sysWord, rest = f.title.indexOf(w) === 0 ? f.title.slice(w.length) : ' ' + f.title;
-      out.push({ parts: [{ s: w, u: true, c: cls }, { s: rest, c: cls }] });
+      (f.pre || []).forEach(function (l) { out.push(l); });
+      // The failure being worked has its title boxed, as on the E/WD.
+      out.push({ parts: [{ s: w, u: true, c: cls }, { s: rest, c: cls }], box: w.length + 1 });
       f.steps.forEach(function (st, i) {
         if (st.k === 'act' && !DR.done[i]) out.push({ text: fmtAct(st.item, st.val), cls: 'c' });
-        if (st.k === 'note') out.push({ text: st.text, cls: st.c });
+        if (st.k === 'note' && st.word) out.push({ parts: [{ s: st.word, u: true, c: st.c }, { s: st.text.slice(st.word.length), c: st.c }] });
+        else if (st.k === 'note') out.push({ text: st.text, cls: st.c });
       });
     }
     var showSts = !!f.sts && (DR.phase === 'stsq' || DR.phase === 'clr2' || DR.phase === 'done');

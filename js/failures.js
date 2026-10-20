@@ -23,7 +23,10 @@
   // ctls: the panel controls that make up the action (all set for it to count). press: a
   // momentary control that only has to be pressed.
   function A(item, val, ctls, o) { return Object.assign({ k: 'act', item: item, val: val, ctls: Array.isArray(ctls[0]) ? ctls : [ctls], sel: true }, o || {}); }
-  function N(text, c) { return { k: 'note', text: text, c: c || 'c' }; }
+  function N(text, c, o) { return Object.assign({ k: 'note', text: text, c: c || 'c' }, o || {}); }
+  // A following ECAM alert title on the E/WD (system word underlined), e.g. HYD PTU FAULT.
+  function TITLE(word, rest, c) { return N(word + ' ' + rest, c || 'a', { word: word }); }
+  var AP_OFF = [{ parts: [{ s: 'AUTO FLT', u: true, c: 'r' }, { s: ' AP OFF', c: 'r' }] }];
   function T(text, want, info) { return { k: 'task', text: text, want: want, info: info }; }
   function Q(q, correct, wrong, explain) { return { k: 'quiz', q: q, options: [correct].concat(wrong), explain: explain }; }
   var MASTER = { k: 'master' };
@@ -157,18 +160,20 @@
         'The alert triggers when green and blue are both at or below 1450 PSI, and resets at 1750 PSI.',
         'With G+B lost: alternate law (protections lost), both ailerons, the left elevator, spoilers 1, 3 and 5 and the slats are lost; flaps are slow, the gear is gravity extended and only yellow (alternate) braking remains.',
         'Green lost by low level may also bring a separate HYD PTU FAULT alert asking for the PTU off.']),
-      memo: [{ t: 'LAND ASAP', c: 'r' }],
+      pre: AP_OFF,
+      memo: [{ t: 'LAND ASAP', c: 'r' }, { t: '*WHEEL', c: 'a' }, { t: '*F/CTL', c: 'a' }],
       setup: function (s) { var g = s.hyd.G; g.rsvr = 'lo'; g.qty = 0.05; g.leak = true; g.p = 0; s.hyd.B.fail = true; s.hyd.B.p = 0; s.fctl.law = 'ALTN'; },
-      lights: [G_PUMP, B_PUMP],
+      lights: [G_PUMP, B_PUMP, PTU],
       steps: [
         MASTER,
         A('RAT', 'MAN ON', [RAT], { press: true, hint: 'RAT MAN ON is guarded: lift the guard, then press it.',
           fx: function (s) { s.elec.rat = true; },
           why: 'With the blue electric pump lost, the RAT is the other way to pressurise blue. Keep at least 140 kt with the RAT out.' }),
-        A('AFFECTED PUMPS', 'OFF', [G_PUMP, B_PUMP], { clears: true, hint: 'GREEN ENG 1 PUMP and BLUE ELEC PUMP, overhead HYD panel.',
-          fx: function (s) { s.hyd.G.pump = 'off'; s.hyd.B.pump = 'off'; },
-          why: 'Switching off the pumps of the lost systems protects them.' }),
-        N('MANEUVER WITH CARE'), N('FOR GO-AROUND:', 'w'), N(' MAX PITCH 15 DEG'), N(' THR LVR.......TOGA THEN MCT'), N('FUEL CONSUMPT INCRSD'), N('FMS PRED UNRELIABLE'),
+        A('GREEN ENG 1 PUMP', 'OFF', [G_PUMP], { clears: true, fx: function (s) { s.hyd.G.pump = 'off'; }, why: 'Protects the green engine pump: its system is lost.' }),
+        A('BLUE ELEC PUMP', 'OFF', [B_PUMP], { clears: true, fx: function (s) { s.hyd.B.pump = 'off'; }, why: 'Protects the failed blue electric pump.' }),
+        N('MANEUVER WITH CARE'),
+        TITLE('HYD', 'PTU FAULT'),
+        A('PTU', 'OFF', [PTU], { clears: true, fx: ptuOff, why: 'Green was lost by low level, so HYD PTU FAULT follows and asks for the PTU off: with no green fluid it would only overheat.' }),
         Q('Why is the RAT deployed in this procedure?', 'The blue electric pump has failed, so the RAT is the other source for blue',
           ['To power the green system', 'To supply the emergency generator only', 'It is always deployed with a dual hydraulic failure'],
           'The line only appears if HYD B ELEC PUMP LO PR. With the RAT out, keep the speed above 140 kt (MIN RAT SPD).'),
@@ -196,17 +201,19 @@
         'The alert triggers when green and yellow are both at or below 1450 PSI, and resets at 1750 PSI.',
         'With G+Y lost: alternate law (protections lost), stabilizer and flaps lost, slats slow, spoilers 1, 2, 4 and 5 and both reversers lost, no anti-skid or nose wheel steering, gear by gravity, braking on the yellow accumulator only (7 full applications).',
         'If the yellow loss is only its engine pump (HYD Y ENG 2 PUMP LO PR), ECAM also asks for the YELLOW ELEC PUMP ON.']),
-      memo: [{ t: 'LAND ASAP', c: 'r' }],
+      pre: AP_OFF,
+      memo: [{ t: 'LAND ASAP', c: 'r' }, { t: '*WHEEL', c: 'a' }, { t: '*F/CTL', c: 'a' }],
       setup: function (s) { var g = s.hyd.G, y = s.hyd.Y; g.rsvr = y.rsvr = 'lo'; g.qty = y.qty = 0.05; g.leak = y.leak = true; g.p = y.p = 0; s.fctl.law = 'ALTN'; },
       lights: [G_PUMP, Y_PUMP, PTU],
       steps: [
         MASTER,
         A('PTU', 'OFF', [PTU], { clears: true, fx: ptuOff, why: 'Nothing to transfer between two depressurised systems; the PTU would only overheat.' }),
-        A('AFFECTED PUMPS', 'OFF', [G_PUMP, Y_PUMP], { clears: true, hint: 'GREEN ENG 1 PUMP and YELLOW ENG 2 PUMP, overhead HYD panel.',
-          fx: function (s) { s.hyd.G.pump = 'off'; s.hyd.Y.pump = 'off'; }, why: 'Protects the engine pumps of the lost systems.' }),
+        A('GREEN ENG 1 PUMP', 'OFF', [G_PUMP], { clears: true, fx: function (s) { s.hyd.G.pump = 'off'; }, why: 'Protects the green engine pump: its system is lost.' }),
+        A('YELLOW ENG 2 PUMP', 'OFF', [Y_PUMP], { clears: true, fx: function (s) { s.hyd.Y.pump = 'off'; }, why: 'Protects the yellow engine pump: its system is lost.' }),
         Q('At what pressure does HYD G+Y SYS LO PR trigger?', 'Green and yellow both at or below 1450 PSI', ['Both below 3000 PSI', 'Both below 500 PSI', 'When either reservoir is low'],
           'It triggers when green and yellow are at or below 1450 PSI, and resets when the pressure is back at 1750 PSI or more.'),
-        N('MANEUVER WITH CARE'), N('FOR GO-AROUND:', 'w'), N(' MAX PITCH 15 DEG'), N(' THR LVR.......TOGA THEN MCT'), N('FUEL CONSUMPT INCRSD'), N('FMS PRED UNRELIABLE'),
+        N('MANEUVER WITH CARE'),
+        TITLE('HYD', 'PTU FAULT'),
         Q('Which pitch control is lost when green and yellow are both lost?', 'The stabilizer (THS)', ['The left elevator', 'The right elevator', 'Both elevators'],
           'The THS is powered by green and yellow, so it is lost (STABILIZER on INOP SYS). Both elevators remain on blue.'),
         Q('What is the go-around technique with this failure?', 'Max pitch 15 deg, thrust levers TOGA then MCT', ['Normal go-around, TOGA only', 'Max pitch 10 deg, FLX/MCT', 'Go-around is not allowed'],

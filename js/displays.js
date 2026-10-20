@@ -114,6 +114,11 @@
     shown.forEach(function (l, k) {
       var y = 205 + k * 12.4;
       if (l.cur && view.highlight) o += fillRect(3, y - 9.5, 211, 12, 'hl');
+      if (l.box != null) {
+        // box around the title from character l.box (monospace, 6.6 units per character at 10.5)
+        var len = l.parts.reduce(function (n, p) { return n + p.s.length; }, 0);
+        o += rc(6 + l.box * 6.6 - 1.5, y - 9.2, (len - l.box) * 6.6 + 3, 12, 's' + l.parts[1].c, 1);
+      }
       if (l.parts) {
         o += '<text x="6" y="' + y + '" font-size="10.5">' + l.parts.map(function (p) {
           return '<tspan class="' + p.c + '"' + (p.u ? ' text-decoration="underline"' : '') + '>' + esc(p.s) + '</tspan>';
