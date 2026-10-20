@@ -318,11 +318,11 @@
       key(52, 9, 'T.O\nCONFIG', 'Take-off configuration test: simulates take-off power so that a wrong configuration (slats/flaps, pitch trim, speed brakes, parking brake, brake temperature) triggers its warning. T.O CONFIG NORMAL shows on the E/WD if all is correct.', { s: 7, w: 11 }),
       key(93, 9, 'EMER\nCANC', 'For spurious alerts. Warnings: silences the aural for the present warning; the ECAM message and MASTER WARN stay. Cautions: cancels the present caution for the rest of the flight; STATUS then shows CANCELLED CAUTION. RCL brings it back.', { s: 7, w: 11 })
     ].concat(PAGES.map(function (q, i) {
-      return key(38 + (i % 6) * 14, 23 + Math.floor(i / 6) * 10, q[0], 'Shows the ' + q[1] + ' system page on the system display. Press again to go back to the automatic page.', { s: 7, w: 11 });
+      return key(38 + (i % 6) * 14, 23 + Math.floor(i / 6) * 10, q[0], 'Shows the ' + q[1] + ' system page on the system display (it lights while that page shows). Press again to go back to the automatic page.', { s: 7, w: 11, sdPage: q[0] });
     })).concat([
-      key(108, 33, 'ALL', 'Hold to scroll through all the system pages, one per second. Release on the page wanted.', { s: 7, w: 11 }),
+      key(108, 33, 'ALL', 'Hold to scroll through all the system pages, one per second, and release on the page wanted. Here each press shows the next page.', { s: 7, w: 11, sdAll: true }),
       key(38, 44, 'CLR', 'Clears the ECAM warning or caution once its actions are done, then the STATUS page. Lit while there is something to clear.', { s: 7, w: 11 }),
-      key(66, 44, 'STS', 'Shows the STATUS page: limitations, inoperative systems and approach procedures. Press again to clear it.', { s: 7, w: 11 }),
+      key(66, 44, 'STS', 'Shows the STATUS page: limitations, inoperative systems and approach procedures. Press again to clear it.', { s: 7, w: 11, sdPage: 'STS' }),
       key(80, 44, 'RCL', 'Recall: shows warnings and cautions that were cleared with CLR or cancelled with EMER CANC. With nothing to recall, NORMAL shows for 5 s.', { s: 7, w: 11 }),
       key(108, 44, 'CLR', 'Second CLR pushbutton, same function.', { s: 7, w: 11 })
     ])

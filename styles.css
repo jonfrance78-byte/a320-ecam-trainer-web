@@ -184,7 +184,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .dk-acft { fill: none; stroke: #f3d400; stroke-width: 1.4; }
 
 /* ECAM displays drawn on the main panel */
-.ecam text { font-family: var(--font-mono); font-size: 11px; }
+.ecam { font-size: 11px; }
+.ecam text { font-family: var(--font-mono); }
 .ecam .screen { fill: #000; }
 .ecam .g { fill: var(--ecam-g); } .ecam .a { fill: var(--ecam-a); } .ecam .r { fill: var(--ecam-r); }
 .ecam .c { fill: var(--ecam-c); } .ecam .w { fill: var(--ecam-w); } .ecam .m { fill: var(--ecam-m); } .ecam .d { fill: #5d6770; }
@@ -411,3 +412,16 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .gear-hub2 { fill: #0d1012; }
 .gear-stem { fill: url(#p-knurl); stroke: #050607; stroke-width: .4; }
 .gear-stem-line { stroke: #000; stroke-width: .5; }
+.ecam .fb { fill: #3b4047; }
+.ecam .sky { fill: #2c9be8; } .ecam .gnd { fill: #a2582a; } .ecam .tape { fill: #3c464f; }
+.ecam .fy { fill: #f3d400; } .ecam .sy { stroke: #f3d400; } .ecam .fk { fill: #000; } .ecam .fr { fill: #e8352b; }
+.sdkey { fill: transparent; cursor: pointer; }
+.sdkey:hover { fill: rgba(51, 214, 242, .18); }
+.ecp-glow { fill: rgba(150, 225, 255, .3); }
+.pv-screen { max-width: min(620px, 100%, 62vh); margin: 0 auto; }
+.pv-screen svg { display: block; width: 100%; height: auto; border: 6px solid #15191d; border-radius: 6px; }
+.pv-sdmini { max-width: 240px; margin: 14px auto 0; }
+.pv-sdmini svg { display: block; width: 100%; height: auto; border: 4px solid #15191d; border-radius: 4px; }
+.sd-pages { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 620px; margin: 14px auto 0; }
+.sd-btn { min-width: 58px; min-height: 40px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: #1a222c; color: var(--ink); font: 700 13px var(--font-head); cursor: pointer; }
+.sd-btn.on { background: rgba(51, 214, 242, .18); border-color: var(--accent); color: #fff; }

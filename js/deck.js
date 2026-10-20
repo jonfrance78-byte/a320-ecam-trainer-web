@@ -29,6 +29,11 @@
     }
     add('<g class="hot" data-panel="' + id + '" tabindex="0" role="button" aria-label="Expand ' + label + ' panel" transform="translate(' + x + ' ' + y + ')' + (s !== 1 ? ' scale(' + s + ')' : '') + '">');
     add(PN.render(id));
+    // ECAM control panel: its page keys change the system display page on the deck itself.
+    p.items.forEach(function (it) {
+      if (!it.sdPage && !it.sdAll) return;
+      add('<rect x="' + (it.x - it.w / 2 - 1) + '" y="' + (it.y - it.s / 2 - 1) + '" width="' + (it.w + 2) + '" height="' + (it.s + 2) + '" rx="1" class="sdkey" data-sd="' + (it.sdAll ? 'ALL' : it.sdPage) + '"/>');
+    });
     add('<rect width="' + p.w + '" height="' + p.h + '" rx="3" class="hot-ring"/>');
     add('</g>');
     return p.h * s;
@@ -87,64 +92,15 @@
   }
 
   /* ----------------------------------------------------- glareshield + MIP */
-  function pfd(x, y, s, uid) {
-    var cx = x + s / 2, cy = y + s * 0.47, id = 'pfdclip' + uid;
-    r(x - 5, y - 5, s + 10, s + 10, 'dk-bezel', 3); r(x, y, s, s, 'dk-screen', 1);
-    add('<clipPath id="' + id + '"><rect x="' + (x + 24) + '" y="' + (y + 18) + '" width="' + (s - 50) + '" height="' + (s - 40) + '" rx="10"/></clipPath>');
-    add('<g clip-path="url(#' + id + ')">');
-    r(x, y, s, cy - y, 'dk-sky'); r(x, cy, s, s, 'dk-ground');
-    l(x, cy, x + s, cy, 'dk-horizon');
-    [-20, -10, 10, 20].forEach(function (p) { var py = cy - p * 1.2, hw = Math.abs(p) === 10 ? 9 : 13; l(cx - hw, py, cx + hw, py, 'dk-ladder'); tx(cx - hw - 4, py + 1.4, Math.abs(p), 'dk-ladtxt', 3.4); });
-    [-5, 5, -15, 15].forEach(function (p) { var py = cy - p * 1.2; l(cx - 4, py, cx + 4, py, 'dk-ladder'); });
-    add('</g>');
-    add('<path d="M' + (cx - 28) + ' ' + (y + 22) + ' A 34 34 0 0 1 ' + (cx + 28) + ' ' + (y + 22) + '" class="dk-arc"/>');
-    add('<path d="M' + cx + ' ' + (y + 16) + ' l-3 -5 l6 0 z" class="dk-yellow"/>');
-    r(cx - 22, cy - 1.2, 13, 2.4, 'dk-aplane'); r(cx + 9, cy - 1.2, 13, 2.4, 'dk-aplane'); r(cx - 1.5, cy - 1.5, 3, 3, 'dk-aplane');
-    r(x + 3, y + 18, 17, s - 40, 'dk-tape');
-    [0, 1, 2, 3].forEach(function (i) { var py = y + 30 + i * 16; tx(x + 13, py, 300 - i * 20, 'dk-tapetxt', 4, 'end'); l(x + 15, py - 1.5, x + 20, py - 1.5, 'dk-tick'); });
-    l(x + 2, cy, x + 24, cy, 'dk-yline');
-    add('<path d="M' + (x + 20) + ' ' + (cy - 3) + ' l4 3 l-4 3 z" class="dk-yellow"/>');
-    r(x + s - 26, y + 18, 18, s - 40, 'dk-tape');
-    [0, 1, 2].forEach(function (i) { tx(x + s - 10, y + 32 + i * 24, ['360', '350', '340'][i], 'dk-tapetxt', 4, 'end'); });
-    r(x + s - 30, cy - 5, 24, 10, 'dk-altbox'); tx(x + s - 9, cy + 2, '35000', 'dk-alttxt', 4.4, 'end');
-    l(x + s - 4, y + 26, x + s - 4, y + s - 26, 'dk-tick');
-    for (var i = 1; i < 5; i++) l(x + 4 + i * (s - 8) / 5, y + 2, x + 4 + i * (s - 8) / 5, y + 13, 'dk-fmaline');
-    tx(x + 15, y + 9, 'MACH', 'dk-fma', 3.6); tx(x + 37, y + 9, 'ALT CRZ', 'dk-fma', 3.6); tx(x + 60, y + 9, 'NAV', 'dk-fma', 3.6); tx(x + 82, y + 9, 'CAT3', 'dk-fmaw', 3.6); tx(x + 104, y + 9, 'AP1', 'dk-fmaw', 3.6);
-    r(cx - 30, y + s - 18, 60, 12, 'dk-tape');
-    ['31', '32', '33', '34', '35'].forEach(function (h, i) { tx(cx - 24 + i * 12, y + s - 9, h, 'dk-tapetxt', 3.8); });
-    l(cx, y + s - 20, cx, y + s - 6, 'dk-yline');
-    glass(x, y, s, s);
-  }
-  function nd(x, y, s, uid) {
-    var cx = x + s / 2, cy = y + s - 16, R = s * 0.62, id = 'ndclip' + uid;
-    r(x - 5, y - 5, s + 10, s + 10, 'dk-bezel', 3); r(x, y, s, s, 'dk-screen', 1);
-    add('<clipPath id="' + id + '"><rect x="' + x + '" y="' + y + '" width="' + s + '" height="' + s + '"/></clipPath><g clip-path="url(#' + id + ')">');
-    add('<path d="M' + (cx - R * 0.94) + ' ' + (cy - R * 0.34) + ' A ' + R + ' ' + R + ' 0 0 1 ' + (cx + R * 0.94) + ' ' + (cy - R * 0.34) + '" class="dk-arc"/>');
-    add('<path d="M' + (cx - R * 0.47) + ' ' + (cy - R * 0.17) + ' A ' + R / 2 + ' ' + R / 2 + ' 0 0 1 ' + (cx + R * 0.47) + ' ' + (cy - R * 0.17) + '" class="dk-arc dk-arc-dash"/>');
-    for (var a = -60; a <= 60; a += 10) {
-      var rad = (a - 90) * Math.PI / 180, len = a % 30 ? 3 : 5;
-      l(cx + R * Math.cos(rad), cy + R * Math.sin(rad), cx + (R - len) * Math.cos(rad), cy + (R - len) * Math.sin(rad), 'dk-tick');
-      if (a % 30 === 0) tx(cx + (R - 10) * Math.cos(rad), cy + (R - 10) * Math.sin(rad) + 1.5, String((33 + a / 10 + 36) % 36 || 36), 'dk-ndtxt', 4.4);
-    }
-    add('<path d="M' + cx + ' ' + (cy - R - 2) + ' l-3 -4 l6 0 z" class="dk-yellow"/>');
-    add('<polyline points="' + cx + ',' + cy + ' ' + (cx + 6) + ',' + (cy - 30) + ' ' + (cx + 18) + ',' + (cy - 58) + ' ' + (cx - 4) + ',' + (cy - 86) + '" class="dk-route"/>');
-    add('<path d="M' + (cx + 18) + ' ' + (cy - 62) + ' l4 4 l-4 4 l-4 -4 z" class="dk-wpt"/>'); tx(cx + 25, cy - 56, 'BIBOS', 'dk-ndtxtw', 3.6, 'start');
-    add('<path d="M' + (cx - 4) + ' ' + (cy - 90) + ' l4 4 l-4 4 l-4 -4 z" class="dk-wpt"/>');
-    add('<path d="M' + (cx - 7) + ' ' + (cy + 1) + ' l7 -3 l7 3 M' + cx + ' ' + (cy - 7) + ' L' + cx + ' ' + (cy + 6) + '" class="dk-acft"/>');
-    tx(x + 4, y + 8, 'GS 452 TAS 468', 'dk-ndtxtw', 3.4, 'start'); tx(x + 4, y + 14, '275/42', 'dk-ndtxtg', 3.4, 'start');
-    tx(x + s - 4, y + 8, 'BIBOS', 'dk-ndtxtw', 3.6, 'end'); tx(x + s - 4, y + 14, '036° 21NM', 'dk-ndtxtg', 3.4, 'end');
-    add('</g>');
-    glass(x, y, s, s);
-  }
-  function ecamScreen(x, y, s, svgStr) {
+  // A display unit (PFD, ND, E/WD, SD): bezel, the screen's SVG and glass. Tapping it
+  // opens the display full screen.
+  function screen(id, x, y, s, svgStr, label) {
+    add('<g class="hot" data-panel="' + id + '" tabindex="0" role="button" aria-label="Expand ' + label + '">');
     r(x - 5, y - 5, s + 10, s + 10, 'dk-bezel', 3);
-    add(svgStr.replace('<svg ', '<svg x="' + x + '" y="' + y + '" width="' + s + '" height="' + s + '" '));
+    add(svgStr.replace('<svg ', '<svg x="' + x + '" y="' + y + '" width="' + s + '" height="' + s + '" data-screen="' + id + '" '));
     glass(x, y, s, s);
-  }
-
-  // Displays are drawn at 116 units and scaled to the screen size used here.
-  function screen(fn, x, y, size, uid) {
-    add('<g transform="translate(' + x + ' ' + y + ') scale(' + (size / 116).toFixed(4) + ')">'); fn(0, 0, 116, uid); add('</g>');
+    add('<rect x="' + x + '" y="' + y + '" width="' + s + '" height="' + s + '" rx="1" class="hot-ring"/>');
+    add('</g>');
   }
 
   /* Glareshield and main instrument panel, laid out from photos/lower. The
@@ -159,12 +115,11 @@
     add('<path d="M12 1222 L888 1222 L888 ' + bottom + ' L12 ' + bottom + ' Z" class="dk-mip"/>');
     l(12, 1223, 888, 1223, 'dk-mip-edge');
     panel('LATL', 18, 1228, 0.8);
-    screen(pfd, 123, 1233, EFIS_S, 'l'); screen(nd, 287, 1233, EFIS_S, 'l');
+    screen('PFD', 123, 1233, EFIS_S, ecam.pfd, 'PFD'); screen('ND', 287, 1233, EFIS_S, ecam.nd, 'ND');
     c(66, 1350, 14, 'dk-vent'); c(66, 1350, 9, 'dk-vent-in');
     // Centre panel, scaled up about its own layout (drawn from x 309, y 1228)
     add('<g transform="translate(' + CTR_X + ' 1228) scale(' + CTR_SCALE + ') translate(-309 -1228)">');
-    ecamScreen(402, 1233, 96, ecam.ewd);
-    ecamScreen(402, 1346, 96, ecam.sd);
+    screen('EWD', 402, 1233, 96, ecam.ewd, 'E/WD'); screen('SD', 402, 1346, 96, ecam.sd, 'system display');
     panel('ISISP', 309, 1228); panel('DCDU1', 309, 1401);
     panel('AUTOBRK', 507, 1228); panel('CLOCK', 507, 1293, 0.7); panel('LGLEVER', 507, 1343); panel('DCDU2', 507, 1401);
     add('</g>');

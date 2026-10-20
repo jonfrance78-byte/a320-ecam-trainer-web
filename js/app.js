@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.3.9';
+  var VERSION = '0.4.0';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -17,9 +17,46 @@
     ['Glareshield', ['GSL', 'EFISL', 'FCU', 'EFISR', 'GSR']],
     ['Main instrument panel', ['LATL', 'ISISP', 'AUTOBRK', 'CLOCK', 'LGLEVER', 'DCDU1', 'DCDU2']],
     ['Pedestal', ['MCDU1', 'SWITCHING', 'ECP', 'MCDU2', 'RMP1', 'RMP2', 'ACP1', 'ACP2', 'THR', 'ENGPED', 'FLOODL', 'WXR', 'FLOODR', 'ATC', 'SPDBRK', 'RUDTRIM', 'FLAPS', 'DOOR', 'PRINTER', 'PARKBRK', 'GRAVITY']],
+    ['Displays', ['PFD', 'ND', 'EWD', 'SD']],
     ['Side consoles', ['CONSL', 'CONSR']]
   ];
-  function panelName(id) { var p = PN.P[id]; return (p && (p.name || p.title)) || id; }
+  // The display units open full screen like panels. parts: what each area shows.
+  var DISPLAYS = {
+    PFD: { name: 'Primary flight display (PFD)', desc: 'Captain\'s primary flight display: the main flight instrument.', parts: [
+      ['FMA', 'Flight mode annunciator along the top: autothrust mode, vertical and lateral modes, approach capability, and the AP, FD and A/THR engagement status.'],
+      ['Speed scale', 'Left: airspeed with the speed trend, the red and black barber pole (VMAX), green dot and the amber VLS strip, and the Mach number below.'],
+      ['Attitude', 'Centre: pitch and bank against the horizon, with the yellow aircraft symbol, the bank scale and the roll index.'],
+      ['Altitude and V/S', 'Right: the altitude scale with the yellow box showing the current altitude, the FCU selected altitude in cyan, and the vertical speed scale and needle.'],
+      ['Heading', 'Bottom: the heading scale with the yellow heading reference line.']] },
+    ND: { name: 'Navigation display (ND)', desc: 'Captain\'s navigation display in ARC mode, set on the EFIS control panel.', parts: [
+      ['GS, TAS, wind', 'Top left: ground speed and true airspeed in knots, the wind direction and speed, and a wind arrow.'],
+      ['Compass arc', 'Heading under the yellow lubber line, the green track line, and the range rings with their distances in cyan.'],
+      ['Bearing pointers', 'VOR or ADF pointers selected on the EFIS panel, with the station name and distance at the bottom corners.'],
+      ['GPS PRIMARY', 'Shows that the GPS is the primary source of position (until cleared on the MCDU).']] },
+    EWD: { name: 'Engine/warning display (E/WD)', desc: 'Upper ECAM display: engine indications, fuel on board and slat/flap position, with the warning, caution and memo area below.', parts: [
+      ['Engines', 'N1, EGT, N2 and fuel flow for both engines.'],
+      ['FOB and FLAP', 'Fuel on board and the slat and flap position.'],
+      ['Messages', 'Lower area: warnings and cautions with their actions on the left, and memos and secondary failures on the right.']] },
+    SD: { name: 'System display (SD)', desc: 'Lower ECAM display: shows the system page selected on the ECAM control panel, or the page chosen for the flight phase (CRUISE in flight). Change the page with the keys below or the ECAM control panel keys on the flight deck.', parts: [] }
+  };
+  function getP(id) { return PN.P[id] || DISPLAYS[id]; }
+  function panelName(id) { var p = getP(id); return (p && (p.name || p.title)) || id; }
+
+  // System display page selected on the ECAM control panel (null: automatic, CRUISE).
+  var SD_ORDER = ['ENG', 'BLEED', 'PRESS', 'ELEC', 'HYD', 'FUEL', 'APU', 'COND', 'DOOR', 'WHEEL', 'F/CTL'];
+  var SD_NAMES = { ENG: 'engine', BLEED: 'bleed', PRESS: 'cabin pressure', ELEC: 'electrical', HYD: 'hydraulic', FUEL: 'fuel', APU: 'APU', COND: 'air conditioning', DOOR: 'door/oxygen', WHEEL: 'wheel', 'F/CTL': 'flight controls', STS: 'STATUS' };
+  var sdPage = null;
+  function sdSvg() { return DISP.renderSD(cruiseState(), sdPage || 'CRUISE', null); }
+  function setSd(key) {
+    if (key === 'ALL') sdPage = SD_ORDER[(SD_ORDER.indexOf(sdPage) + 1) % SD_ORDER.length];
+    else sdPage = sdPage === key ? null : key;
+    PN.LIVE.sdPage = sdPage;
+    var y = window.scrollY;
+    renderHome();
+    window.scrollTo(0, y);
+    if (PV) renderStage();
+    return sdPage ? 'The system display shows the ' + SD_NAMES[sdPage] + ' page.' : 'Back to the automatic page (CRUISE).';
+  }
 
   // A normal cruise state for the E/WD and SD on the main instrument panel.
   function cruiseState() {
@@ -51,7 +88,7 @@
   /* ----------------------------------------------------------------- home */
   function renderHome() {
     var s = cruiseState();
-    var ecam = { ewd: DISP.renderEWD(s, { lines: [], memo: [] }), sd: DISP.renderSD(s, 'CRUISE', null) };
+    var ecam = { ewd: DISP.renderEWD(s, { lines: [], memo: [] }), sd: sdSvg(), pfd: DISP.renderPFD(s), nd: DISP.renderND(s) };
     document.getElementById('view').innerHTML =
       '<section class="home">' +
       '<p class="home-hint">Tap any panel to expand it. <span class="ver-pill">Version ' + VERSION + '</span></p>' +
@@ -115,8 +152,8 @@
     return o + '</svg>';
   }
   function openPanel(id, fromEl) {
-    if (!PN.P[id] && !(PHOTO && PHOTO.panels[id])) return;
-    PV = { id: id };
+    if (!getP(id) && !(PHOTO && PHOTO.panels[id])) return;
+    PV = { id: id, disp: !!DISPLAYS[id] };
     setPanelMode(PN.P[id] ? 'draw' : 'photo');
     drawerOpen = false; searchOpen = false; renderDrawer(); renderSearch();
     renderPanelView();
@@ -136,12 +173,13 @@
   function setPanelMode(mode) {
     var photo = mode === 'photo' && PHOTO && PHOTO.panels[PV.id];
     PV.photo = photo || null; PV.states = {}; PV.selected = null; PV.note = null;
-    PV.items = photo ? photoItems(PV.id) : PN.P[PV.id].items;
+    PV.items = photo ? photoItems(PV.id) : (PV.disp ? [] : PN.P[PV.id].items);
     if (photo) PV.items.forEach(function (it, i) { if (it.photoLit) PV.states[i] = { lit: it.photoLit }; });
   }
 
   function legendChip(L) { return L ? '<span class="lchip lchip-' + L.c + '">' + esc(L.s) + '</span>' : ''; }
   function infoHtml(p) {
+    if (PV.disp) return (p.parts || []).map(function (q) { return '<p><b>' + esc(q[0]) + '.</b> ' + esc(q[1]) + '</p>'; }).join('');
     if (PV.selected == null) return '<p class="pv-hint">Tap any pushbutton, guard, selector or switch to work it and see what it does.</p>';
     var it = PV.items[PV.selected], st = PV.states[PV.selected] || {};
     var k = PN.kindOf(it);
@@ -162,11 +200,26 @@
       (note ? '<p class="small">' + esc(note) + '</p>' : '') +
       (it.guard ? '<p class="small">' + (st.guardOpen ? 'Guard lifted. Tap again to work the pushbutton.' : 'Tap again to lift the guard.') + '</p>' : '');
   }
+  function sdButtons() {
+    return '<div class="sd-pages" role="group" aria-label="System display page">' + SD_ORDER.concat(['STS']).map(function (k) {
+      return '<button class="sd-btn' + (sdPage === k ? ' on' : '') + '" data-act="sdpage" data-sd="' + k + '" aria-pressed="' + (sdPage === k) + '">' + esc(k) + '</button>';
+    }).join('') + '</div>';
+  }
+  function dispSvg(id) {
+    var s = cruiseState();
+    return id === 'PFD' ? DISP.renderPFD(s) : id === 'ND' ? DISP.renderND(s) : id === 'EWD' ? DISP.renderEWD(s, { lines: [], memo: [] }) : sdSvg();
+  }
   function renderStage() {
-    var p = PN.P[PV.id];
+    var p = getP(PV.id);
+    if (PV.disp) {
+      document.getElementById('pv-stage').innerHTML = '<div class="pv-screen">' + dispSvg(PV.id) + '</div>' + (PV.id === 'SD' ? sdButtons() : '');
+      document.getElementById('pv-info').innerHTML = infoHtml(p);
+      return;
+    }
     document.getElementById('pv-stage').innerHTML = PV.photo ? renderPhotoStage(PV.photo) :
       '<svg viewBox="-4 -4 ' + (p.w + 8) + ' ' + (p.h + 8) + '" class="pv-svg" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
-      PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>';
+      PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' +
+      (PV.id === 'ECP' ? '<div class="pv-sdmini" aria-label="System display">' + sdSvg() + '</div>' : '');
     document.getElementById('pv-info').innerHTML = infoHtml(p);
   }
   function creditHtml() {
@@ -177,7 +230,7 @@
   function renderPanelView() {
     var el = document.getElementById('pv');
     if (!PV) { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('pv-open'); return; }
-    var p = PN.P[PV.id] || { desc: '' }, dims = PV.photo || p;
+    var p = getP(PV.id) || { desc: '' }, dims = PV.photo || (PV.disp ? { w: 1, h: 1 } : p);
     var gate = PV.photo && PV.items.some(function (it) { return it.photoLit; });
     el.innerHTML = '<div class="pv-card" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       '<header class="pv-bar"><button class="icon-btn" data-act="closePanel" aria-label="Back to flight deck">' + ICON.back + '</button>' +
@@ -198,6 +251,7 @@
     var it = PV.items[i];
     if (!it) return;
     PV.note = PN.pressItems(PV.items, i, PV.states);
+    if (it.sdPage || it.sdAll) PV.note = setSd(it.sdAll ? 'ALL' : it.sdPage);
     PV.selected = i;
     renderStage();
     if (PV.states[i] && PV.states[i].down) {
@@ -218,7 +272,7 @@
   /* ------------------------------------------------------ menu and search */
   function panelLinks(ids) {
     return '<ul class="plist">' + ids.map(function (id) {
-      return '<li><button class="plink" data-act="open" data-id="' + id + '"><span>' + esc(panelName(id)) + '</span><small>' + esc(PN.P[id].desc) + '</small></button></li>';
+      return '<li><button class="plink" data-act="open" data-id="' + id + '"><span>' + esc(panelName(id)) + '</span><small>' + esc(getP(id).desc) + '</small></button></li>';
     }).join('') + '</ul>';
   }
   function renderDrawer() {
@@ -256,8 +310,8 @@
     var ids = [];
     GROUPS.forEach(function (g) {
       g[1].forEach(function (id) {
-        var p = PN.P[id];
-        var hay = (panelName(id) + ' ' + p.desc + ' ' + p.items.map(function (it) { return (it.name || it.label || '') + ' ' + (it.info || ''); }).join(' ')).toLowerCase();
+        var p = getP(id);
+        var hay = (panelName(id) + ' ' + p.desc + ' ' + (p.items || p.parts.map(function (q) { return { name: q[0], info: q[1] }; })).map(function (it) { return (it.name || it.label || '') + ' ' + (it.info || ''); }).join(' ')).toLowerCase();
         if (hay.indexOf(q) >= 0) ids.push(id);
       });
     });
@@ -268,6 +322,8 @@
   document.addEventListener('click', function (e) {
     var ctlEl = e.target.closest('.ctl');
     if (ctlEl && PV) { pressCtl(+ctlEl.getAttribute('data-ctl')); return; }
+    var sdKey = e.target.closest('.sdkey');
+    if (sdKey && !PV) { setSd(sdKey.getAttribute('data-sd')); return; }
     var hotEl = e.target.closest('.hot');
     if (hotEl) { openPanel(hotEl.getAttribute('data-panel'), hotEl); return; }
     if (e.target.id === 'scrim') { drawerOpen = false; searchOpen = false; renderDrawer(); renderSearch(); return; }
@@ -280,6 +336,7 @@
       case 'closeSearch': searchOpen = false; renderSearch(); break;
       case 'open': openPanel(el.getAttribute('data-id'), null); break;
       case 'closePanel': closePanel(); break;
+      case 'sdpage': setSd(el.getAttribute('data-sd')); break;
       case 'pvmode': if (PV) { setPanelMode(el.getAttribute('data-mode')); renderPanelView(); } break;
     }
   });
