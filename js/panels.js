@@ -633,7 +633,7 @@
     var s = it.s || 20, h = s / 2, x = it.x, y = it.y, o = '', bw = it.w || s, bh = bw / 2;
     var lit = st.lit === 'none' ? null : (st.lit != null ? st.lit : (it.lit ? 'lo' : null));
     o += '<rect x="' + (x - bh - 1.2) + '" y="' + (y - h - 0.4) + '" width="' + (bw + 3.6) + '" height="' + (s + 3.6) + '" rx="2" class="shadow"/>';
-    if (!it.rect) o += '<rect x="' + (x - bh - 2.3) + '" y="' + (y - h - 2.3) + '" width="' + (bw + 4.6) + '" height="' + (s + 4.6) + '" rx="2.2" class="pb-frame"/>';
+    if (!it.rect && !it.noFrame) o += '<rect x="' + (x - bh - 2.3) + '" y="' + (y - h - 2.3) + '" width="' + (bw + 4.6) + '" height="' + (s + 4.6) + '" rx="2.2" class="pb-frame"/>';
     if (it.k === 'pb' || it.guard) o += '<rect x="' + (x - bh - 1.4) + '" y="' + (y - h - 1.4) + '" width="' + (bw + 2.8) + '" height="' + (s + 2.8) + '" rx="1.8" class="pb-bezel"/>';
     o += '<rect x="' + (x - bh) + '" y="' + (y - h) + '" width="' + bw + '" height="' + s + '" rx="1.4" class="pb-cap' + (it.k === 'ann' ? ' ann' : '') + '"/>';
     var lfs = Math.max(2.6, s * 0.23);
@@ -800,10 +800,10 @@
     o += '<line x1="' + (x - 5) + '" y1="' + (on ? y - 11 : y + 7) + '" x2="' + (x + 5) + '" y2="' + (on ? y - 11 : y + 7) + '" class="lever-grip"/>';
     return o;
   }
-  function drawDisp(it) {
+  function drawDisp(it, off) {
     var w = it.w, h = 11, o = '';
     o += '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="1" class="disp"/>';
-    o += text(it.x, it.y + 2.6, it.val, 'disp-txt' + (it.amber ? ' amber' : ''), 7);
+    if (!off) o += text(it.x, it.y + 2.6, it.val, 'disp-txt' + (it.amber ? ' amber' : ''), 7);
     o += '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="1" class="glass"/>';
     o += text(it.x, it.y - h / 2 - 2, it.lbl || it.name, 'pn-name', 3.8);
     return o;
@@ -918,8 +918,11 @@
       o += text(cx, 10, p.title, 'pn-title', 6.2);
     }
     if (p.blank) return o;
+    var off = poweredOff(p.items, states);
     p.items.forEach(function (it, i) {
       var st = states[i] || {}, g = '';
+      // Panel switched off: its lights and displays are dark.
+      if (off && (it.k === 'pb' || it.k === 'ann')) st = Object.assign({}, st, { lit: 'none' });
       switch (it.k) {
         case 'line': o += '<polyline points="' + it.pts.map(function (q) { return q.join(','); }).join(' ') + '" class="' + (p.flow ? 'pn-flow' : 'pn-div') + '"/>'; return;
         case 'label': o += text(it.x, it.y, it.s, 'pn-label', it.size); return;
@@ -942,7 +945,7 @@
         case 'knob': g = drawKnob(it, st); break;
         case 'tog': g = drawTog(it, st); break;
         case 'lever': g = drawLever(it, st); break;
-        case 'disp': g = drawDisp(it); break;
+        case 'disp': g = drawDisp(it, off); break;
         case 'win': g = drawWin(it); break;
       }
       if (opts && opts.interactive) {
@@ -1040,8 +1043,19 @@
   // pushbutton arms its agents' squibs; an armed agent lights DISCH when pressed).
   // Returns a short note about what happened, or null.
   function pressPanel(id, i, states) { return pressItems(P[id].items, i, states); }
+  // A panel with its own power switch (RMP ON/OFF) is off when that switch is
+  // at its OFF position (the item's power index).
+  function poweredOff(items, states) {
+    return items.some(function (it, i) {
+      if (it.power == null) return false;
+      var st = states[i] || {};
+      return (st.cur != null ? st.cur : it.cur) === it.power;
+    });
+  }
   function pressItems(items, i, states) {
     var it = items[i], st = states[i] || {};
+    if (it.power == null && poweredOff(items, states) && (it.k === 'pb' || it.k === 'ann' || it.k === 'knob' || it.k === 'disp'))
+      return 'Nothing happens: the panel is switched off. Switch it ON first.';
     if (it.agent && !(it.guard && !st.guardOpen)) {
       var bb = litBits(st.lit, it);
       if (bb.up && !bb.lo) { states[i] = Object.assign({}, st, { lit: 'both', down: true }); return 'Agent discharged: DISCH is lit.'; }

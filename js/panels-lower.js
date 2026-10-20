@@ -306,7 +306,7 @@
 
   function rmp(n) {
     var items = [
-      raw(t(26, 5.4, 'ACTIVE', 3.4) + t(76, 5.4, 'STBY/CRS', 3.4) + line(8, 44.6, 34, 44.6) + t(46, 45.6, 'STBY NAV', 3) + line(58, 44.6, 92, 44.6)),
+      raw(t(26, 5.4, 'ACTIVE', 3.4) + t(76, 5.4, 'STBY/CRS', 3.4) + line(8, 44.6, 34, 44.6) + t(46, 45.6, 'STBY NAV', 3) + line(58, 44.6, 74, 44.6)),
       disp(26, 13, 34, '118.775', 'ACTIVE', 'Frequency in use on the selected radio.', { amber: true, lbl: ' ' }),
       disp(76, 13, 34, '124.850', 'STBY/CRS', 'Standby frequency, set with the knob. With STBY NAV in use, it shows the course.', { amber: true, lbl: ' ' }),
       key(51, 13, '⇄', 'Transfer: swaps the active and standby frequencies.', { s: 7, w: 10 }),
@@ -318,13 +318,14 @@
       cap(41, 36, 'HF2', 'Selects HF 2 for tuning.', { s: 7, w: 11, group: 'rmp' }),
       cap(54, 36, 'AM', 'Selects amplitude modulation for HF.', { s: 7, w: 11 }),
       knob(78, 32, 'Tuning knob', '', '', 'Tuning knob for the standby window: outer knob MHz, inner knob kHz.', { r: 7.5, light: true, noname: true }),
-      cap(15, 53, 'NAV', 'Guarded. Back-up radio navigation: lets the RMPs tune the VOR, ILS and ADF if both FMGCs fail. The green light shows it is selected.', { s: 7, w: 11, guard: 'c' }),
+      cap(15, 53, 'NAV', 'Back-up radio navigation (under a clear guard on the aircraft): lets the RMPs tune the VOR, ILS and ADF if both FMGCs fail. The green light shows it is selected.', { s: 7, w: 11 }),
       cap(30, 53, 'VOR', 'With NAV selected: the standby window tunes a VOR, and shows its course.', { s: 7, w: 11, group: 'nav' }),
       cap(43, 53, 'ILS', 'With NAV selected: the standby window tunes the ILS, and shows its course.', { s: 7, w: 11, group: 'nav' }),
       cap(69, 53, 'ADF', 'With NAV selected: the standby window tunes the ADF.', { s: 7, w: 11, group: 'nav' }),
-      tog(88, 53, 'RMP ' + n, ['ON', 'OFF'], 0, 'Switches RMP ' + n + ' on or off.', { noname: true })
+      tog(80, 53, 'RMP ' + n, ['ON', 'OFF'], 0, 'Switches RMP ' + n + ' on or off. At OFF the panel goes dark: the frequency windows and the selection lights go out, and its keys do nothing.', { noname: true, power: 1 })
     ];
-    return items;
+    // RMP keys sit flush in the panel, without the white frame of overhead pushbuttons.
+    return items.map(function (it) { return it.k === 'pb' || it.k === 'ann' ? Object.assign({ noFrame: true }, it) : it; });
   }
   P.RMP1 = { title: '', name: 'RMP 1', w: 100, h: 62, tone: 'dark', sys: null, desc: 'Radio management panel 1: tunes the VHF and HF radios, and the navaids as a back-up.', items: rmp(1) };
   P.RMP2 = { title: '', name: 'RMP 2', w: 100, h: 62, tone: 'dark', sys: null, desc: 'Radio management panel 2: tunes the VHF and HF radios, and the navaids as a back-up.', items: rmp(2) };
