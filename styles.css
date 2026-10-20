@@ -104,10 +104,14 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .guard-r { fill: url(#g-guard-r); stroke: #6c0e0b; }
 .guard-c { fill: url(#g-guard-c); stroke: #d0dbe3; }
 .guard-hinge { stroke: #0f1316; stroke-width: 1.2; }
-.fire-cap { fill: #4f120e; stroke: #2a0504; stroke-width: .5; }
+.fire-cap { fill: #c9452f; stroke: #6d160c; stroke-width: .5; }
+.fire-well { fill: #15181b; stroke: #c9cfd5; stroke-width: .5; }
+.fire-slot { fill: #3a0b06; }
+.fire-guard { fill: #d8402c; stroke: #7a1a0e; stroke-width: .4; }
+.fire-guard-glass { fill: #ff6a50; opacity: .14; pointer-events: none; }
 .fire-cap.on { fill: url(#g-fire-lit); }
 .fire-halo { fill: #ff3b30; opacity: .75; }
-.fire-txt { fill: #d98a7c; font-weight: 700; letter-spacing: .04em; opacity: .6; }
+.fire-txt { fill: #7c1a0e; font-weight: 700; letter-spacing: .04em; opacity: .85; }
 .fire-txt.on { fill: #fff; opacity: 1; }
 .fire-txt.sm { opacity: .8; }
 .fire-out { fill: #f6d9d6; opacity: .7; }

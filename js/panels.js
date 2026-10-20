@@ -679,18 +679,31 @@
     }
     return o;
   }
+  // ENG/APU FIRE pushbutton in its well, under a hinged red guard (as in the
+  // owner's photos): first tap lifts the guard, the next pushes the button,
+  // which then stays released out and arms the agent squibs.
   function drawFire(it, st) {
-    var x = it.x, y = it.y, w = 44, h = 26, lit = !!st.lit, o = '', l = x - w / 2, t = y - h / 2;
-    o += '<rect x="' + (l + 0.8) + '" y="' + (t + 1.6) + '" width="' + w + '" height="' + h + '" rx="2.4" class="shadow"/>';
+    var x = it.x, y = it.y, w = 44, h = 26, lit = !!st.lit, o = '', l = x - w / 2, t = y - h / 2, out = st.pushed ? 1.8 : 0;
+    o += '<rect x="' + (l - 1.6) + '" y="' + (t - 1.6) + '" width="' + (w + 3.2) + '" height="' + (h + 3.2) + '" rx="2" class="fire-well"/>';
     if (lit) o += '<rect x="' + (l - 2) + '" y="' + (t - 2) + '" width="' + (w + 4) + '" height="' + (h + 4) + '" rx="4" class="fire-halo" filter="url(#f-soft)"/>';
-    o += '<path d="M' + (x - 4) + ' ' + (t + h) + ' l4 6 l4 -6 z" class="guard-o-solid"/>' + '<circle cx="' + x + '" cy="' + (t + h + 2.6) + '" r="1.3" class="guard-hole"/>';
-    o += '<rect x="' + l + '" y="' + t + '" width="' + w + '" height="' + h + '" rx="2.4" class="guard-o-solid"/>';
-    o += '<rect x="' + (l + 4) + '" y="' + (t + 0.8) + '" width="' + (w - 8) + '" height="3.6" rx="1" class="guard-hinge-bar"/>';
-    o += '<rect x="' + (l + 3.4) + '" y="' + (t + 5.4) + '" width="' + (w - 6.8) + '" height="' + (h - 8.4) + '" rx="1.6" class="fire-cap' + (lit ? ' on' : '') + '"/>';
-    o += text(x, y + 2.6, 'FIRE', 'fire-txt' + (lit ? ' on' : ''), 6.4) + text(x, y + 8.4, 'PUSH', 'fire-txt sm' + (lit ? ' on' : ''), 3.4);
-    o += '<circle cx="' + (l + 5.6) + '" cy="' + (y + 3) + '" r="1" class="guard-hole"/><circle cx="' + (l + w - 5.6) + '" cy="' + (y + 3) + '" r="1" class="guard-hole"/>';
-    o += '<rect x="' + (l + 1) + '" y="' + (t + 1) + '" width="' + (w - 2) + '" height="' + (h * 0.4) + '" rx="2" class="gloss"/>';
-    if (st.pushed) o += '<rect x="' + (l + 3.4) + '" y="' + (t + h - 4.4) + '" width="' + (w - 6.8) + '" height="1.6" class="fire-out"/>';
+    if (out) o += '<rect x="' + (l + 2) + '" y="' + (t + h - 5) + '" width="' + (w - 4) + '" height="4" class="fire-out"/>';
+    o += '<rect x="' + (l + 1.4) + '" y="' + (t + 1.4 - out) + '" width="' + (w - 2.8) + '" height="' + (h - 2.8) + '" rx="2" class="fire-cap' + (lit ? ' on' : '') + '"/>';
+    o += '<rect x="' + (l + 2.4) + '" y="' + (t + 2.2 - out) + '" width="' + (w - 4.8) + '" height="' + (h * 0.35) + '" rx="1.6" class="gloss"/>';
+    o += text(x, y + 1.6 - out, 'FIRE', 'fire-txt' + (lit ? ' on' : ''), 7.4) + text(x, y + 8 - out, 'PUSH', 'fire-txt sm' + (lit ? ' on' : ''), 3.6);
+    [l + 4.4, l + w - 4.4].forEach(function (sx) { o += '<ellipse cx="' + sx + '" cy="' + (y - out) + '" rx="1.8" ry="1.1" class="fire-slot"/>'; });
+    var gl = l - 2.4, gw = w + 4.8;
+    if (st.guardOpen) {
+      // guard hinged up: seen nearly edge-on above the button, tab at the top
+      var gt = t - 15;
+      o += '<path d="M' + gl + ' ' + (t - 1) + ' L' + (gl + 3) + ' ' + gt + ' L' + (gl + gw - 3) + ' ' + gt + ' L' + (gl + gw) + ' ' + (t - 1) + ' Z M' + (gl + 3.6) + ' ' + (t - 3) + ' L' + (gl + 5.4) + ' ' + (gt + 2.4) + ' L' + (gl + gw - 5.4) + ' ' + (gt + 2.4) + ' L' + (gl + gw - 3.6) + ' ' + (t - 3) + ' Z" class="fire-guard" fill-rule="evenodd"/>';
+      o += '<path d="M' + (x - 5) + ' ' + gt + ' l5 -5 l5 5 z" class="fire-guard"/><circle cx="' + x + '" cy="' + (gt - 1.8) + '" r="1.1" class="guard-hole"/>';
+    } else {
+      // guard closed over the button: red frame with a window, tab at the bottom
+      var gt2 = t - 2.4, gh = h + 4.8;
+      o += '<path d="M' + gl + ' ' + gt2 + ' h' + gw + ' v' + gh + ' h-' + gw + ' Z M' + (gl + 3) + ' ' + (gt2 + 3) + ' v' + (gh - 6) + ' h' + (gw - 6) + ' v-' + (gh - 6) + ' Z" class="fire-guard" fill-rule="evenodd"/>';
+      o += '<rect x="' + (gl + 3) + '" y="' + (gt2 + 3) + '" width="' + (gw - 6) + '" height="' + (gh - 6) + '" class="fire-guard-glass"/>';
+      o += '<path d="M' + (x - 5) + ' ' + (gt2 + gh) + ' l5 5 l5 -5 z" class="fire-guard"/><circle cx="' + x + '" cy="' + (gt2 + gh + 1.8) + '" r="1.1" class="guard-hole"/>';
+    }
     return o;
   }
   function selAngles(n) {
@@ -978,7 +991,7 @@
   }
   function hitRect(it) {
     var w = 26, h = 26;
-    if (it.k === 'fire') { w = 60; h = 34; }
+    if (it.k === 'fire') { w = 56; h = 42; }
     else if (it.k === 'pb' || it.k === 'ann') { w = (it.w || it.s || 20) + 8; h = (it.s || 20) + 8; }
     else if (it.k === 'cb') { w = h = 11; }
     else if (it.k === 'sel' || it.k === 'knob') { w = h = (it.r || 8) * 2 + 10; }
@@ -1031,7 +1044,8 @@
       if (it.follow) b.lo = b.up;
       st.lit = bitsToLit(b, it);
     } else if (it.k === 'fire') {
-      st.pushed = !st.pushed;
+      if (!st.guardOpen) st.guardOpen = true;
+      else st.pushed = !st.pushed;
     } else if (it.k === 'sel' || it.k === 'tog') {
       var cur = st.cur != null ? st.cur : it.cur;
       st.cur = (cur + 1) % it.pos.length;
@@ -1087,6 +1101,7 @@
       return 'Nothing happens: the squib is not armed. Push the fire pushbutton first.';
     }
     states[i] = press(it, st);
+    if (it.k === 'fire' && !st.guardOpen) return 'Guard lifted. Tap again to push the ' + it.label + ' FIRE pushbutton.';
     // Radio groups (AUTO BRK LO/MED/MAX): selecting one deselects the others.
     if (it.group && litBits(states[i].lit, it).lo) {
       items.forEach(function (o, j) {
