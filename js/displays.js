@@ -395,9 +395,28 @@
     return o + footer(s);
   }
 
+  // Spoilers 1-5 each side: green dash when available, amber underlined number when its
+  // hydraulic system is lost (1 and 5 green, 2 and 4 yellow, 3 blue).
+  var SPL_SYS = ['G', 'Y', 'B', 'Y', 'G'];
+  function hydOk(s) { var h = s.hyd; return { G: h.G.p >= 1450, B: h.B.p >= 1450, Y: h.Y.p >= 1450 }; }
+  function spoiler(x, y, k, ok, ext) {
+    if (!ok[SPL_SYS[k]]) return t(x, y + 3, String(k + 1), 'a', 10, 'middle') + ln(x - 4, y + 5, x + 4, y + 5, 'sa', 1);
+    return ext ? '<path d="M' + (x - 5) + ' ' + y + ' l5 -8 l5 8 z" class="fg"/>' : ln(x - 7, y, x + 7, y, 'sg', 2.6);
+  }
+  function sysBox(x, y, L, ok) { return fillRect(x - 5, y - 9, 10, 11, 'fb') + t(x, y, L, ok ? 'g' : 'a', 9, 'middle'); }
   function pageWHEEL(s) {
-    var o = ul(10, 78, 'WHEEL', 'w', 12);
-    [[50, 54], [74, 50], [98, 46], [122, 42], [146, 38], [174, 38], [198, 42], [222, 46], [246, 50], [270, 54]].forEach(function (q) { o += ln(q[0] - 7, q[1], q[0] + 7, q[1], 'sg', 2.6); });
+    var o = ul(10, 78, 'WHEEL', 'w', 12), ok = hydOk(s);
+    [[50, 54], [74, 50], [98, 46], [122, 42], [146, 38]].forEach(function (q, i) { o += spoiler(q[0], q[1], 4 - i, ok); });
+    [[174, 38], [198, 42], [222, 46], [246, 50], [270, 54]].forEach(function (q, i) { o += spoiler(q[0], q[1], i, ok); });
+    // Lost wheel functions, shown only when degraded
+    if (!ok.Y) o += sysBox(116, 130, 'Y', false) + t(126, 130, 'N/W STEERING', 'a', 10);
+    if (!ok.G && !ok.Y) o += t(118, 152, 'ANTI SKID', 'a', 10) + rc(176, 143, 10, 11, 'sg', 1) + t(181, 152, '1', 'a', 9, 'middle') + rc(188, 143, 10, 11, 'sg', 1) + t(193, 152, '2', 'a', 9, 'middle');
+    if (!ok.G) {
+      o += sysBox(136, 222, 'G', false) + t(146, 222, 'NORM BRK', 'a', 10);
+      o += sysBox(136, 238, 'Y', ok.Y) + t(146, 238, 'ALTN BRK', 'g', 10);
+      if (!ok.Y) o += '<path d="M152 242 v8 h6" class="sg" fill="none" stroke-width="1"/>' + t(160, 254, 'ACCU ONLY', 'g', 10);
+      o += t(160, 274, 'AUTO BRK', 'a', 10, 'middle');
+    }
     function door(x, y, d) { return ln(x - 18, y + 2 * d, x + 18, y - 2 * d, 'sg', 1.4) + circ(x, y, 2.2, 'sw', 1); }
     o += door(124, 76, 1) + door(174, 74, -1);
     o += arc(124, 86, 16, 135, 45, 'sw', 1.4) + arc(174, 84, 16, 135, 45, 'sw', 1.4);
@@ -407,7 +426,7 @@
     }
     o += brake(66, 206, 1) + brake(104, 206, 2) + t(85, 202, '°C', 'c', 8, 'middle') + t(85, 214, 'REL', 'w', 8, 'middle');
     o += brake(214, 178, 3) + brake(252, 178, 4) + t(233, 174, '°C', 'c', 8, 'middle') + t(233, 186, 'REL', 'w', 8, 'middle');
-    if (s.autoBrk) o += t(160, 220, 'AUTO BRK', 'g', 10, 'middle') + t(160, 232, s.autoBrk, 'g', 10, 'middle');
+    if (s.autoBrk && ok.G) o += t(160, 220, 'AUTO BRK', 'g', 10, 'middle') + t(160, 232, s.autoBrk, 'g', 10, 'middle');
     return o + footer(s);
   }
 
@@ -421,11 +440,7 @@
     }
     o += letters(149, 20, ['G', 'B', 'Y']);
     o += ln(56, 50, 148, 30, 'sw', 1) + ln(172, 30, 264, 50, 'sw', 1) + ln(80, 76, 142, 64, 'sw', 1) + ln(178, 64, 240, 76, 'sw', 1);
-    var spl = ['G', 'Y', 'B', 'Y', 'G'];
-    for (var k = 0; k < 5; k++) {
-      var c = ok[spl[k]] ? 'sg' : 'sa', xl = 132 - k * 18, xr = 188 + k * 18, y = 54 + k * 3;
-      o += s.spdBrk && c === 'sg' ? '<path d="M' + (xl - 5) + ' ' + y + ' l5 -8 l5 8 z" class="fg"/><path d="M' + (xr - 5) + ' ' + y + ' l5 -8 l5 8 z" class="fg"/>' : ln(xl - 6, y, xl + 6, y, c, 2.6) + ln(xr - 6, y, xr + 6, y, c, 2.6);
-    }
+    for (var k = 0; k < 5; k++) { var y = 54 + k * 3; o += spoiler(132 - k * 18, y, k, ok, s.spdBrk) + spoiler(188 + k * 18, y, k, ok, s.spdBrk); }
     o += t(160, 76, 'SPD BRK', 'w', 9, 'middle');
     function surf(x, y0, y1, ay, side) {
       var r = ln(x, y0, x, y1, 'sw', 1);
@@ -439,7 +454,7 @@
     o += t(186, 110, 'SEC', 'w', 10) + ln(182, 114, 212, 114, 'sw', 1) + ln(192, 126, 222, 126, 'sw', 1) + ln(202, 138, 232, 138, 'sw', 1);
     s.fctl.sec.forEach(function (st, idx) { o += t(216 + idx * 8, 112 + idx * 12, String(idx + 1), st === 'ok' ? 'g' : 'a', 11, 'middle'); });
     var ths = ok.G || ok.Y;
-    o += t(140, 180, 'PITCH TRIM', 'w', 10, 'middle') + letters(196, 180, ['G', 'Y']) + t(150, 194, ths ? '1.2' : 'XX', ths ? 'g' : 'a', 10, 'end') + t(154, 194, '°', 'c', 10) + t(162, 194, ths ? 'UP' : '', 'g', 9);
+    o += t(140, 180, 'PITCH TRIM', 'w', 10, 'middle') + letters(196, 180, ['G', 'Y']) + t(150, 194, '0.8', ths ? 'g' : 'a', 10, 'end') + t(154, 194, '°', 'c', 10) + t(162, 194, 'UP', ths ? 'g' : 'a', 9);
     o += t(82, 206, 'L', 'w', 10, 'middle') + t(82, 218, 'ELEV', 'w', 10, 'middle') + surf(106, 190, 254, 226, -1) + letters(76, 244, ['B', 'G']);
     o += t(256, 182, 'R', 'w', 10, 'middle') + t(256, 194, 'ELEV', 'w', 10, 'middle') + surf(226, 174, 238, 214, 1) + letters(246, 220, ['Y', 'B']);
     o += '<path d="M120 216 L146 200 M200 200 L222 216" class="sw" fill="none" stroke-width="1"/>';
@@ -460,7 +475,7 @@
     o += ln(196, 30, 196, 272, 'sw', 1.5);
     if (sts.inop.length) {
       o += ul(204, 44, 'INOP SYS', 'w', 10);
-      sts.inop.forEach(function (l, i) { o += t(204, 60 + i * di, l, 'a', di < 13 ? 9 : 10); });
+      sts.inop.forEach(function (l, i) { var it = Array.isArray(l) ? l : [l, 'a']; o += t(204, 60 + i * di, it[0], it[1], di < 13 ? 9 : 10); });
     }
     return o + footer(s);
   }

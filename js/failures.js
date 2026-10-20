@@ -194,39 +194,62 @@
         'With one elevator and all slats lost, direct law (from gear extension) gives better pitch control than alternate law below 200 kt. The gear uses L/G GRVTY PROC, and APPR SPD is VREF + 30 kt.')
     },
 
+    // ECAM display sequence for G+Y: laid out from the owner's ReadECAM slides of the
+    // E/WD, SD and STATUS pages (displays only; questions and notes are our own).
     'hyd-gy': {
-      title: 'HYD G+Y SYS LO PR', sysWord: 'HYD', level: 3, sd: 'HYD', phase: 'Cruise · FL350',
-      brief: 'In cruise. The green and yellow reservoirs both empty: green and yellow pressure fall below 1450 PSI. Only blue remains.',
+      title: 'HYD G+Y SYS LO PR', sysWord: 'HYD', level: 3, sd: 'HYD', phase: 'Climb · FL350',
+      brief: 'Climbing. The green and yellow reservoirs both empty: green and yellow pressure fall below 1450 PSI. Only blue remains, and the autopilot disconnects.',
       learn: HYD_LEARN.concat([
         'The alert triggers when green and yellow are both at or below 1450 PSI, and resets at 1750 PSI.',
-        'With G+Y lost: alternate law (protections lost), stabilizer and flaps lost, slats slow, spoilers 1, 2, 4 and 5 and both reversers lost, no anti-skid or nose wheel steering, gear by gravity, braking on the yellow accumulator only (7 full applications).',
-        'If the yellow loss is only its engine pump (HYD Y ENG 2 PUMP LO PR), ECAM also asks for the YELLOW ELEC PUMP ON.']),
+        'With G+Y lost: alternate law (protections lost), stabilizer and flaps lost, slats slow, spoilers 1, 2, 4 and 5 and both reversers lost, no anti-skid or nose wheel steering, gear by gravity, braking on the yellow accumulator only.',
+        'After the procedure, ECAM shows the F/CTL ALTN LAW alert, then the secondary failures (*WHEEL, *F/CTL) one page at a time, then STATUS. Each is reviewed and cleared with CLR.']),
       pre: AP_OFF,
-      memo: [{ t: 'LAND ASAP', c: 'r' }, { t: '*WHEEL', c: 'a' }, { t: '*F/CTL', c: 'a' }],
+      memo: [{ t: 'LAND ASAP', c: 'r' }, { t: 'F/CTL', c: 'a' }, { t: '*WHEEL', c: 'a' }, { t: '*F/CTL', c: 'a' }],
+      memoDone: [{ t: 'LAND ASAP', c: 'r' }, { t: '*WHEEL', c: 'a' }, { t: '*F/CTL', c: 'a' }],
       setup: function (s) { var g = s.hyd.G, y = s.hyd.Y; g.rsvr = y.rsvr = 'lo'; g.qty = y.qty = 0.05; g.leak = y.leak = true; g.p = y.p = 0; s.fctl.law = 'ALTN'; },
       lights: [G_PUMP, Y_PUMP, PTU],
       steps: [
         MASTER,
+        Q('The autopilot has disconnected with the warning. What comes first?', 'Fly the aircraft: aviate, then navigate, then communicate',
+          ['Start the ECAM actions straight away', 'Re-engage the autopilot', 'Call ATC and declare an emergency'],
+          'Both autopilots are lost with G+Y (AP 1+2 on INOP SYS). The PF flies manually and keeps control of the flight path; the ECAM actions come once the aircraft is under control.'),
         A('PTU', 'OFF', [PTU], { clears: true, fx: ptuOff, why: 'Nothing to transfer between two depressurised systems; the PTU would only overheat.' }),
         A('GREEN ENG 1 PUMP', 'OFF', [G_PUMP], { clears: true, fx: function (s) { s.hyd.G.pump = 'off'; }, why: 'Protects the green engine pump: its system is lost.' }),
         A('YELLOW ENG 2 PUMP', 'OFF', [Y_PUMP], { clears: true, fx: function (s) { s.hyd.Y.pump = 'off'; }, why: 'Protects the yellow engine pump: its system is lost.' }),
         Q('At what pressure does HYD G+Y SYS LO PR trigger?', 'Green and yellow both at or below 1450 PSI', ['Both below 3000 PSI', 'Both below 500 PSI', 'When either reservoir is low'],
           'It triggers when green and yellow are at or below 1450 PSI, and resets when the pressure is back at 1750 PSI or more.'),
         N('MANEUVER WITH CARE'),
-        TITLE('HYD', 'PTU FAULT'),
-        Q('Which pitch control is lost when green and yellow are both lost?', 'The stabilizer (THS)', ['The left elevator', 'The right elevator', 'Both elevators'],
-          'The THS is powered by green and yellow, so it is lost (STABILIZER on INOP SYS). Both elevators remain on blue.'),
-        Q('What is the go-around technique with this failure?', 'Max pitch 15 deg, thrust levers TOGA then MCT', ['Normal go-around, TOGA only', 'Max pitch 10 deg, FLX/MCT', 'Go-around is not allowed'],
-          'The procedure limits pitch to 15 degrees and asks for TOGA then MCT. The line is not shown with one engine inoperative.'),
-        Q('Braking is now on the yellow accumulator only. How many full brake applications does it give?', '7', ['3', '12', 'Unlimited, with the yellow electric pump'],
-          'STATUS: BRK Y ACCU PR ONLY (7 full brake applications) and MAX BRK PR 1000 PSI. Normal brakes, anti-skid and nose wheel steering are lost.')
+        N('HYD PTU FAULT', 'a', { word: 'HYD', gone: true }),
+        N('F/CTL ALTN LAW', 'a', { word: 'F/CTL', after: true }),
+        N('     (PROT LOST)', 'a', { after: true }),
+        N('MAX SPEED.......320/.77', 'c', { after: true })
       ],
-      sts: { left: [['MAX SPEED........320/.77', 'c'], ['MAX BRK PR........1000 PSI', 'c'], ['MANEUVER WITH CARE', 'c'], ['FOR GA: MAX PITCH 15 DEG', 'c'], ['APPR PROC DUAL HYD LO PR', 'w'],
-        ['FOR LDG.......FLAP LVR 3', 'c'], ['GPWS FLAP MODE.......OFF', 'c'], ['WHEN CONF 3 AND VAPP:', 'w'], ['-L/G GRVTY PROC...APPLY', 'c'], ['APPR SPD.....VREF+30 KT', 'c'],
-        ['LDG DIST PROC.....APPLY', 'c'], ['ALTN LAW: PROT LOST', 'a'], ['WHEN L/G DN: DIRECT LAW', 'a'], ['BRK Y ACCU PR ONLY', 'c'], ['FUEL CONSUMPT INCRSD', 'c'], ['FMS PRED UNRELIABLE', 'c'], ['SLATS SLOW', 'g']],
-        inop: ['G+Y HYD', 'F/CTL PROT', 'STABILIZER', 'REVERSER 1+2', 'SPLR 1+2+4+5', 'FLAPS', 'YAW DAMPER', 'AP 1+2', 'ANTI SKID', 'N/W STRG', 'NORM BRK', 'AUTO BRK', 'L/G RETRACT', 'CARGO DOOR', 'CAT 2', 'GLS AUTOLAND'] },
-      statusQ: Q('When does the STATUS ask for the gravity gear extension?', 'When in CONF 3 and stabilised at VAPP', ['At 200 kt', 'Before descent', 'At 1000 ft AGL'],
-        'Being stabilised at VAPP before selecting the gear down lets the aircraft be trimmed for the approach (the stabilizer is lost). APPR SPD is VREF + 30 kt on the A319/A320, VREF + 35 kt on the A321.')
+      seq: [
+        { lines: [N('F/CTL ALTN LAW', 'a', { word: 'F/CTL', boxed: true }), N('     (PROT LOST)', 'a'), N('MAX SPEED.......320/.77')], memo: [{ t: 'LAND ASAP', c: 'r' }, { t: '*WHEEL', c: 'a' }, { t: '*F/CTL', c: 'a' }],
+          sd: 'HYD', text: 'F/CTL ALTN LAW is now shown: note the protections lost and the maximum speed.', note: 'HYD G+Y cleared. The next alert is F/CTL ALTN LAW.',
+          q: Q('Why is the maximum speed limited to 320 kt / M .77?', 'In alternate law the high-speed protection is lost', ['To save fuel', 'Because the flaps are lost', 'To keep the RAT out'],
+            'With the protections lost (PROT LOST), the aircraft is no longer protected against overspeed, so the speed is limited to 320 kt / M .77.') },
+        { lines: [], memo: [{ t: 'LAND ASAP', c: 'r' }, { t: '*WHEEL', c: 'a' }, { t: '*F/CTL', c: 'a' }], sd: 'WHEEL',
+          text: 'Secondary failure *WHEEL: the SD shows the WHEEL page. Check what is left for stopping.', note: 'ECAM shows the WHEEL page for the secondary failure.',
+          q: Q('From the WHEEL page, what is left for stopping after landing?', 'Alternate braking on the yellow accumulator only, no anti-skid, no autobrake, ground spoiler 3 only',
+            ['Normal braking with anti-skid', 'Autobrake LO and both reversers', 'No braking at all'],
+            'NORM BRK, ANTI SKID and AUTO BRK are amber; ALTN BRK shows ACCU ONLY. Only spoiler 3 (blue) extends and both reversers are lost. Nose wheel steering is lost too, so the aircraft cannot be taxied off the runway.') },
+        { lines: [], memo: [{ t: 'LAND ASAP', c: 'r' }, { t: '*F/CTL', c: 'a' }], sd: 'F/CTL',
+          text: 'Secondary failure *F/CTL: the SD shows the F/CTL page. Check what is left to fly the aircraft.', note: 'ECAM shows the F/CTL page for the secondary failure.',
+          q: Q('From the F/CTL page, is the aircraft still trimmable in pitch?', 'No: the THS (G+Y) is frozen; pitch is by the elevators on blue',
+            ['Yes, with the trim wheel on blue', 'Yes, the THS moves slowly on blue', 'Only with the autopilot'],
+            'PITCH TRIM shows G and Y amber and the trim value amber: the stabilizer is lost at its last position. Both elevators work on blue, the ailerons on blue, spoiler 3 for roll, and the rudder on blue.') },
+        { lines: [], memo: [{ t: 'LAND ASAP', c: 'r' }], sd: 'STS',
+          sts: { left: [['MAX SPEED........320/.77', 'c'], ['MAX BRK PR.......1000PSI', 'c'], ['MANEUVER WITH CARE', 'c'], ['', 'c'], [' -FOR LDG.....USE FLAP 3', 'c'], [' -GPWS FLAP MODE.....OFF', 'c'],
+            [' .WHEN CONF 3 AND VAPP:', 'w'], [' -L/G.........GRVTY EXTN', 'c'], ['APPR SPD : VREF + 25 KT', 'c'], ['LDG DIST PROC......APPLY', 'c'], ['', 'c'],
+            ['ALTN LAW : PROT LOST', 'g'], ['WHEN L/G DN : DIRECT LAW', 'g'], ['BRK Y ACCU PR ONLY', 'g'], ['SLATS SLOW', 'g']],
+            inop: [['G+Y HYD', 'r'], 'F/CTL PROT', 'STABILIZER', 'REVERSER 1+2', 'SPLR 1+2+4+5', 'FLAPS', 'YAW DAMPER', 'AP 1+2', 'CAT 2', 'ANTI SKID', 'N/W STRG', 'NORM BRK', 'AUTO BRK', 'L/G RETRACT', 'CARGO DOOR', 'G ENG 1 PUMP', 'Y ENG 2 PUMP'] },
+          text: 'STATUS is shown. Review it with the other pilot.', note: 'Secondary failures reviewed. STATUS is shown.',
+          task: T('STATUS: GPWS FLAP MODE OFF (overhead GPWS panel, left side).', { ctl: ['GPWS', 'FLAP\nMODE', 1], sel: true },
+            'GPWS FLAP MODE OFF: the landing is made in CONF 3 with the flaps lost, so the "too low flaps" warning is inhibited.'),
+          q: Q('When does the STATUS ask for the gravity gear extension?', 'When in CONF 3 and stabilised at VAPP', ['At 200 kt', 'Before descent', 'At 1000 ft AGL'],
+            'Being stabilised at VAPP before the gear goes down lets the aircraft be trimmed for the approach, because the stabilizer is lost. APPR SPD is VREF + 25 kt.') }
+      ]
     }
   };
   Object.keys(DRILLS).forEach(function (id) { DRILLS[id].id = id; });

@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.5.6';
+  var VERSION = '0.5.7';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -48,6 +48,7 @@
   var sdPage = null;
   function sdSvg() {
     var sts = DR && DR.s && (DR.phase === 'stsq' || DR.phase === 'clr2' || DR.phase === 'done') ? DR.f.sts : null;
+    if (DR && DR.phase === 'seq' && DR.f.seq[DR.si].sts) sts = DR.f.seq[DR.si].sts;
     return DISP.renderSD(liveState(), sdPage || 'CRUISE', sts);
   }
   function setSd(key) {
@@ -349,17 +350,34 @@
     var f = DR.f, out = [], cls = f.level === 3 ? 'r' : 'a';
     if (f.level >= 2 && (DR.phase === 'run' || DR.phase === 'clr1' || DR.phase === 'quiz')) {
       var w = f.sysWord, rest = f.title.indexOf(w) === 0 ? f.title.slice(w.length) : ' ' + f.title;
-      (f.pre || []).forEach(function (l) { out.push(l); });
+      if (!DR.masterDone) (f.pre || []).forEach(function (l) { out.push(l); });
       // The failure being worked has its title boxed, as on the E/WD.
       out.push({ parts: [{ s: w, u: true, c: cls }, { s: rest, c: cls }], box: w.length + 1 });
+      var allDone = DR.phase === 'clr1';
       f.steps.forEach(function (st, i) {
+        // gone: lines that clear by themselves once the actions are done; after: lines that only then appear
+        if (st.k === 'note' && ((st.gone && allDone) || (st.after && !allDone))) return;
         if (st.k === 'act' && !DR.done[i]) out.push({ text: fmtAct(st.item, st.val), cls: 'c' });
         if (st.k === 'note' && st.word) out.push({ parts: [{ s: st.word, u: true, c: st.c }, { s: st.text.slice(st.word.length), c: st.c }] });
         else if (st.k === 'note') out.push({ text: st.text, cls: st.c });
       });
     }
+    if (DR.phase === 'seq') {
+      var sg = f.seq[DR.si];
+      return { lines: (sg.lines || []).map(ewdLine), memo: sg.memo || [], sts: sg.sd === 'STS' };
+    }
     var showSts = !!f.sts && (DR.phase === 'stsq' || DR.phase === 'clr2' || DR.phase === 'done');
-    return { lines: out, memo: f.level >= 2 ? (f.memo || []) : [], sts: showSts };
+    var memo = DR.phase === 'clr1' && f.memoDone ? f.memoDone : (f.memo || []);
+    return { lines: out, memo: f.level >= 2 ? memo : [], sts: showSts };
+  }
+  // A clear-sequence line: a note (with an underlined system word) or a boxed title.
+  function ewdLine(l) {
+    if (l.k === 'note' && l.word) {
+      var p = { parts: [{ s: l.word, u: true, c: l.c }, { s: l.text.slice(l.word.length), c: l.c }] };
+      if (l.boxed) p.box = l.word.length + 1;
+      return p;
+    }
+    return l.k === 'note' ? { text: l.text, cls: l.c } : l;
   }
 
   function startEntry(entry) {
@@ -410,12 +428,17 @@
   }
   // Called after anything the trainee does.
   function drillCheck() {
+    if (DR && DR.phase === 'seq') {
+      var sg = DR.f.seq[DR.si];
+      if (sg.task && !DR.stTask && stepMet(sg.task)) { DR.stTask = true; DR.flash = sg.task.info || null; stageReady(); }
+      return;
+    }
     if (!DR || DR.phase !== 'run') return;
     var st = DR.f.steps[DR.i], moved = false, acted = false;
     while (st && (st.k === 'master' || st.k === 'act' || st.k === 'task') && stepMet(st)) {
       DR.done[DR.i] = true;
       if (st.k === 'act') { acted = true; if (st.fx) st.fx(DR.s); if (st.clears) st.ctls.forEach(function (c) { setFault(c, false); }); DR.flash = st.item + ' ' + st.val + ': ' + (st.why || 'done.'); }
-      if (st.k === 'master') DR.flash = 'Warning acknowledged. Now read the ECAM procedure on the E/WD.';
+      if (st.k === 'master') { DR.masterDone = true; DR.flash = 'Warning acknowledged. Now read the ECAM procedure on the E/WD.'; }
       if (st.k === 'task') DR.flash = st.info || null;
       DR.i++; moved = true;
       st = DR.f.steps[DR.i];
@@ -470,11 +493,31 @@
       DR.flash = 'Not yet: finish the ECAM actions, then clear.';
     } else if (DR.phase === 'clr1') {
       PN.LIVE.clr = false;
-      if (f.sts) { sdPage = 'STS'; PN.LIVE.sdPage = 'STS'; DR.phase = 'stsq'; DR.flash = 'STATUS shows on the SD. Review it.'; if (f.statusQ) showModal('quiz', { q: f.statusQ }); else afterStatusQ(); }
+      if (f.seq) startStage(0);
+      else if (f.sts) { sdPage = 'STS'; PN.LIVE.sdPage = 'STS'; DR.phase = 'stsq'; DR.flash = 'STATUS shows on the SD. Review it.'; if (f.statusQ) showModal('quiz', { q: f.statusQ }); else afterStatusQ(); }
       else finish();
     } else if (DR.phase === 'clr2') finish();
+    else if (DR.phase === 'seq') {
+      if (!PN.LIVE.clr) DR.flash = 'Not yet: ' + (DR.f.seq[DR.si].task && !DR.stTask ? 'do the action on this page first.' : 'answer the question first.');
+      else if (DR.si + 1 < f.seq.length) startStage(DR.si + 1);
+      else finish();
+    }
     renderDrill(); refreshHome(); if (PV) renderStage();
     return 'CLR';
+  }
+  // After the procedure, each CLR moves the ECAM on: the next alert, each secondary
+  // failure's page (*WHEEL, *F/CTL), then STATUS. A stage can hold a question and an action.
+  function startStage(i) {
+    var sg = DR.f.seq[i];
+    DR.phase = 'seq'; DR.si = i; DR.stQ = !sg.q; DR.stTask = !sg.task;
+    sdPage = sg.sd || null; PN.LIVE.sdPage = sdPage; PN.LIVE.clr = false;
+    DR.flash = sg.note || null;
+    if (sg.q) showModal('quiz', { q: sg.q });
+    stageReady();
+  }
+  function stageReady() {
+    if (DR.stQ && DR.stTask) PN.LIVE.clr = true;
+    renderDrill(); refreshHome(); if (PV && !PV.disp) renderStage();
   }
   function afterStatusQ() { DR.phase = 'clr2'; PN.LIVE.clr = true; renderDrill(); refreshHome(); }
   function answer(k) {
@@ -487,9 +530,10 @@
     hideModal();
     if (DR.phase === 'quiz') { DR.done[DR.i] = true; DR.i++; DR.phase = 'run'; advance(); drillCheck(); }
     else if (DR.phase === 'stsq') afterStatusQ();
+    else if (DR.phase === 'seq') { DR.stQ = true; stageReady(); }
   }
   function finish() {
-    var f = DR.f, acts = f.steps.filter(function (s) { return s.k === 'act' || s.k === 'task'; }).length;
+    var f = DR.f, acts = f.steps.filter(function (s) { return s.k === 'act' || s.k === 'task'; }).length + (f.seq || []).filter(function (g) { return g.task; }).length;
     var total = acts + DR.asked, score = acts - Math.min(acts, DR.mist.length) + DR.right;
     DR.pct = total ? Math.round(score / total * 100) : 100;
     DR.phase = 'done'; PN.LIVE.clr = false; stopChime();
@@ -508,6 +552,11 @@
 
   function taskText() {
     var f = DR.f, st = f.steps[DR.i];
+    if (DR.phase === 'seq') {
+      var sg = f.seq[DR.si];
+      if (sg.task && !DR.stTask) return sg.task.text;
+      return sg.text + ' Then press CLR' + (DR.si + 1 < f.seq.length ? '.' : ' to finish.');
+    }
     if (DR.phase === 'clr1') return 'Actions complete. Press CLR on the ECAM control panel (pedestal) to clear the ' + (f.level === 3 ? 'warning' : 'caution') + '.';
     if (DR.phase === 'stsq') return 'Review the STATUS page on the SD.';
     if (DR.phase === 'clr2') return 'STATUS reviewed. Press CLR again to clear it.';
