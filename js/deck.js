@@ -29,12 +29,13 @@
     }
     add('<g class="hot" data-panel="' + id + '" tabindex="0" role="button" aria-label="Expand ' + label + ' panel" transform="translate(' + x + ' ' + y + ')' + (s !== 1 ? ' scale(' + s + ')' : '') + '">');
     add(PN.render(id));
-    // ECAM control panel: its page keys change the system display page on the deck itself.
+    add('<rect width="' + p.w + '" height="' + p.h + '" rx="3" class="hot-ring"/>');
+    // ECAM control panel: its page keys (drawn above the highlight, so clicks reach them)
+    // change the system display page on the deck itself.
     p.items.forEach(function (it) {
       if (!it.sdPage && !it.sdAll) return;
-      add('<rect x="' + (it.x - it.w / 2 - 1) + '" y="' + (it.y - it.s / 2 - 1) + '" width="' + (it.w + 2) + '" height="' + (it.s + 2) + '" rx="1" class="sdkey" data-sd="' + (it.sdAll ? 'ALL' : it.sdPage) + '"/>');
+      add('<rect x="' + (it.x - it.w / 2 - 1) + '" y="' + (it.y - it.s / 2 - 1) + '" width="' + (it.w + 2) + '" height="' + (it.s + 2) + '" rx="1" class="sdkey" data-sd="' + (it.sdAll ? 'ALL' : it.sdPage) + '"><title>' + (it.sdAll ? 'ALL pages' : it.sdPage + ' page') + '</title></rect>');
     });
-    add('<rect width="' + p.w + '" height="' + p.h + '" rx="3" class="hot-ring"/>');
     add('</g>');
     return p.h * s;
   }

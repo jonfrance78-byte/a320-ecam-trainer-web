@@ -425,3 +425,5 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .sd-pages { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 620px; margin: 14px auto 0; }
 .sd-btn { min-width: 58px; min-height: 40px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: #1a222c; color: var(--ink); font: 700 13px var(--font-head); cursor: pointer; }
 .sd-btn.on { background: rgba(51, 214, 242, .18); border-color: var(--accent); color: #fff; }
+.hot:has(.sdkey:hover) .hot-ring { fill: rgba(51, 214, 242, 0); stroke: rgba(51, 214, 242, 0); }
+.sdkey:hover { stroke: var(--accent); stroke-width: .8; }
