@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.5.3';
+  var VERSION = '0.5.4';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -226,7 +226,7 @@
     document.getElementById('pv-stage').innerHTML = PV.photo ? renderPhotoStage(PV.photo) :
       '<svg viewBox="-4 -4 ' + (p.w + 8) + ' ' + (p.h + 8) + '" class="pv-svg" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' +
-      (PV.id === 'ECP' ? '<div class="pv-sdmini" aria-label="System display">' + sdSvg() + '</div>' : '');
+      (PV.id === 'ECP' ? '<div class="pv-sdmini" aria-label="System display">' + sdSvg() + '</div>' : '') + miniEwd();
     document.getElementById('pv-info').innerHTML = infoHtml(p);
   }
   function creditHtml() {
@@ -417,8 +417,19 @@
       st = DR.f.steps[DR.i];
     }
     if (moved) advance(); else renderDrill();
-    // An ECAM action done in an expanded panel: flip back to the flight deck and the E/WD.
-    if (acted && PV && !PV.disp) { var pv = PV; setTimeout(function () { if (PV === pv) { closePanel(); showEcam(); } }, 650); }
+    // An ECAM action done in an expanded panel: the panel stays open (with its information)
+    // and its small E/WD pulses as the line clears.
+    if (acted && PV && !PV.disp) {
+      DR.pulse = Date.now();
+      setTimeout(function () { var m = document.querySelector('#pv-stage .pv-ewd'); if (m) m.classList.remove('flash'); }, 1400);
+    }
+  }
+  // During a drill an expanded panel shows the E/WD message area, so the procedure
+  // stays in view while the trainee works the panel.
+  function miniEwd() {
+    if (!DR || !DR.s || DR.f.level < 2 || PV.disp || !(DR.phase === 'run' || DR.phase === 'quiz' || DR.phase === 'clr1')) return '';
+    return '<div class="pv-ewd' + (Date.now() - (DR.pulse || 0) < 1300 ? ' flash' : '') + '" aria-label="E/WD procedure">' + DISP.renderEWD(DR.s, ewdView()).replace('viewBox="0 0 320 320"', 'viewBox="0 188 320 132"') + '</div>' +
+      '<div class="pv-ewd-bar"><button class="btn sm" data-act="backEcam">Back to ECAM</button></div>';
   }
   function showEcam() {
     var g = document.querySelector('.hot[data-panel="EWD"]');
@@ -537,7 +548,7 @@
       var q = data.q;
       data.order = data.order || shuffle(q.options.length);
       var ans = data.answered;
-      h = '<p class="eyebrow">Question</p><h2 class="m-title q">' + esc(q.q) + '</h2><div class="m-opts">' + data.order.map(function (oi, k) {
+      h = '<p class="eyebrow">Question · ' + esc(f.title) + '</p><h2 class="m-title q">' + esc(q.q) + '</h2><div class="m-opts">' + data.order.map(function (oi, k) {
         var c = ans == null ? '' : oi === 0 ? ' right' : k === ans ? ' wrong' : ' dim';
         return '<button class="opt' + c + '" data-act="answer" data-k="' + k + '"' + (ans != null ? ' disabled' : '') + '>' + esc(q.options[oi]) + '</button>';
       }).join('') + '</div>' +
@@ -652,6 +663,7 @@
       case 'quizDone': quizDone(); break;
       case 'againDrill': var id = DR.f.id; brief(id); begin(); break;
       case 'stopDrill': stopDrill(); break;
+      case 'backEcam': closePanel(); showEcam(); break;
       case 'mute': muted = !muted; try { localStorage.setItem('ecam-mute', muted ? '1' : '0'); } catch (err) { /* ignore */ } if (muted) stopChime(); renderDrill(); break;
       case 'pvmode': if (PV) { setPanelMode(el.getAttribute('data-mode')); renderPanelView(); } break;
     }

@@ -77,7 +77,9 @@
           why: 'With the green fluid gone, the PTU would run unloaded and overheat, and could take power from yellow.' }),
         Q('Why is the PTU switched off first?', 'It would run against an empty green system and overheat', ['It transfers fluid from yellow into the leak', 'It is needed to power the RAT', 'It only works on the ground'],
           'The PTU transfers power, not fluid. With no green fluid it runs unloaded and overheats.'),
-        A('GREEN ENG 1 PUMP', 'OFF', G_PUMP, { clears: true, fx: function (s) { s.hyd.G.pump = 'off'; }, why: 'Stops the pump running dry.' })
+        A('GREEN ENG 1 PUMP', 'OFF', G_PUMP, { clears: true, fx: function (s) { s.hyd.G.pump = 'off'; }, why: 'Stops the pump running dry.' }),
+        Q('Green is now lost. Which wheel braking is still available?', 'Alternate braking (yellow), without autobrake', ['Normal braking with autobrake', 'Normal braking without autobrake', 'No wheel braking'],
+          'Normal brakes and autobrake are green, so they are lost (NORM BRK and AUTO BRK on INOP SYS). The alternate brakes are yellow: the STATUS shows ALTN BRK ONLY.')
       ],
       sts: { left: [['APPR PROC', 'w'], ['L/G.......GRVTY EXTN', 'c'], ['SLATS SLOW', 'g'], ['FLAPS SLOW', 'g'], ['ALTN BRK ONLY', 'g']],
         inop: ['G HYD', 'NORM BRK', 'AUTO BRK', 'SPLR 1+5', 'REVERSER 1', 'L/G RETRACT'] },
@@ -96,7 +98,9 @@
         MASTER,
         A('BLUE ELEC PUMP', 'OFF', B_PUMP, { clears: true, fx: function (s) { s.hyd.B.pump = 'off'; }, why: 'Switching off a pump that has lost pressure protects it and confirms the failure.' }),
         Q('Can the PTU help the blue system?', 'No: it only links green and yellow', ['Yes, automatically', 'Yes, when selected ON', 'Only on the ground'],
-          'The PTU sits between green and yellow. Blue has its own electric pump and the RAT.')
+          'The PTU sits between green and yellow. Blue has its own electric pump and the RAT.'),
+        Q('With blue lost, how do the slats move?', 'Slowly, on green only', ['Normally', 'Not at all', 'Slowly, on yellow'],
+          'Slats are powered by green and blue. With blue lost they still work on green, but slowly: SLATS SLOW on the STATUS.')
       ],
       sts: { left: [['SLATS SLOW', 'g']], inop: ['B HYD', 'SPLR 3'] },
       statusQ: Q('Which spoiler is lost with the blue system?', 'Spoiler 3 on each wing', ['Spoilers 1 and 5', 'Spoilers 2 and 4', 'All spoilers'],
@@ -168,6 +172,10 @@
         Q('Why is the RAT deployed in this procedure?', 'The blue electric pump has failed, so the RAT is the other source for blue',
           ['To power the green system', 'To supply the emergency generator only', 'It is always deployed with a dual hydraulic failure'],
           'The line only appears if HYD B ELEC PUMP LO PR. With the RAT out, keep the speed above 140 kt (MIN RAT SPD).'),
+        Q('With the RAT out, what is the minimum speed shown on the STATUS?', '140 kt', ['100 kt', '180 kt', 'VLS'],
+          'STATUS: MIN RAT SPD 140 KT (if the RAT is out), so that the RAT keeps enough output.'),
+        Q('At what pressure does HYD G+B SYS LO PR trigger?', 'Green and blue both at or below 1450 PSI', ['Both below 3000 PSI', 'Both below 500 PSI', 'When either reservoir is low'],
+          'It triggers when green and blue are at or below 1450 PSI, and resets when the pressure is back at 1750 PSI or more.'),
         Q('How is roll controlled with green and blue lost?', 'By spoilers 2 and 4 (yellow)', ['By the ailerons on yellow', 'By the rudder only', 'By spoiler 3'],
           'Both ailerons are G+B, so they are lost (L+R AIL on INOP SYS). Spoilers 2 and 4 are yellow and give roll control.')
       ],
@@ -196,11 +204,15 @@
         A('PTU', 'OFF', [PTU], { clears: true, fx: ptuOff, why: 'Nothing to transfer between two depressurised systems; the PTU would only overheat.' }),
         A('AFFECTED PUMPS', 'OFF', [G_PUMP, Y_PUMP], { clears: true, hint: 'GREEN ENG 1 PUMP and YELLOW ENG 2 PUMP, overhead HYD panel.',
           fx: function (s) { s.hyd.G.pump = 'off'; s.hyd.Y.pump = 'off'; }, why: 'Protects the engine pumps of the lost systems.' }),
+        Q('At what pressure does HYD G+Y SYS LO PR trigger?', 'Green and yellow both at or below 1450 PSI', ['Both below 3000 PSI', 'Both below 500 PSI', 'When either reservoir is low'],
+          'It triggers when green and yellow are at or below 1450 PSI, and resets when the pressure is back at 1750 PSI or more.'),
         N('MANEUVER WITH CARE'), N('FOR GO-AROUND:', 'w'), N(' MAX PITCH 15 DEG'), N(' THR LVR.......TOGA THEN MCT'), N('FUEL CONSUMPT INCRSD'), N('FMS PRED UNRELIABLE'),
         Q('Which pitch control is lost when green and yellow are both lost?', 'The stabilizer (THS)', ['The left elevator', 'The right elevator', 'Both elevators'],
           'The THS is powered by green and yellow, so it is lost (STABILIZER on INOP SYS). Both elevators remain on blue.'),
         Q('What is the go-around technique with this failure?', 'Max pitch 15 deg, thrust levers TOGA then MCT', ['Normal go-around, TOGA only', 'Max pitch 10 deg, FLX/MCT', 'Go-around is not allowed'],
-          'The procedure limits pitch to 15 degrees and asks for TOGA then MCT. The line is not shown with one engine inoperative.')
+          'The procedure limits pitch to 15 degrees and asks for TOGA then MCT. The line is not shown with one engine inoperative.'),
+        Q('Braking is now on the yellow accumulator only. How many full brake applications does it give?', '7', ['3', '12', 'Unlimited, with the yellow electric pump'],
+          'STATUS: BRK Y ACCU PR ONLY (7 full brake applications) and MAX BRK PR 1000 PSI. Normal brakes, anti-skid and nose wheel steering are lost.')
       ],
       sts: { left: [['MAX SPEED........320/.77', 'c'], ['MAX BRK PR........1000 PSI', 'c'], ['MANEUVER WITH CARE', 'c'], ['FOR GA: MAX PITCH 15 DEG', 'c'], ['APPR PROC DUAL HYD LO PR', 'w'],
         ['FOR LDG.......FLAP LVR 3', 'c'], ['GPWS FLAP MODE.......OFF', 'c'], ['WHEN CONF 3 AND VAPP:', 'w'], ['-L/G GRVTY PROC...APPLY', 'c'], ['APPR SPD.....VREF+30 KT', 'c'],
