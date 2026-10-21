@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.6.1';
+  var VERSION = '0.6.2';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -104,16 +104,21 @@
     renderHome();
   }
   function goHome() { if (DR) stopDrill(true); hideModal(); if (PV) PV = null, renderPanelView(); QZ = null; setView('start'); renderDrill(); }
+  // Normal procedure flows, checklists and approach guides live in their own app.
+  var NORMAL_APP = 'https://claude.ai/artifact/SsHESftK2sRXrwGF6sDNJ5';
   // First page: the three parts of the trainer.
   function renderStart() {
     var items = [
-      ['normal', 'Normal Procedures', 'The flight deck: explore every panel and control. Normal procedure flows are coming.'],
+      ['normal', 'Normal Procedures', 'Interactive flows from power-up to securing, the normal checklists and approach guides. Opens the Normal Procedures app.', NORMAL_APP],
       ['abnormal', 'Abnormal Procedures', 'ECAM failures by system, worked on the flight deck: actions, secondary failures and STATUS.'],
       ['quiz', 'Questions Bank', 'Questions on each system and on ECAM handling, with explanations.']
     ];
     document.getElementById('view').innerHTML = '<section class="start">' +
       '<ul class="tlist">' + items.map(function (t) {
-        return '<li><button class="titem" data-act="choose" data-v="' + t[0] + '"><span class="titem-t">' + esc(t[1]) + '</span><span class="titem-d">' + esc(t[2]) + '</span></button></li>';
+        var body = '<span class="titem-t">' + esc(t[1]) + '</span><span class="titem-d">' + esc(t[2]) + '</span>';
+        // An item with a link opens a separate app in a new tab.
+        if (t[3]) return '<li><a class="titem" href="' + t[3] + '" target="_blank" rel="noopener" style="text-decoration:none">' + body + '</a></li>';
+        return '<li><button class="titem" data-act="choose" data-v="' + t[0] + '">' + body + '</button></li>';
       }).join('') + '</ul>' +
       '<p class="start-ver"><span class="ver-pill">Version ' + VERSION + '</span></p>' +
       '<p class="disclaimer">Training aid only, simplified. Follow the FCOM, QRH and your operator\'s procedures.</p></section>';
@@ -174,7 +179,7 @@
     var ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: DISP.renderPFD(s), nd: DISP.renderND(s) };
     document.getElementById('view').innerHTML =
       '<section class="home">' +
-      '<p class="home-hint">' + (DECK_MODE === 'normal' ? 'Normal procedure flows are coming. Tap any panel to explore it. ' : 'Tap any panel to expand it. Failures are in the menu. ') + '<span class="ver-pill">Version ' + VERSION + '</span> <button class="linkbtn" data-act="winReset">Reset window sizes</button></p>' +
+      '<p class="home-hint">' + (DECK_MODE === 'normal' ? 'Tap any panel to explore it. Normal procedure flows are in the <a href="' + NORMAL_APP + '" target="_blank" rel="noopener">Normal Procedures app</a>. ' : 'Tap any panel to expand it. Failures are in the menu. ') + '<span class="ver-pill">Version ' + VERSION + '</span> <button class="linkbtn" data-act="winReset">Reset window sizes</button></p>' +
       '<div class="wins">' + DECK.build({ ecam: ecam, states: PSTATE }).map(winHtml).join('') + '</div>' +
       '<p class="disclaimer">Training aid only. Panels are drawings of the A320 flight deck; some overhead panels also offer a real A319 photo (Linus Follert, CC BY-SA 2.0).</p>' +
       '</section>';
