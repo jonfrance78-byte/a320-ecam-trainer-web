@@ -280,5 +280,49 @@
     ['WHEEL', [E('WHEEL TIRE DAMAGE SUSPECTED', 'a')]]
   ];
 
-  window.ECAM_FAILURES = { DRILLS: DRILLS, CATEGORIES: CATEGORIES };
+  // General ECAM handling questions for the Questions Bank.
+  var GENERAL = [
+    Q('A red ECAM warning comes with MASTER WARN and the continuous repetitive chime. What level is it?', 'Level 3: an emergency needing immediate action',
+      ['Level 2: an abnormal needing crew awareness', 'Level 1: monitoring only', 'An advisory'],
+      'Level 3 (red, MASTER WARN, continuous repetitive chime) needs immediate action. Level 2 (amber, MASTER CAUT, single chime) needs awareness. Level 1 (amber, no master light or chime) needs monitoring.'),
+    Q('Which colour does the ECAM use for the actions to carry out?', 'Cyan', ['Green', 'White', 'Magenta'],
+      'Cyan: actions and limitations. Green: normal operation. Amber: cautions. Red: warnings. White: titles and remarks.'),
+    Q('Who reads and carries out the ECAM actions?', 'The PM, on the PF\'s command', ['The PF', 'Always the Captain', 'Whoever spots the warning first'],
+      'The PF flies the aircraft and handles navigation and communication; the PM reads and does the ECAM actions, asking for confirmation where it is needed.'),
+    Q('Which actions need confirmation from both pilots before they are done?', 'Thrust lever, ENG MASTER, fire pushbutton, IR and IDG', ['Any overhead pushbutton', 'Only the fire pushbutton', 'Only actions below 10 000 ft'],
+      'These actions are critical or cannot be undone in flight, so the PM announces them and the PF confirms first.'),
+    Q('When is CLR pressed after a failure?', 'When all actions are done and both pilots agree', ['As soon as the warning appears', 'Before the procedure is read', 'Only on the ground'],
+      'The PM asks "Clear?" and the PF checks before agreeing. Clearing too early can hide actions not yet done.'),
+    Q('What comes after the procedure of a failure is cleared?', 'Any secondary failures (marked *), then the STATUS page', ['The CRUISE page straight away', 'The E/WD goes blank', 'The ENG page'],
+      'ECAM works through the alerts, then shows each secondary failure (for example *WHEEL, *F/CTL) on its SD page, then STATUS for review before the last CLR.'),
+    Q('What does EMER CANC do for an amber caution?', 'Cancels it for the rest of the flight; it can be brought back with RCL', ['Cancels it until the next flight phase', 'Resets the failed system', 'Clears the STATUS page'],
+      'EMER CANC is for spurious alerts. A cancelled caution is listed on STATUS as CANCELLED CAUTION and can be recalled with RCL.'),
+    Q('What does a red LAND ASAP mean?', 'Land at the nearest airport where a safe landing can be made', ['Consider landing at the nearest suitable airport', 'Return to the departure airport', 'Continue to destination'],
+      'Red LAND ASAP: land at the nearest suitable airport where a safe landing can be made. Amber LAND ASAP: consider landing at the nearest suitable airport.'),
+    Q('From what height can the ECAM actions be started after take-off?', '400 ft AGL, with the flight path under control', ['1000 ft AGL', '1500 ft AGL', 'Straight after lift-off'],
+      'Apart from silencing the aural warning, ECAM actions are not started below 400 ft AGL.'),
+    Q('What does the STS indication at the bottom of the E/WD mean?', 'There is STATUS information to review', ['A system is on standby', 'The aircraft is stable', 'A caution was cancelled'],
+      'STS reminds the crew that the STATUS page has content. Press STS on the ECAM control panel to see it.')
+  ];
+
+  // Every question, grouped by menu category, for the Questions Bank.
+  function questions() {
+    var out = [['GENERAL ECAM', GENERAL.slice()]];
+    CATEGORIES.forEach(function (c) {
+      var qs = [];
+      c[1].forEach(function (e) {
+        [].concat(e.drill || []).forEach(function (id) {
+          var d = DRILLS[id];
+          function add(q) { if (q && qs.indexOf(q) < 0) qs.push(Object.assign({ from: d.title }, q)); }
+          d.steps.forEach(function (st) { if (st.k === 'quiz') add(st); });
+          (d.seq || []).forEach(function (g) { add(g.q); });
+          add(d.statusQ);
+        });
+      });
+      if (qs.length) out.push([c[0], qs]);
+    });
+    return out;
+  }
+
+  window.ECAM_FAILURES = { DRILLS: DRILLS, CATEGORIES: CATEGORIES, questions: questions };
 })();

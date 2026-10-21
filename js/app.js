@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.5.8';
+  var VERSION = '0.6.0';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -91,12 +91,41 @@
   var PV = null; // expanded panel: { id, states, selected }
 
   /* ----------------------------------------------------------------- home */
+  var VIEW = 'start', DECK_MODE = null, QZ = null;
+  var BARTITLE = { start: 'A320 ECAM Trainer', normal: 'Normal Procedures', abnormal: 'A320 Flight Deck Overview', quiz: 'Questions Bank' };
+  function setView(v, mode) {
+    VIEW = v; DECK_MODE = mode || null;
+    var bar = document.querySelector('.appbar');
+    bar.classList.remove('away');
+    bar.querySelector('.appbar-title').textContent = BARTITLE[v === 'deck' ? mode : v];
+    bar.querySelector('[data-act=home]').hidden = v === 'start';
+    bar.querySelector('[data-act=search]').hidden = v !== 'deck';
+    window.scrollTo(0, 0);
+    renderHome();
+  }
+  function goHome() { if (DR) stopDrill(true); hideModal(); if (PV) PV = null, renderPanelView(); QZ = null; setView('start'); renderDrill(); }
+  // First page: the three parts of the trainer.
+  function renderStart() {
+    var items = [
+      ['normal', 'Normal Procedures', 'The flight deck: explore every panel and control. Normal procedure flows are coming.'],
+      ['abnormal', 'Abnormal Procedures', 'ECAM failures by system, worked on the flight deck: actions, secondary failures and STATUS.'],
+      ['quiz', 'Questions Bank', 'Questions on each system and on ECAM handling, with explanations.']
+    ];
+    document.getElementById('view').innerHTML = '<section class="start">' +
+      '<ul class="tlist">' + items.map(function (t) {
+        return '<li><button class="titem" data-act="choose" data-v="' + t[0] + '"><span class="titem-t">' + esc(t[1]) + '</span><span class="titem-d">' + esc(t[2]) + '</span></button></li>';
+      }).join('') + '</ul>' +
+      '<p class="start-ver"><span class="ver-pill">Version ' + VERSION + '</span></p>' +
+      '<p class="disclaimer">Training aid only, simplified. Follow the FCOM, QRH and your operator\'s procedures.</p></section>';
+  }
   function renderHome() {
+    if (VIEW === 'start') return renderStart();
+    if (VIEW === 'quiz') return renderQuiz();
     var s = liveState();
     var ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: DISP.renderPFD(s), nd: DISP.renderND(s) };
     document.getElementById('view').innerHTML =
       '<section class="home">' +
-      '<p class="home-hint">Tap any panel to expand it. <span class="ver-pill">Version ' + VERSION + '</span></p>' +
+      '<p class="home-hint">' + (DECK_MODE === 'normal' ? 'Normal procedure flows are coming. Tap any panel to explore it. ' : 'Tap any panel to expand it. Failures are in the menu. ') + '<span class="ver-pill">Version ' + VERSION + '</span></p>' +
       '<div class="deck-wrap">' + DECK.build({ ecam: ecam, states: PSTATE }) + '</div>' +
       '<p class="disclaimer">Training aid only. Panels are drawings of the A320 flight deck; some overhead panels also offer a real A319 photo (Linus Follert, CC BY-SA 2.0).</p>' +
       '</section>';
@@ -382,6 +411,7 @@
 
   function startEntry(entry) {
     drawerOpen = false; renderDrawer();
+    if (VIEW !== 'deck' || DECK_MODE !== 'abnormal') setView('deck', 'abnormal');
     var ids = Array.isArray(entry.drill) ? entry.drill : [entry.drill];
     if (ids.length > 1) { showModal('choose', { entry: entry, ids: ids }); return; }
     brief(ids[0]);
@@ -634,6 +664,60 @@
     }).join('');
   }
 
+  /* ------------------------------------------------------ questions bank */
+  var QBEST = {};
+  try { QBEST = JSON.parse(localStorage.getItem('ecam-qbest') || '{}'); } catch (e) { QBEST = {}; }
+  function renderQuiz() {
+    var v = document.getElementById('view'), bank = FAIL.questions();
+    if (!QZ) {
+      var all = bank.reduce(function (n, c) { return n + c[1].length; }, 0);
+      v.innerHTML = '<section class="start"><p class="start-intro">Choose a topic. Each set is in random order, with an explanation after every answer.</p><ul class="tlist">' +
+        '<li><button class="titem" data-act="qzStart" data-c="*"><span class="titem-t">All topics</span><span class="titem-d">' + all + ' questions, 10 picked at random' + (QBEST['*'] != null ? ' · best ' + QBEST['*'] + '%' : '') + '</span></button></li>' +
+        bank.map(function (c) {
+          return '<li><button class="titem" data-act="qzStart" data-c="' + esc(c[0]) + '"><span class="titem-t">' + esc(c[0]) + '</span><span class="titem-d">' + c[1].length + ' question' + (c[1].length > 1 ? 's' : '') + (QBEST[c[0]] != null ? ' · best ' + QBEST[c[0]] + '%' : '') + '</span></button></li>';
+        }).join('') + '</ul><p class="small center">More topics appear as each system\'s drills are built.</p></section>';
+      return;
+    }
+    var q = QZ.list[QZ.i];
+    if (!q) {
+      var pct = Math.round(QZ.right / QZ.list.length * 100);
+      v.innerHTML = '<section class="start"><div class="qcard"><p class="eyebrow">' + esc(QZ.cat === '*' ? 'All topics' : QZ.cat) + '</p><p class="m-score">' + pct + '%</p>' +
+        '<p>' + QZ.right + ' of ' + QZ.list.length + ' right.</p><div class="m-btns"><button class="btn" data-act="qzBack">Topics</button><button class="btn primary" data-act="qzStart" data-c="' + esc(QZ.cat) + '">Again</button></div></div></section>';
+      return;
+    }
+    var ans = QZ.ans;
+    v.innerHTML = '<section class="start"><div class="qcard"><p class="eyebrow">' + esc(QZ.cat === '*' ? 'All topics' : QZ.cat) + (q.from ? ' · ' + esc(q.from) : '') + ' · ' + (QZ.i + 1) + ' of ' + QZ.list.length + '</p>' +
+      '<h2 class="m-title q">' + esc(q.q) + '</h2><div class="m-opts">' + QZ.order.map(function (oi, k) {
+        var c = ans == null ? '' : oi === 0 ? ' right' : k === ans ? ' wrong' : ' dim';
+        return '<button class="opt' + c + '" data-act="qzAns" data-k="' + k + '"' + (ans != null ? ' disabled' : '') + '>' + esc(q.options[oi]) + '</button>';
+      }).join('') + '</div>' +
+      (ans != null ? '<p class="m-explain"><b>' + (QZ.order[ans] === 0 ? 'Correct.' : 'Not quite.') + '</b> ' + esc(q.explain) + '</p><div class="m-btns"><button class="btn primary" data-act="qzNext">' + (QZ.i + 1 < QZ.list.length ? 'Next' : 'Finish') + '</button></div>' : '') +
+      '</div></section>';
+  }
+  function startQuiz(cat) {
+    var bank = FAIL.questions(), list = [];
+    bank.forEach(function (c) { if (cat === '*' || c[0] === cat) list = list.concat(c[1]); });
+    list = shuffle(list.length).map(function (i) { return list[i]; }).slice(0, cat === '*' ? 10 : list.length);
+    QZ = { cat: cat, list: list, i: 0, right: 0, ans: null };
+    QZ.order = shuffle(list[0].options.length);
+    renderQuiz(); window.scrollTo(0, 0);
+  }
+  function qzAnswer(k) {
+    if (QZ.ans != null) return;
+    QZ.ans = k; if (QZ.order[k] === 0) QZ.right++;
+    renderQuiz();
+  }
+  function qzNext() {
+    QZ.i++; QZ.ans = null;
+    if (QZ.list[QZ.i]) QZ.order = shuffle(QZ.list[QZ.i].options.length);
+    else {
+      var pct = Math.round(QZ.right / QZ.list.length * 100);
+      QBEST[QZ.cat] = Math.max(QBEST[QZ.cat] || 0, pct);
+      try { localStorage.setItem('ecam-qbest', JSON.stringify(QBEST)); } catch (e) { /* not saved */ }
+    }
+    renderQuiz(); window.scrollTo(0, 0);
+  }
+
   /* ------------------------------------------------------ menu and search */
   function panelLinks(ids) {
     return '<ul class="plist">' + ids.map(function (id) {
@@ -646,7 +730,9 @@
     if (!drawerOpen) { el.hidden = true; return; }
     el.innerHTML = '<nav class="drawer-card" aria-label="Menu">' +
       '<div class="drawer-top"><span class="drawer-brand">A320 ECAM Trainer</span><button class="icon-btn" data-act="closeDrawer" aria-label="Close menu">' + ICON.close + '</button></div>' +
-      '<button class="drawer-link" data-act="closeDrawer">Flight deck overview</button>' +
+      '<button class="drawer-link" data-act="home">Start page</button>' +
+      '<button class="drawer-link" data-act="choose" data-v="normal">Flight deck overview</button>' +
+      '<button class="drawer-link" data-act="choose" data-v="quiz">Questions Bank</button>' +
       failureMenu() + '<h3 class="drawer-h">Panels</h3>' +
       GROUPS.map(function (g) { return '<h3 class="drawer-h">' + esc(g[0]) + '</h3>' + panelLinks(g[1]); }).join('') +
       '<h3 class="drawer-h">Photo credits</h3><p class="drawer-note">Overhead panels: ' + creditHtml() + ' The straightened crops are shared under the same licence.</p>' +
@@ -703,6 +789,13 @@
     if (!el) return;
     switch (el.getAttribute('data-act')) {
       case 'menu': drawerOpen = true; renderDrawer(); break;
+      case 'home': goHome(); break;
+      case 'choose': var v = el.getAttribute('data-v'); if (v === 'quiz') { QZ = null; setView('quiz'); } else setView('deck', v); break;
+      case 'failures': drawerOpen = true; renderDrawer(); break;
+      case 'qzStart': startQuiz(el.getAttribute('data-c')); break;
+      case 'qzAns': qzAnswer(+el.getAttribute('data-k')); break;
+      case 'qzNext': qzNext(); break;
+      case 'qzBack': QZ = null; renderQuiz(); break;
       case 'closeDrawer': drawerOpen = false; renderDrawer(); applyPendingUpdate(); break;
       case 'search': searchOpen = true; renderSearch(); break;
       case 'closeSearch': searchOpen = false; renderSearch(); break;
@@ -742,6 +835,7 @@
     if (MODAL.kind && MODAL.kind !== 'quiz') { if (MODAL.kind === 'brief') stopDrill(); else hideModal(); return true; }
     if (searchOpen || drawerOpen) { searchOpen = false; drawerOpen = false; renderSearch(); renderDrawer(); return true; }
     if (PV) { closePanel(); return true; }
+    if (VIEW !== 'start') { if (QZ && VIEW === 'quiz') { QZ = null; renderQuiz(); } else goHome(); return true; }
     return false;
   };
 
@@ -802,9 +896,10 @@
   function boot() {
     document.getElementById('app').innerHTML =
       '<header class="appbar">' +
+      '<button class="icon-btn" data-act="home" aria-label="Back to the start" hidden>' + ICON.back + '</button>' +
       '<button class="icon-btn" data-act="menu" aria-label="Open menu">' + ICON.menu + '</button>' +
-      '<h1 class="appbar-title">A320 Flight Deck Overview</h1>' +
-      '<button class="icon-btn" data-act="search" aria-label="Search panels">' + ICON.search + '</button>' +
+      '<h1 class="appbar-title">A320 ECAM Trainer</h1>' +
+      '<button class="icon-btn" data-act="search" aria-label="Search panels" hidden>' + ICON.search + '</button>' +
       '</header>' +
       '<main id="view"></main>' +
       '<div id="scrim" class="scrim" hidden></div>' +
@@ -813,7 +908,7 @@
       '<div id="pv" class="pv" hidden></div>' +
       '<div id="drill" class="drill" hidden aria-live="polite"></div>' +
       '<div id="modal" class="modal" hidden></div>';
-    renderHome();
+    setView('start');
     showUpdatedNote();
     hideBarOnScroll();
     setTimeout(checkUpdate, 1500);
