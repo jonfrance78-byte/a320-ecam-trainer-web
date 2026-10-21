@@ -158,28 +158,37 @@
     for (var i = 0; i < 2; i++) for (var k = 0; k < 12; k++) l(318 + i * 144 + k * 10, 2039, 318 + i * 144 + k * 10, 2047, 'dk-footrest-rib');
   }
 
-  // The pedestal is drawn larger than the panels above it, so its small
-  // controls read well; the side consoles sit beside its lower part. It is
-  // drawn from y 1456 and moved to just below the main panel.
+  // The pedestal is drawn larger than the panels above it, so its small controls read well.
   var PED_SCALE = 1.45, PED_Y = 1456;
-  function build(opts) {
-    out = []; STATES = opts.states || {};
-    add('');
+  // The deck is drawn as separate windows (aft overhead, forward overhead, main
+  // panel, pedestal, side consoles), each its own SVG, so the app can size each one.
+  function section(id, title, vb, draw) {
+    out = [];
     add(PN.defs());
-    var aftBottom = aftOverhead();
-    var shift = fwdOverhead(aftBottom + 18) + 12 - 1128;
-    add('<g transform="translate(0 ' + shift.toFixed(1) + ')">');
-    var pedTop = mainPanel(opts.ecam) - 4;
-    add('<g transform="translate(450 ' + pedTop + ') scale(' + PED_SCALE + ') translate(-450 -' + PED_Y + ')">');
-    pedestal();
-    add('</g>');
-    var consY = pedTop + (1838 - PED_Y) * PED_SCALE;
-    panel('CONSL', 18, consY, 0.95); panel('CONSR', 663.5, consY, 0.95);
-    add('</g>');
-    add('</svg>');
-    var bottom = pedTop + (2058 - PED_Y) * PED_SCALE + shift;
-    out[0] = '<svg viewBox="16 6 868 ' + bottom.toFixed(0) + '" class="deck" role="group" aria-label="A320 flight deck overview. Tap a panel to expand it.">';
-    return out.join('');
+    draw();
+    return { id: id, title: title, w: vb[2], h: vb[3],
+      svg: '<svg viewBox="' + vb.join(' ') + '" class="deck" role="group" aria-label="' + title + '. Tap a panel to expand it.">' + out.join('') + '</svg>' };
+  }
+  function build(opts) {
+    STATES = opts.states || {};
+    var aftBottom, fwdTop, fwdBottom, mainBottom;
+    var secs = [];
+    secs.push(section('aft', 'Aft overhead', [116, 5, 668, 0], function () { aftBottom = aftOverhead(); }));
+    secs[0].svg = secs[0].svg.replace('viewBox="116 5 668 0"', 'viewBox="116 5 668 ' + (aftBottom + 1).toFixed(0) + '"'); secs[0].h = aftBottom + 1;
+    fwdTop = 18;
+    secs.push(section('fwd', 'Forward overhead', [116, 5, 668, 0], function () { fwdBottom = fwdOverhead(fwdTop); }));
+    secs[1].svg = secs[1].svg.replace('viewBox="116 5 668 0"', 'viewBox="116 5 668 ' + (fwdBottom + 1).toFixed(0) + '"'); secs[1].h = fwdBottom + 1;
+    secs.push(section('main', 'Glareshield and main panel', [8, 1118, 884, 0], function () { mainBottom = mainPanel(opts.ecam); }));
+    var mh = mainBottom - 1118 + 6;
+    secs[2].svg = secs[2].svg.replace('viewBox="8 1118 884 0"', 'viewBox="8 1118 884 ' + mh.toFixed(0) + '"'); secs[2].h = mh;
+    var pw = 368 * PED_SCALE + 12, ph = 600 * PED_SCALE + 12;
+    secs.push(section('ped', 'Pedestal', [450 - pw / 2, PED_Y - 6, pw, ph], function () {
+      add('<g transform="translate(450 ' + PED_Y + ') scale(' + PED_SCALE + ') translate(-450 -' + PED_Y + ')">');
+      pedestal();
+      add('</g>');
+    }));
+    secs.push(section('cons', 'Side consoles', [-6, -6, 482, 198], function () { panel('CONSL', 0, 0); panel('CONSR', 246, 0); }));
+    return secs;
   }
 
   window.ECAM_DECK = { build: build };

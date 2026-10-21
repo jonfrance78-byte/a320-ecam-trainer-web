@@ -58,9 +58,9 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .ver-pill { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; background: rgba(51, 214, 242, .12); color: var(--accent); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .toast { position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 80; padding: 10px 16px; border-radius: 10px; background: #1d2a40; color: #fff; font-size: 14px; font-weight: 700; box-shadow: 0 6px 24px rgba(0, 0, 0, .45); transition: opacity .6s; }
 .toast.out { opacity: 0; }
-.deck-wrap { margin: 0 auto; max-width: 760px; }
+.wins { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 10px; margin: 0 auto; max-width: 1400px; }
 /* On a computer, let the flight deck use the screen: wider, up to about 1400 px. */
-@media (min-width: 1100px) { .home { max-width: 1480px; } .deck-wrap { max-width: min(1400px, 100%); } }
+@media (min-width: 1100px) { .home { max-width: 1480px; } }
 .deck { display: block; width: 100%; height: auto; }
 .disclaimer { max-width: 62ch; margin: 18px auto 0; text-align: center; color: var(--ink-2); font-size: 13px; }
 
@@ -490,3 +490,16 @@ body.drill-on .home, body.drill-on .pv-card { padding-bottom: 150px; }
 .qcard { padding: 18px; border: 1px solid #3a4a5e; border-radius: 14px; background: #121b29; }
 .center { text-align: center; }
 .linkbtn { border: 0; background: none; padding: 0; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; }
+
+/* ------------------------------------------------------------ deck windows */
+.win { position: relative; box-sizing: border-box; min-width: 0; border: 1px solid #33445a; border-radius: 10px; background: #0f1724; box-shadow: 0 4px 18px rgba(0, 0, 0, .4); overflow: hidden; }
+.win.min { width: auto !important; }
+.win-bar { display: flex; align-items: center; gap: 4px; padding: 4px 6px 4px 12px; background: #182335; border-bottom: 1px solid #2c3b50; user-select: none; }
+.win.min .win-bar { border-bottom: 0; }
+.win-t { flex: 1; min-width: 0; font: 600 13px var(--font-head); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.win-pct { min-width: 36px; text-align: center; font: 600 11px var(--font-mono); color: var(--ink-2); }
+.win-btn { display: grid; place-items: center; width: 30px; height: 28px; border: 0; border-radius: 6px; background: transparent; color: var(--ink); font: 600 16px var(--font-head); cursor: pointer; }
+.win-btn:hover { background: rgba(255, 255, 255, .08); }
+.win-body { padding: 4px; }
+.win-grip { position: absolute; right: 0; bottom: 0; width: 22px; height: 22px; cursor: nwse-resize; touch-action: none;
+  background: linear-gradient(135deg, transparent 0 50%, #5b6d84 50% 56%, transparent 56% 66%, #5b6d84 66% 72%, transparent 72% 82%, #5b6d84 82% 88%, transparent 88%); }
