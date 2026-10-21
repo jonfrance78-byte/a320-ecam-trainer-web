@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.6.2';
+  var VERSION = '0.6.3';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -106,22 +106,33 @@
   function goHome() { if (DR) stopDrill(true); hideModal(); if (PV) PV = null, renderPanelView(); QZ = null; setView('start'); renderDrill(); }
   // Normal procedure flows, checklists and approach guides live in their own app.
   var NORMAL_APP = 'https://claude.ai/artifact/SsHESftK2sRXrwGF6sDNJ5';
-  // First page: the three parts of the trainer.
+  // First page: the three parts of the trainer. Colour follows the ECAM meaning:
+  // green for normal, amber for abnormal, cyan for knowledge.
+  var START_ICON = {
+    normal: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M3.5 6l1.2 1.2L7 4.8M3.5 12l1.2 1.2L7 10.8M3.5 18l1.2 1.2L7 16.8"/></svg>',
+    abnormal: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5L21.5 20h-19z"/><path d="M12 10v4.5M12 17.2v.1"/></svg>',
+    quiz: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.3-.9.8-.9 1.5v.4M12 16.8v.1"/></svg>'
+  };
   function renderStart() {
+    var live = FAIL.CATEGORIES.filter(function (c) { return c[1].some(function (e) { return e.drill; }); }).map(function (c) { return c[0]; });
+    var nq = FAIL.questions().reduce(function (n, c) { return n + c[1].length; }, 0);
     var items = [
-      ['normal', 'Normal Procedures', 'Interactive flows from power-up to securing, the normal checklists and approach guides. Opens the Normal Procedures app.', NORMAL_APP],
-      ['abnormal', 'Abnormal Procedures', 'ECAM failures by system, worked on the flight deck: actions, secondary failures and STATUS.'],
-      ['quiz', 'Questions Bank', 'Questions on each system and on ECAM handling, with explanations.']
+      ['normal', 'g', 'Normal', 'Normal Procedures', 'Interactive flows from power-up to securing, the normal checklists and approach guides.', 'Separate app · opens in a new tab', NORMAL_APP],
+      ['abnormal', 'a', 'Abnormal', 'Abnormal Procedures', 'ECAM failures by system, worked on the flight deck: actions, secondary failures and STATUS.', (live.length ? live.join(', ') + ' drills ready' : 'Drills coming') + ' · more systems coming'],
+      ['quiz', 'c', 'Knowledge', 'Questions Bank', 'Questions on each system and on ECAM handling, with an explanation after every answer.', nq + ' questions']
     ];
-    document.getElementById('view').innerHTML = '<section class="start">' +
-      '<ul class="tlist">' + items.map(function (t) {
-        var body = '<span class="titem-t">' + esc(t[1]) + '</span><span class="titem-d">' + esc(t[2]) + '</span>';
+    document.getElementById('view').innerHTML = '<section class="start start-home">' +
+      '<header class="start-hero"><p class="eyebrow">A320 family · Flight deck trainer</p><h2 class="start-h">ECAM Trainer</h2>' +
+      '<p class="start-lede">Work the flight deck the way you do in the aircraft: normal flows, ECAM failures on the real panels, and system knowledge.</p></header>' +
+      '<ul class="tlist tgrid">' + items.map(function (t) {
+        var body = '<span class="titem-ico">' + START_ICON[t[0]] + '</span><span class="titem-k">' + esc(t[2]) + '</span>' +
+          '<span class="titem-t">' + esc(t[3]) + '</span><span class="titem-d">' + esc(t[4]) + '</span>' +
+          '<span class="titem-m">' + esc(t[5]) + '<span class="titem-go" aria-hidden="true">' + (t[6] ? '\u2197' : '\u2192') + '</span></span>';
         // An item with a link opens a separate app in a new tab.
-        if (t[3]) return '<li><a class="titem" href="' + t[3] + '" target="_blank" rel="noopener" style="text-decoration:none">' + body + '</a></li>';
-        return '<li><button class="titem" data-act="choose" data-v="' + t[0] + '">' + body + '</button></li>';
+        if (t[6]) return '<li><a class="titem" data-tone="' + t[1] + '" href="' + t[6] + '" target="_blank" rel="noopener">' + body + '</a></li>';
+        return '<li><button class="titem" data-tone="' + t[1] + '" data-act="choose" data-v="' + t[0] + '">' + body + '</button></li>';
       }).join('') + '</ul>' +
-      '<p class="start-ver"><span class="ver-pill">Version ' + VERSION + '</span></p>' +
-      '<p class="disclaimer">Training aid only, simplified. Follow the FCOM, QRH and your operator\'s procedures.</p></section>';
+      '<footer class="start-foot"><span class="ver-pill">Version ' + VERSION + '</span><span>Training aid only, simplified. Follow the FCOM, QRH and your operator\'s procedures.</span></footer></section>';
   }
   /* Deck windows: each part of the flight deck sits in a window that can be made
    * smaller or bigger (buttons or by dragging its corner), minimised to its title
@@ -727,9 +738,9 @@
     if (!QZ) {
       var all = bank.reduce(function (n, c) { return n + c[1].length; }, 0);
       v.innerHTML = '<section class="start"><p class="start-intro">Choose a topic. Each set is in random order, with an explanation after every answer.</p><ul class="tlist">' +
-        '<li><button class="titem" data-act="qzStart" data-c="*"><span class="titem-t">All topics</span><span class="titem-d">' + all + ' questions, 10 picked at random' + (QBEST['*'] != null ? ' · best ' + QBEST['*'] + '%' : '') + '</span></button></li>' +
+        '<li><button class="titem titem-row" data-tone="c" data-act="qzStart" data-c="*"><span class="titem-t">All topics</span><span class="titem-d">' + all + ' questions, 10 picked at random' + (QBEST['*'] != null ? ' · best ' + QBEST['*'] + '%' : '') + '</span><span class="titem-go" aria-hidden="true">\u2192</span></button></li>' +
         bank.map(function (c) {
-          return '<li><button class="titem" data-act="qzStart" data-c="' + esc(c[0]) + '"><span class="titem-t">' + esc(c[0]) + '</span><span class="titem-d">' + c[1].length + ' question' + (c[1].length > 1 ? 's' : '') + (QBEST[c[0]] != null ? ' · best ' + QBEST[c[0]] + '%' : '') + '</span></button></li>';
+          return '<li><button class="titem titem-row" data-tone="c" data-act="qzStart" data-c="' + esc(c[0]) + '"><span class="titem-t">' + esc(c[0]) + '</span><span class="titem-d">' + c[1].length + ' question' + (c[1].length > 1 ? 's' : '') + (QBEST[c[0]] != null ? ' · best ' + QBEST[c[0]] + '%' : '') + '</span><span class="titem-go" aria-hidden="true">\u2192</span></button></li>';
         }).join('') + '</ul><p class="small center">More topics appear as each system\'s drills are built.</p></section>';
       return;
     }

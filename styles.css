@@ -503,3 +503,78 @@ body.drill-on .home, body.drill-on .pv-card { padding-bottom: 150px; }
 .win-body { padding: 4px; }
 .win-grip { position: absolute; right: 0; bottom: 0; width: 22px; height: 22px; cursor: nwse-resize; touch-action: none;
   background: linear-gradient(135deg, transparent 0 50%, #5b6d84 50% 56%, transparent 56% 66%, #5b6d84 66% 72%, transparent 72% 82%, #5b6d84 82% 88%, transparent 88%); }
+
+/* ------------------------------------------------------------- shell polish (0.6.3)
+ * One finish for the app shell, shared with the Normal Procedures app: a faint
+ * ECAM-cyan glow at the top of the page, left-aligned bold titles, raised cards
+ * without side stripes, real hover and press states. Panel drawings are untouched. */
+:root { --surface: #151f30; --surface-2: #19253a; --edge: #26354d; --edge-hi: #36486a; }
+body { background: var(--night) radial-gradient(1100px 420px at 50% -180px, rgba(51, 214, 242, .07), transparent 70%) no-repeat; }
+
+.appbar-title { text-align: left; font: 700 clamp(17px, 2.2vw, 20px)/1.2 var(--font-head); letter-spacing: .015em; }
+.appbar { box-shadow: 0 1px 0 rgba(255, 255, 255, .03), 0 6px 18px rgba(0, 0, 0, .25); }
+.icon-btn { transition: background .15s; }
+.icon-btn:active { background: var(--surface-2); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border-color: var(--edge); background: var(--surface-2); text-decoration: none; transition: background .15s, border-color .15s, filter .15s; }
+.btn:hover { border-color: var(--edge-hi); background: #1f2d45; }
+.btn.primary:hover { background: var(--accent); filter: brightness(1.08); }
+.btn:active { transform: translateY(1px); }
+
+.seg { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--edge); border-radius: 10px; background: #0f1724; }
+.seg-btn { min-height: 34px; padding: 5px 14px; border: 0; border-radius: 7px; background: transparent; color: var(--ink-2); font: 600 13px var(--font-head); cursor: pointer; transition: background .15s, color .15s; }
+.seg-btn:hover { color: var(--ink); }
+.seg-btn.on { background: rgba(51, 214, 242, .16); color: var(--accent); }
+
+/* Start page */
+.start-home { max-width: 1040px; padding-block: 32px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.start-hero { max-width: 640px; margin: 0 0 26px; }
+.start-h { margin: 2px 0 10px; font: 700 clamp(32px, 6vw, 48px)/1.04 var(--font-head); letter-spacing: -.01em; text-wrap: balance; }
+.start-lede { margin: 0; color: var(--ink-2); font-size: 16.5px; line-height: 1.55; }
+.tgrid { gap: 14px; }
+@media (min-width: 820px) { .tgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.tgrid li { display: flex; }
+.start-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--edge); color: var(--ink-2); font-size: 13px; }
+.start-foot .ver-pill { margin-left: 0; }
+
+/* Cards: one raised surface, colour from data-tone (g normal, a abnormal, c knowledge). */
+.titem { --tone: var(--accent); position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 20px; border: 1px solid var(--edge); border-radius: 14px;
+  background: linear-gradient(180deg, var(--surface-2), var(--surface)); color: var(--ink); text-decoration: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 10px 26px rgba(0, 0, 0, .22); transition: border-color .15s, transform .15s, box-shadow .15s; }
+.titem[data-tone="g"] { --tone: var(--ecam-g); }
+.titem[data-tone="a"] { --tone: var(--ecam-a); }
+.titem[data-tone="c"] { --tone: var(--ecam-c); }
+.titem:hover { background: linear-gradient(180deg, var(--surface-2), var(--surface)); border-color: color-mix(in srgb, var(--tone) 55%, var(--edge)); transform: translateY(-2px); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 14px 32px rgba(0, 0, 0, .3); }
+.titem:active { transform: translateY(0); }
+.titem-ico { display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 6px; border-radius: 11px; background: color-mix(in srgb, var(--tone) 13%, transparent); color: var(--tone); }
+.titem-ico svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.titem-k { font: 700 11.5px var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--tone); }
+.titem-t { font: 700 21px/1.2 var(--font-head); letter-spacing: .005em; }
+.titem-d { font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+.titem-m { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: auto; padding-top: 14px; color: #c3cfdb; font: 600 13px var(--font-ui); }
+.titem-go { margin-left: auto; color: var(--tone); font: 700 18px var(--font-ui); transition: transform .15s; }
+.titem:hover .titem-go { transform: translateX(3px); }
+/* Row cards (question topics): title and count with an arrow on the right. */
+.titem-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 16px; padding: 16px 18px; }
+.titem-row .titem-t { font-size: 18px; }
+.titem-row .titem-go { grid-column: 2; grid-row: 1 / span 2; }
+.start-intro { font-size: 15px; }
+
+/* Menu */
+.drawer-card { box-shadow: 12px 0 40px rgba(0, 0, 0, .45); }
+.drawer-brand { font: 700 18px var(--font-head); }
+.drawer-link { padding: 11px 8px; border-radius: 8px; border-bottom-color: transparent; transition: background .15s; }
+.drawer-link:hover { background: var(--card); color: var(--ink); }
+details.cat summary { padding: 11px 8px; border-radius: 8px; }
+details.cat summary:hover { background: rgba(255, 255, 255, .04); }
+details.cat summary small { padding: 1px 7px; border: 1px solid var(--edge); border-radius: 999px; font-size: 10.5px; letter-spacing: .04em; opacity: .8; }
+
+/* Panel view */
+.pv-switch { margin-top: 12px; }
+.pv-info { border-color: var(--edge); background: linear-gradient(180deg, var(--surface-2), var(--surface)); }
+.qcard, .m-card { border-color: var(--edge-hi); background: linear-gradient(180deg, var(--surface-2), var(--surface)); }
+.opt { transition: border-color .15s, background .15s; }
+.opt:hover:not([disabled]) { border-color: var(--edge-hi); background: #1f2d45; }
+.win { border-color: var(--edge); }
+@media (prefers-reduced-motion: reduce) { .titem, .titem-go, .btn, .icon-btn { transition: none; } .titem:hover { transform: none; } }
+.seg.pv-switch { display: flex; width: max-content; max-width: 100%; margin-inline: auto; }
