@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.0';
+  var VERSION = '0.7.1';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -106,9 +106,9 @@
   function goHome() { if (DR) stopDrill(true); hideModal(); if (PV) PV = null, renderPanelView(); QZ = null; setView('start'); renderDrill(); }
   // Normal procedure flows, checklists and approach guides live in their own app.
   var NORMAL_APP = 'https://claude.ai/artifact/SsHESftK2sRXrwGF6sDNJ5';
-  // The Questions Bank is its own app too: procedures, abnormal, technical knowledge
-  // and the Safety First flight, with briefings and referenced answers.
-  var QUESTIONS_APP = 'https://claude.ai/artifact/FGYZ6FH3G8bYYnuaJDtJsJ';
+  // The Questions Bank is its own page in this app (qbank.html): procedures, abnormal,
+  // technical knowledge and the Safety First flight, with briefings and referenced answers.
+  var QBANK = 'qbank.html?v=' + VERSION;
   // First page: the three parts of the trainer. Colour follows the ECAM meaning:
   // green for normal, amber for abnormal, cyan for knowledge.
   var START_ICON = {
@@ -121,7 +121,7 @@
     var items = [
       ['normal', 'g', 'Normal', 'Normal Procedures', 'Interactive flows from power-up to securing, the normal checklists and approach guides.', 'Separate app · opens in a new tab', NORMAL_APP],
       ['abnormal', 'a', 'Abnormal', 'Abnormal Procedures', 'ECAM failures by system, worked on the flight deck: actions, secondary failures and STATUS.', (live.length ? live.join(', ') + ' drills ready' : 'Drills coming') + ' · more systems coming'],
-      ['quiz', 'c', 'Knowledge', 'Questions Bank', 'Procedures, abnormal procedures, technical knowledge and a gate-to-gate Safety First flight, with FCOM-referenced answers.', 'Separate app · opens in a new tab', QUESTIONS_APP]
+      ['quiz', 'c', 'Knowledge', 'Questions Bank', 'Procedures, abnormal procedures, technical knowledge and a gate-to-gate Safety First flight, with FCOM-referenced answers.', 'Procedures · Abnormal · Technical · Safety First flight', QBANK, true]
     ];
     document.getElementById('view').innerHTML = '<section class="start start-home">' +
       '<header class="start-hero"><p class="eyebrow">A320 family · Flight deck trainer</p><h2 class="start-h">ECAM Trainer</h2>' +
@@ -129,9 +129,9 @@
       '<ul class="tlist tgrid">' + items.map(function (t) {
         var body = '<span class="titem-ico">' + START_ICON[t[0]] + '</span><span class="titem-k">' + esc(t[2]) + '</span>' +
           '<span class="titem-t">' + esc(t[3]) + '</span><span class="titem-d">' + esc(t[4]) + '</span>' +
-          '<span class="titem-m">' + esc(t[5]) + '<span class="titem-go" aria-hidden="true">' + (t[6] ? '\u2197' : '\u2192') + '</span></span>';
-        // An item with a link opens a separate app in a new tab.
-        if (t[6]) return '<li><a class="titem" data-tone="' + t[1] + '" href="' + t[6] + '" target="_blank" rel="noopener">' + body + '</a></li>';
+          '<span class="titem-m">' + esc(t[5]) + '<span class="titem-go" aria-hidden="true">' + (t[6] && !t[7] ? '\u2197' : '\u2192') + '</span></span>';
+        // An item with a link opens a separate app in a new tab, or a page of this app in place (t[7]).
+        if (t[6]) return '<li><a class="titem" data-tone="' + t[1] + '" href="' + t[6] + '"' + (t[7] ? '' : ' target="_blank" rel="noopener"') + '>' + body + '</a></li>';
         return '<li><button class="titem" data-tone="' + t[1] + '" data-act="choose" data-v="' + t[0] + '">' + body + '</button></li>';
       }).join('') + '</ul>' +
       '<footer class="start-foot"><span class="ver-pill">Version ' + VERSION + '</span><span>Training aid only, simplified. Follow the FCOM, QRH and your operator\'s procedures.</span></footer></section>';
