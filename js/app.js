@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.6.3';
+  var VERSION = '0.7.0';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -92,7 +92,7 @@
 
   /* ----------------------------------------------------------------- home */
   var VIEW = 'start', DECK_MODE = null, QZ = null;
-  var BARTITLE = { start: 'A320 ECAM Trainer', normal: 'Normal Procedures', abnormal: 'A320 Flight Deck Overview', quiz: 'Questions Bank' };
+  var BARTITLE = { start: 'A320 ECAM Trainer', normal: 'Normal Procedures', abnormal: 'A320 Flight Deck Overview', quiz: 'ECAM drill quiz' };
   function setView(v, mode) {
     VIEW = v; DECK_MODE = mode || null;
     var bar = document.querySelector('.appbar');
@@ -106,6 +106,9 @@
   function goHome() { if (DR) stopDrill(true); hideModal(); if (PV) PV = null, renderPanelView(); QZ = null; setView('start'); renderDrill(); }
   // Normal procedure flows, checklists and approach guides live in their own app.
   var NORMAL_APP = 'https://claude.ai/artifact/SsHESftK2sRXrwGF6sDNJ5';
+  // The Questions Bank is its own app too: procedures, abnormal, technical knowledge
+  // and the Safety First flight, with briefings and referenced answers.
+  var QUESTIONS_APP = 'https://claude.ai/artifact/FGYZ6FH3G8bYYnuaJDtJsJ';
   // First page: the three parts of the trainer. Colour follows the ECAM meaning:
   // green for normal, amber for abnormal, cyan for knowledge.
   var START_ICON = {
@@ -115,11 +118,10 @@
   };
   function renderStart() {
     var live = FAIL.CATEGORIES.filter(function (c) { return c[1].some(function (e) { return e.drill; }); }).map(function (c) { return c[0]; });
-    var nq = FAIL.questions().reduce(function (n, c) { return n + c[1].length; }, 0);
     var items = [
       ['normal', 'g', 'Normal', 'Normal Procedures', 'Interactive flows from power-up to securing, the normal checklists and approach guides.', 'Separate app · opens in a new tab', NORMAL_APP],
       ['abnormal', 'a', 'Abnormal', 'Abnormal Procedures', 'ECAM failures by system, worked on the flight deck: actions, secondary failures and STATUS.', (live.length ? live.join(', ') + ' drills ready' : 'Drills coming') + ' · more systems coming'],
-      ['quiz', 'c', 'Knowledge', 'Questions Bank', 'Questions on each system and on ECAM handling, with an explanation after every answer.', nq + ' questions']
+      ['quiz', 'c', 'Knowledge', 'Questions Bank', 'Procedures, abnormal procedures, technical knowledge and a gate-to-gate Safety First flight, with FCOM-referenced answers.', 'Separate app · opens in a new tab', QUESTIONS_APP]
     ];
     document.getElementById('view').innerHTML = '<section class="start start-home">' +
       '<header class="start-hero"><p class="eyebrow">A320 family · Flight deck trainer</p><h2 class="start-h">ECAM Trainer</h2>' +
@@ -798,7 +800,7 @@
       '<div class="drawer-top"><span class="drawer-brand">A320 ECAM Trainer</span><button class="icon-btn" data-act="closeDrawer" aria-label="Close menu">' + ICON.close + '</button></div>' +
       '<button class="drawer-link" data-act="home">Start page</button>' +
       '<button class="drawer-link" data-act="choose" data-v="normal">Flight deck overview</button>' +
-      '<button class="drawer-link" data-act="choose" data-v="quiz">Questions Bank</button>' +
+      '<button class="drawer-link" data-act="choose" data-v="quiz">ECAM drill quiz</button>' +
       failureMenu() + '<h3 class="drawer-h">Panels</h3>' +
       GROUPS.map(function (g) { return '<h3 class="drawer-h">' + esc(g[0]) + '</h3>' + panelLinks(g[1]); }).join('') +
       '<h3 class="drawer-h">Photo credits</h3><p class="drawer-note">Overhead panels: ' + creditHtml() + ' The straightened crops are shared under the same licence.</p>' +
