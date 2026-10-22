@@ -363,6 +363,23 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .grav-handle { fill: url(#g-fire); stroke: #3c0705; stroke-width: .5; }
 .grav-txt { fill: #f3eee6; font-weight: 700; }
 .grav-side { fill: #ff9d2a; font-weight: 700; }
+.crank-well { fill: #07090b; stroke: #22272c; stroke-width: .6; }
+.crank-body { fill: #1a1d21; stroke: #050607; stroke-width: .6; }
+.crank-notch { fill: #050607; }
+.crank-bar { fill: #1d2125; stroke: #050607; stroke-width: .6; }
+.crank-bar-hi { stroke: rgba(255, 255, 255, .16); stroke-width: .7; stroke-linecap: round; }
+.crank-arrow { fill: none; stroke: #eef0f2; stroke-width: .9; stroke-linecap: round; }
+.crank-arrow-hd { fill: #eef0f2; }
+.crank-hub { fill: url(#g-boss); stroke: #050607; stroke-width: .5; }
+.crank-index { stroke: #e3261b; stroke-width: 1.4; stroke-linecap: round; }
+.crank-knob { fill: url(#g-fire-lit); stroke: #6d0c07; stroke-width: .6; }
+.crank-knob-hi { fill: #fff; opacity: .35; }
+/* Each tap animates the crank from its last position: unfolding, a whole turn, or folding away. */
+.crank-arm { transform-box: fill-box; transform-origin: center; }
+@keyframes crank-turn { from { transform: rotate(var(--a0)); } to { transform: rotate(0deg); } }
+@keyframes crank-unfold { from { transform: scale(.25); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes crank-stow { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .crank-arm, .crank-stowed { animation: none !important; } }
 .prn-slot { fill: #0c1014; stroke: #5d676f; stroke-width: .6; }
 .prn-paper { fill: #e9eef2; opacity: .7; }
 .stow-handle { fill: none; stroke: url(#g-chrome); stroke-width: 3; stroke-linecap: round; }

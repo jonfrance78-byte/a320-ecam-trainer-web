@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.2';
+  var VERSION = '0.7.3';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -295,7 +295,7 @@
     if (it.k === 'fire') note = 'Tap once to lift the guard, then again to push the button: it releases out and arms the squibs (SQUIB lights on the AGENT pushbuttons). The red light comes on only with a fire warning.';
     var chips = legendChip(it.up) + legendChip(it.lo);
     if (it.k === 'fire') chips = '<span class="lchip lchip-r">FIRE</span>';
-    if (it.k === 'sel' || it.k === 'tog' || it.k === 'slide') chips = it.pos.map(function (q, i) { return '<span class="lchip' + (i === (st.cur != null ? st.cur : it.cur) ? ' lchip-cur' : '') + '">' + esc(q) + '</span>'; }).join('');
+    if (it.k === 'sel' || it.k === 'tog' || it.k === 'slide' || it.k === 'crank') chips = it.pos.map(function (q, i) { return '<span class="lchip' + (i === (st.cur != null ? st.cur : it.cur) ? ' lchip-cur' : '') + '">' + esc(q) + '</span>'; }).join('');
     return '<p class="eyebrow">' + kind + (it.guard || it.k === 'fire' ? ' · guarded' : '') + '</p>' +
       '<h3 class="pv-ctl">' + esc(PN.ctlName(it)) + '</h3>' +
       (chips ? '<div class="lchips">' + chips + '</div>' : '') +

@@ -16,6 +16,7 @@
  *   disp    digital display
  *   win     FCU window (label + value)
  *   slide   lever moving between detents (flaps, speed brake, thrust, gear)
+ *   crank   gravity gear extension hand crank: stowed, pulled out, then whole turns
  *   part    drawn part with an info card (screens, sidestick, handles)
  *   raw     decoration drawn as given
  *   line    white flow line
@@ -895,6 +896,47 @@
     if (it.name && !it.noname) o += nameLines(it.nx != null ? it.nx : x, it.ny != null ? it.ny : it.y0 - 8, it.name, it.ns || 4.4);
     return o;
   }
+  /* Gravity gear extension hand crank, seen from above (owner's photos). Stowed:
+   * the handle lies folded in its slot across the recess, red PULL & TURN placard
+   * up. Pulled out: it unfolds into a black arm with a red knob, which then turns
+   * clockwise about the hub, one whole turn per position. A press animates from
+   * the previous position (st.from, st.t); the resting drawing is the same for
+   * every turn, as on the aircraft. */
+  var CRANK_TURN = 900, CRANK_FOLD = 450;
+  function crankAngle(i) { return i < 2 ? 0 : (i - 1) * 360; }
+  function drawCrank(it, st) {
+    var x = it.x, y = it.y, cur = st.cur != null ? st.cur : it.cur, age = st.t ? Date.now() - st.t : Infinity, from = st.from;
+    var o = '<circle cx="' + x + '" cy="' + y + '" r="15" class="grav-boss"/><circle cx="' + x + '" cy="' + y + '" r="12.6" class="crank-well"/>';
+    if (cur === 0) {
+      var stow = from === 1 && age < CRANK_FOLD ? ' style="animation: crank-stow ' + CRANK_FOLD + 'ms ease-out both; animation-delay: -' + age + 'ms"' : '';
+      o += '<g class="crank-stowed"' + stow + '>' +
+        '<rect x="' + (x - 10.5) + '" y="' + (y - 15.5) + '" width="21" height="' + (it.h - y + 14) + '" rx="3" class="crank-body"/>' +
+        '<rect x="' + (x - 9) + '" y="' + (y - 14) + '" width="18" height="26" rx="2.2" class="grav-handle"/>' +
+        text(x, y - 8, 'GRAVITY', 'grav-txt', 2.8) + text(x, y - 3, 'GEAR', 'grav-txt big', 3.6) + text(x, y + 1.6, 'EXTN', 'grav-txt big', 3.6) +
+        text(x, y + 7, 'PULL &', 'grav-txt', 2.6) + text(x, y + 10.4, 'TURN', 'grav-txt', 2.6) +
+        '<rect x="' + (x - 3) + '" y="' + (y + 14.5) + '" width="6" height="2.4" rx="1.2" class="crank-notch"/></g>';
+      return o;
+    }
+    // Pulled out. The invisible ring centres the arm's box on the hub so it turns about it.
+    var anim = '';
+    if (from === 0 && cur === 1 && age < CRANK_FOLD) anim = 'animation: crank-unfold ' + CRANK_FOLD + 'ms ease-out both; animation-delay: -' + age + 'ms';
+    else if (from != null && from > 0 && age < CRANK_TURN) anim = '--a0: ' + (crankAngle(from) - crankAngle(cur)) + 'deg; animation: crank-turn ' + CRANK_TURN + 'ms ease-in-out both; animation-delay: -' + age + 'ms';
+    var kx = x - 27;
+    o += '<g class="crank-arm"' + (anim ? ' style="' + anim + '"' : '') + '>' +
+      '<circle cx="' + x + '" cy="' + y + '" r="34" fill="none" stroke="none"/>' +
+      '<rect x="' + (kx - 1) + '" y="' + (y - 3) + '" width="' + (x - kx + 6) + '" height="9" rx="4.5" class="shadow"/>' +
+      '<rect x="' + (kx - 2) + '" y="' + (y - 4.5) + '" width="' + (x - kx + 7) + '" height="9" rx="4.5" class="crank-bar"/>' +
+      '<line x1="' + (kx + 2) + '" y1="' + (y - 3.4) + '" x2="' + (x + 2) + '" y2="' + (y - 3.4) + '" class="crank-bar-hi"/>' +
+      '<path d="M' + (x - 19) + ' ' + (y + 1.6) + ' Q' + (x - 15.5) + ' ' + (y - 2.6) + ' ' + (x - 11.5) + ' ' + (y + 0.6) + '" class="crank-arrow"/>' +
+      '<path d="M' + (x - 11.4) + ' ' + (y - 1.4) + ' L' + (x - 10.6) + ' ' + (y + 1.6) + ' L' + (x - 13.4) + ' ' + (y + 1.4) + ' Z" class="crank-arrow-hd"/>' +
+      '<circle cx="' + x + '" cy="' + y + '" r="6.2" class="crank-hub"/>' +
+      '<line x1="' + x + '" y1="' + y + '" x2="' + (x + 5.4) + '" y2="' + y + '" class="crank-index"/>' +
+      '<circle cx="' + kx + '" cy="' + (y + 1.4) + '" r="5.4" class="shadow"/>' +
+      '<circle cx="' + kx + '" cy="' + y + '" r="5.4" class="crank-knob"/>' +
+      '<ellipse cx="' + (kx - 1.6) + '" cy="' + (y - 1.8) + '" rx="2.2" ry="1.3" class="crank-knob-hi"/>' +
+      '</g>';
+    return o;
+  }
   function drawCb(it, st) {
     var x = it.x, y = it.y, o = '';
     o += '<circle cx="' + (x + 0.4) + '" cy="' + (y + 0.8) + '" r="5" class="shadow"/>';
@@ -975,6 +1017,7 @@
         case 'raw': o += it.svg; return;
         case 'part': g = it.art; break;
         case 'slide': g = drawSlide(it, st); break;
+        case 'crank': g = drawCrank(it, st); break;
         case 'cb': g = drawCb(it, st); break;
         case 'pb': case 'ann': g = drawPb(it, st); break;
         case 'fire': g = drawFire(it, st); break;
@@ -1055,11 +1098,13 @@
       st.angle = ((st.angle || 0) + 40 + 120) % 240 - 120;
     } else if (it.k === 'lever') {
       st.on = st.on === false;
-    } else if (it.k === 'slide') {
+    } else if (it.k === 'slide' || it.k === 'crank') {
       // Steps one detent at a time, back and forth between the end stops.
       var c0 = st.cur != null ? st.cur : it.cur, dir = st.dir || (c0 >= it.pos.length - 1 ? -1 : 1);
       if (c0 + dir < 0 || c0 + dir >= it.pos.length) dir = -dir;
       st.cur = c0 + dir; st.dir = dir;
+      // The crank animates from where it was (see drawCrank).
+      if (it.k === 'crank') { st.from = c0; st.t = Date.now(); }
     } else if (it.k === 'cb') {
       st.pulled = !st.pulled;
     }

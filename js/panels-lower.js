@@ -518,17 +518,17 @@
       sel(52, 26, 'PARKING BRK', ['OFF', 'ON'], 0, 'Parking brake handle: pull and turn. ON: the parking brake is set with the yellow hydraulic system (accumulator pressure), and the normal brakes are disabled. Check the pressure on the brake triple indicator.', { r: 8, light: true, noname: true, angs: [0, 90] })
     ]
   };
+  // Side markings; the crank itself is drawn by drawCrank in js/panels.js.
   function gravityArt() {
-    var o = '<circle cx="37" cy="24" r="15" class="grav-boss"/>' + rect(28, 10, 18, 28, 'grav-handle', 3);
-    o += text(37, 16, 'GRAVITY', 'grav-txt', 2.8) + text(37, 21, 'GEAR', 'grav-txt big', 3.6) + text(37, 25.6, 'EXTN', 'grav-txt big', 3.6) + text(37, 31, 'PULL &', 'grav-txt', 2.6) + text(37, 34.4, 'TURN', 'grav-txt', 2.6);
-    o += '<path d="M14 34 A22 22 0 0 1 14 12 M60 12 A22 22 0 0 1 60 34" class="pn-arc"/>' + vletters(8, 23, 'GEAR', 3, 'grav-side') + vletters(66, 23, 'GEAR', 3, 'grav-side');
-    return o;
+    return '<path d="M14 34 A22 22 0 0 1 14 12 M60 12 A22 22 0 0 1 60 34" class="pn-arc"/>' + vletters(8, 23, 'GEAR', 3, 'grav-side') + vletters(66, 23, 'GEAR', 3, 'grav-side');
   }
   P.GRAVITY = {
     title: '', name: 'Gravity gear extension', w: 74, h: 45, tone: 'dark', sys: 'WHEEL',
     desc: 'Landing gear gravity extension hand crank.',
     items: [
-      part(37, 24, 30, 32, 'GRAVITY GEAR EXTN', 'Gravity extension hand crank: pull and turn it clockwise three turns when the normal extension fails. It isolates the gear from the green hydraulic system and unlocks the doors and gear, which then fall by gravity and lock down.', gravityArt(), { kindName: 'Handle' })
+      raw(gravityArt()),
+      { k: 'crank', x: 37, y: 24, h: 45, name: 'GRAVITY GEAR EXTN', pos: ['STOWED', 'PULLED OUT', '1 TURN', '2 TURNS', '3 TURNS'], cur: 0, kindName: 'Handle', hit: [62, 42],
+        info: 'Gravity extension hand crank. Pull the handle up and fold it out, then turn it clockwise three turns when the normal extension fails. It isolates the gear from the green hydraulic system and unlocks the doors and gear, which then fall by gravity and lock down. Turning it back three turns anticlockwise and folding it away resets it. Each tap moves it one step.' }
     ]
   };
   P.PRINTER = {
