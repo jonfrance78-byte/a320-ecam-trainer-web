@@ -715,7 +715,21 @@
     for (var i = 0; i < n; i++) out.push(-span / 2 + i * span / (n - 1));
     return out;
   }
+  /* Parking brake handle (owner's photo): a black bar with PARK BRK along it and a
+   * grey flared pointer on its side. Drawn at ON (bar upright, pointer to ON on the
+   * right) and turned a quarter turn anticlockwise for OFF (pointer up). */
+  function drawPark(it, st) {
+    var x = it.x, y = it.y, cur = st.cur != null ? st.cur : it.cur, a = (it.angs[cur] || 0) - 90;
+    var o = text(x - 3, y - 15.6, 'OFF', 'pn-pos' + (cur === 0 ? ' cur' : ''), 3.4) + text(x + 17.5, y + 5.6, 'ON', 'pn-pos' + (cur === 1 ? ' cur' : ''), 3.4);
+    var bar = function (dx, dy, cls) { return '<rect x="' + (x - 3.8 + dx) + '" y="' + (y - 15 + dy) + '" width="7.6" height="30.5" rx="1.6" class="' + cls + '"/>'; };
+    o += '<g transform="rotate(' + a + ' ' + x + ' ' + y + ')">' + bar(0.9, 1.3, 'shadow') + bar(0, 0, 'park-bar') +
+      '<path d="M' + (x + 3.8) + ' ' + (y - 5.2) + ' C' + (x + 7) + ' ' + (y - 4.6) + ' ' + (x + 9) + ' ' + (y - 1.2) + ' ' + (x + 15) + ' ' + (y - 0.3) +
+      ' L' + (x + 15) + ' ' + (y + 0.3) + ' C' + (x + 9) + ' ' + (y + 1.2) + ' ' + (x + 7) + ' ' + (y + 4.6) + ' ' + (x + 3.8) + ' ' + (y + 5.2) + ' Z" class="park-ptr"/>' +
+      '<g transform="rotate(90 ' + x + ' ' + y + ')">' + text(x, y + 1.6, 'PARK BRK', 'park-txt', 4.4) + '</g></g>';
+    return o;
+  }
   function drawSel(it, st) {
+    if (it.park) return drawPark(it, st);
     var r = it.r || 8, x = it.x, y = it.y, cur = st.cur != null ? st.cur : it.cur, angs = it.angs || selAngles(it.pos.length), o = '';
     it.pos.forEach(function (p, i) {
       var q = polar(x, y, r + 5.5, angs[i]), tick = polar(x, y, r + 1.6, angs[i]), t2 = polar(x, y, r + 0.2, angs[i]);

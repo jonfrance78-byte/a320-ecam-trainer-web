@@ -363,6 +363,9 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .grav-handle { fill: url(#g-fire); stroke: #3c0705; stroke-width: .5; }
 .grav-txt { fill: #f3eee6; font-weight: 700; }
 .grav-side { fill: #ff9d2a; font-weight: 700; }
+.park-bar { fill: #121417; stroke: #000; stroke-width: .5; }
+.park-ptr { fill: #aeb6bb; stroke: #4b5257; stroke-width: .4; }
+.park-txt { fill: #c7cbcf; font-weight: 700; letter-spacing: .06em; }
 .crank-well { fill: #07090b; stroke: #22272c; stroke-width: .6; }
 .crank-body { fill: #1a1d21; stroke: #050607; stroke-width: .6; }
 .crank-notch { fill: #050607; }

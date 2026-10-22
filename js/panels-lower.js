@@ -514,8 +514,8 @@
     title: '', name: 'Parking brake', w: 74, h: 40, tone: 'dark', sys: 'WHEEL',
     desc: 'Parking brake handle.',
     items: [
-      raw(t(28, 7, 'PARKING BRK', 3.8) + t(26, 13, 'PULL & TURN', 2.8) + '<path d="M58 9 A16 16 0 0 1 70 24" class="pn-arc"/>'),
-      sel(52, 26, 'PARKING BRK', ['OFF', 'ON'], 0, 'Parking brake handle: pull and turn. ON: the parking brake is set with the yellow hydraulic system (accumulator pressure), and the normal brakes are disabled. Check the pressure on the brake triple indicator.', { r: 8, light: true, noname: true, angs: [0, 90] })
+      raw(t(24, 9, 'PARKING BRK', 3.8) + t(22, 15, 'PULL & TURN', 2.8) + '<path d="M58 9.2 A16 16 0 0 1 68 24 h2.5" class="pn-arc"/>'),
+      sel(52, 24, 'PARKING BRK', ['OFF', 'ON'], 0, 'Parking brake handle: pull and turn. ON: the parking brake is set with the yellow hydraulic system (accumulator pressure), and the normal brakes are disabled. Check the pressure on the brake triple indicator.', { park: true, noname: true, angs: [0, 90], hit: [36, 34] })
     ]
   };
   // Side markings; the crank itself is drawn by drawCrank in js/panels.js.
