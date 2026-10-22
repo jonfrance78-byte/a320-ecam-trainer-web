@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.1';
+  var VERSION = '0.7.2';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
   var esc = DISP.esc;
 
@@ -104,8 +104,8 @@
     renderHome();
   }
   function goHome() { if (DR) stopDrill(true); hideModal(); if (PV) PV = null, renderPanelView(); QZ = null; setView('start'); renderDrill(); }
-  // Normal procedure flows, checklists and approach guides live in their own app.
-  var NORMAL_APP = 'https://claude.ai/artifact/SsHESftK2sRXrwGF6sDNJ5';
+  // Normal procedure flows, checklists and approach guides are their own page in this app (normal.html).
+  var NORMAL_APP = 'normal.html?v=' + VERSION;
   // The Questions Bank is its own page in this app (qbank.html): procedures, abnormal,
   // technical knowledge and the Safety First flight, with briefings and referenced answers.
   var QBANK = 'qbank.html?v=' + VERSION;
@@ -119,7 +119,7 @@
   function renderStart() {
     var live = FAIL.CATEGORIES.filter(function (c) { return c[1].some(function (e) { return e.drill; }); }).map(function (c) { return c[0]; });
     var items = [
-      ['normal', 'g', 'Normal', 'Normal Procedures', 'Interactive flows from power-up to securing, the normal checklists and approach guides.', 'Separate app · opens in a new tab', NORMAL_APP],
+      ['normal', 'g', 'Normal', 'Normal Procedures', 'Interactive flows from power-up to securing, the normal checklists and approach guides.', 'Flows · checklists · approach guides', NORMAL_APP, true],
       ['abnormal', 'a', 'Abnormal', 'Abnormal Procedures', 'ECAM failures by system, worked on the flight deck: actions, secondary failures and STATUS.', (live.length ? live.join(', ') + ' drills ready' : 'Drills coming') + ' · more systems coming'],
       ['quiz', 'c', 'Knowledge', 'Questions Bank', 'Procedures, abnormal procedures, technical knowledge and a gate-to-gate Safety First flight, with FCOM-referenced answers.', 'Procedures · Abnormal · Technical · Safety First flight', QBANK, true]
     ];
@@ -192,7 +192,7 @@
     var ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: DISP.renderPFD(s), nd: DISP.renderND(s) };
     document.getElementById('view').innerHTML =
       '<section class="home">' +
-      '<p class="home-hint">' + (DECK_MODE === 'normal' ? 'Tap any panel to explore it. Normal procedure flows are in the <a href="' + NORMAL_APP + '" target="_blank" rel="noopener">Normal Procedures app</a>. ' : 'Tap any panel to expand it. Failures are in the menu. ') + '<span class="ver-pill">Version ' + VERSION + '</span> <button class="linkbtn" data-act="winReset">Reset window sizes</button></p>' +
+      '<p class="home-hint">' + (DECK_MODE === 'normal' ? 'Tap any panel to explore it. Normal procedure flows are in the <a href="' + NORMAL_APP + '">Normal Procedures</a>. ' : 'Tap any panel to expand it. Failures are in the menu. ') + '<span class="ver-pill">Version ' + VERSION + '</span> <button class="linkbtn" data-act="winReset">Reset window sizes</button></p>' +
       '<div class="wins">' + DECK.build({ ecam: ecam, states: PSTATE }).map(winHtml).join('') + '</div>' +
       '<p class="disclaimer">Training aid only. Panels are drawings of the A320 flight deck; some overhead panels also offer a real A319 photo (Linus Follert, CC BY-SA 2.0).</p>' +
       '</section>';
