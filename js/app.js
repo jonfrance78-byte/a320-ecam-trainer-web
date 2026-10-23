@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.7';
+  var VERSION = '0.7.8';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -92,11 +92,13 @@
 
   /* ----------------------------------------------------------------- home */
   var VIEW = 'start', DECK_MODE = null, QZ = null;
-  var BARTITLE = { start: 'A320 ECAM Trainer', normal: 'Normal Procedures', abnormal: 'A320 Flight Deck Overview', quiz: 'ECAM drill quiz' };
+  // The flight deck has no bar title and a slim bar (owner's request, 0.7.8: more room for the panels).
+  var BARTITLE = { start: 'A320 ECAM Trainer', normal: '', abnormal: '', quiz: 'ECAM drill quiz' };
   function setView(v, mode) {
     VIEW = v; DECK_MODE = mode || null;
     var bar = document.querySelector('.appbar');
     bar.classList.remove('away');
+    bar.classList.toggle('slim', v === 'deck');
     bar.querySelector('.appbar-title').textContent = BARTITLE[v === 'deck' ? mode : v];
     bar.querySelector('[data-act=home]').hidden = v === 'start';
     bar.querySelector('[data-act=search]').hidden = v !== 'deck';
