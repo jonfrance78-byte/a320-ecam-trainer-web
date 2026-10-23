@@ -6,8 +6,8 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.5';
-  var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS;
+  var VERSION = '0.7.6';
+  var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
   // Panels by area of the flight deck.
@@ -320,10 +320,13 @@
       document.getElementById('pv-info').innerHTML = infoHtml(p);
       return;
     }
+    var fm = FMGC && /^MCDU[12]$/.test(PV.id), ecp = PV.id === 'ECP';
+    // ECP: the SD sits on top of the panel, the same width, with no gap (no top margin in the viewBox).
     document.getElementById('pv-stage').innerHTML = PV.photo ? renderPhotoStage(PV.photo) :
-      '<svg viewBox="-4 -4 ' + (p.w + 8) + ' ' + (p.h + 8) + '" class="pv-svg" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
-      PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' +
-      (PV.id === 'ECP' ? '<div class="pv-sdmini" aria-label="System display">' + sdSvg() + '</div>' : '') + miniEwd();
+      (fm ? '<div class="fm-wrap">' + FMGC.guideHtml() : '') + (ecp ? '<div class="ecp-wrap"><div class="pv-sdtop" aria-label="System display">' + sdSvg() + '</div>' : '') +
+      '<svg viewBox="-4 ' + (ecp ? 0 : -4) + ' ' + (p.w + 8) + ' ' + (p.h + (ecp ? 4 : 8)) + '" class="pv-svg' + (/^MCDU[12]$/.test(PV.id) ? ' pv-mcdu' : '') + '" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
+      PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' + (fm || ecp ? '</div>' : '') +
+      (FMGC && /^MCDU[12]$/.test(PV.id) ? FMGC.simHtml() : '') + miniEwd();
     document.getElementById('pv-info').innerHTML = infoHtml(p);
   }
   function creditHtml() {
@@ -359,6 +362,7 @@
     else if (it.clrKey && DR && DR.s) { PN.pressItems(PV.items, i, PV.states); pressClr(); PV.note = DR && DR.flash; }
     else PV.note = PN.pressItems(PV.items, i, PV.states);
     if (it.sdPage || it.sdAll) PV.note = setSd(it.sdAll ? 'ALL' : it.sdPage);
+    if (FMGC && /^MCDU[12]$/.test(PV.id) && it.k === 'pb' && it.name) FMGC.key(PV.id, it.name.replace(/\n/g, ' '));
     if (!PV) return;
     if (!PV.photo) drillCheck();
     PV.selected = i;
@@ -884,6 +888,8 @@
       case 'backEcam': closePanel(); showEcam(); break;
       case 'mute': muted = !muted; try { localStorage.setItem('ecam-mute', muted ? '1' : '0'); } catch (err) { /* ignore */ } if (muted) stopChime(); renderDrill(); break;
       case 'pvmode': if (PV) { setPanelMode(el.getAttribute('data-mode')); renderPanelView(); } break;
+      case 'fmsim': FMGC.sim(el.getAttribute('data-sim')); if (PV) renderStage(); break;
+      case 'fmguide': FMGC.guide(el.getAttribute('data-g'), PV && PV.id); if (PV) renderStage(); break;
     }
   });
   document.addEventListener('keydown', function (e) {
@@ -892,6 +898,10 @@
       if (searchOpen || drawerOpen) { searchOpen = false; drawerOpen = false; renderSearch(); renderDrawer(); }
       else if (PV) closePanel();
       return;
+    }
+    // On an open MCDU the computer keyboard types into the scratchpad.
+    if (FMGC && PV && /^MCDU[12]$/.test(PV.id) && !e.ctrlKey && !e.metaKey && !e.altKey && /^([a-zA-Z0-9./+-]|Backspace)$/.test(e.key)) {
+      e.preventDefault(); FMGC.key(PV.id, e.key === 'Backspace' ? 'CLR' : e.key === '+' || e.key === '-' ? '±' : e.key.toUpperCase()); renderStage(); return;
     }
     if (e.key !== 'Enter' && e.key !== ' ') return;
     var ctlEl = e.target.closest && e.target.closest('.ctl');

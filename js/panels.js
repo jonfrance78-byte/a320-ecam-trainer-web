@@ -1029,7 +1029,7 @@
         case 'dec': o += drawDec(it); return;
         case 'acp': o += drawAcp(); return;
         case 'raw': o += it.svg; return;
-        case 'part': g = it.art; break;
+        case 'part': g = it.artFn ? it.artFn() : it.art; break;
         case 'slide': g = drawSlide(it, st); break;
         case 'crank': g = drawCrank(it, st); break;
         case 'cb': g = drawCb(it, st); break;

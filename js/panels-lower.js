@@ -269,24 +269,27 @@
   var FKEYS = [['DIR', 'Direct to: fly direct to a waypoint.'], ['PROG', 'Progress page: flight phase, cruise level, distance to destination and navigation accuracy.'], ['PERF', 'Performance pages for the flight phases: speeds, flap retraction, cost index and so on.'], ['INIT', 'Initialisation pages: route, cost index, cruise level, zero fuel weight and block fuel.'], ['DATA', 'Data index: sensor positions, stored waypoints and navaids, and A/C status.'], ['', 'Blank key.'],
     ['F-PLN', 'Flight plan pages: the active route with waypoints, constraints and times.'], ['RAD\nNAV', 'Radio navigation page: VOR, ILS and ADF tuning.'], ['FUEL\nPRED', 'Fuel prediction page: fuel at destination and alternate, and extra fuel.'], ['SEC\nF-PLN', 'Secondary flight plan.'], ['ATC\nCOMM', 'ATC datalink communications.'], ['MCDU\nMENU', 'MCDU menu: choose the system using the MCDU (FMGC, ATSU, AIDS, CFDS).']];
   function mcdu(side) {
-    var items = [part(52, 41, 70, 60, 'MCDU screen', 'MCDU screen. Shows the pages of the FMGC, or the ATSU, AIDS or CFDS chosen through MCDU MENU. The bottom line is the scratchpad, where entries are typed before being put into a field with a line select key.', mcduScreen(17, 11, 70, 60), { kindName: 'Display' })];
+    var id = side === 'L' ? 'MCDU1' : 'MCDU2';
+    // With js/fmgc.js loaded the screen shows the live FMGC pages.
+    var live = function () { var F = window.ECAM_FMGC; return F ? rect(15.5, 9.5, 73, 63, 'scr-bezel', 1.5) + rect(17, 11, 70, 60, 'dk-screen', 1) + F.screen(id, 17.6, 11.4, 68.8, 59.2) : mcduScreen(17, 11, 70, 60); };
+    var items = [part(52, 41, 70, 60, 'MCDU screen', 'MCDU screen. Shows the pages of the FMGC, or the ATSU, AIDS or CFDS chosen through MCDU MENU. The bottom line is the scratchpad, where entries are typed before being put into a field with a line select key.', mcduScreen(17, 11, 70, 60), { kindName: 'Display', artFn: live })];
     for (var i = 0; i < 6; i++) {
-      items.push(key(7, 19 + i * 8.2, 'LSK ' + (i + 1) + 'L', 'Line select key: puts the scratchpad into the field beside it, or selects the prompt there.', { s: 3.6, w: 7, noname: true, blankCap: true }));
-      items.push(key(97, 19 + i * 8.2, 'LSK ' + (i + 1) + 'R', 'Line select key: puts the scratchpad into the field beside it, or selects the prompt there.', { s: 3.6, w: 7, noname: true, blankCap: true }));
+      items.push(key(7, 21.8 + i * 8.46, 'LSK ' + (i + 1) + 'L', 'Line select key: puts the scratchpad into the field beside it, or selects the prompt there.', { s: 3.6, w: 7, noname: true, blankCap: true }));
+      items.push(key(97, 21.8 + i * 8.46, 'LSK ' + (i + 1) + 'R', 'Line select key: puts the scratchpad into the field beside it, or selects the prompt there.', { s: 3.6, w: 7, noname: true, blankCap: true }));
     }
-    FKEYS.forEach(function (f, k) { items.push(key(15 + (k % 6) * 12.4, 82 + Math.floor(k / 6) * 8.6, f[0], f[1], { s: 7, w: 11 })); });
-    items.push(key(91, 82, 'BRT', 'Brightens the MCDU screen.', { s: 6, w: 8 }), key(91, 91, 'DIM', 'Dims the MCDU screen.', { s: 6, w: 8 }));
-    items.push(key(15, 100, 'AIR\nPORT', 'Scrolls the flight plan to the next airport.', { s: 7, w: 11 }));
+    FKEYS.forEach(function (f, k) { items.push(key(16 + (k % 6) * 12, 81 + Math.floor(k / 6) * 8.4, f[0], f[1], { s: 7, w: 11 })); });
+    items.push(key(91, 81, 'BRT', 'Brightens the MCDU screen.', { s: 7, w: 8 }), key(91, 89.4, 'DIM', 'Dims the MCDU screen.', { s: 7, w: 8 }));
+    items.push(key(16, 97.8, 'AIR\nPORT', 'Scrolls the flight plan to the next airport.', { s: 7, w: 11 }), key(28, 97.8, '', 'Blank key.', { s: 7, w: 11 }));
     [['←', 'Slew left: previous page of a multi-page set.'], ['↑', 'Slew up: scrolls the page up.'], ['→', 'Slew right: next page.'], ['↓', 'Slew down: scrolls the page down.']].forEach(function (a, k) {
-      items.push(key(15 + (k % 2) * 12.4, 109 + Math.floor(k / 2) * 8.4, a[0], a[1], { s: 7, w: 11 }));
+      items.push(key(16 + (k % 2) * 12, 106 + Math.floor(k / 2) * 8, a[0], a[1], { s: 7, w: 11 }));
     });
     var L = 'ABCDEFGHIJKLMNOPQRSTUVWXY'.split('').concat(['Z', '/', 'SP', 'OVFY', 'CLR']);
     L.forEach(function (c, k) {
       var info = c === 'CLR' ? 'Clear: erases the scratchpad, or a field when the scratchpad is empty.' : c === 'OVFY' ? 'Overfly: makes the next waypoint a fly-over waypoint.' : c === 'SP' ? 'Space.' : 'Types ' + c + ' in the scratchpad.';
-      items.push(key(48 + (k % 5) * 10, 100 + Math.floor(k / 5) * 9, c, info, { s: 7, w: 8 }));
+      items.push(key(51 + (k % 5) * 10, 101.8 + Math.floor(k / 5) * 9.4, c, info, { s: 7, w: 8 }));
     });
     '123456789.0±'.split('').forEach(function (c, k) {
-      items.push(key(15 + (k % 3) * 10, 127 + Math.floor(k / 3) * 7.6, c, c === '±' ? 'Changes the sign of the entry (+/-).' : 'Types ' + c + ' in the scratchpad.', { s: 6, w: 8 }));
+      items.push(key(15.5 + (k % 3) * 10, 123 + Math.floor(k / 3) * 8.6, c, c === '±' ? 'Changes the sign of the entry (+/-).' : 'Types ' + c + ' in the scratchpad.', { s: 7, w: 8 }));
     });
     return items;
   }
