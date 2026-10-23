@@ -846,7 +846,7 @@
     return o;
   }
   function drawDisp(it, off, st) {
-    var w = it.w, h = 11, o = '', val = st && st.typed ? st.typed : st && st.val != null ? st.val : it.val;
+    var w = it.w, h = 11, o = '', val = st && st.typed != null ? st.typed : st && st.val != null ? st.val : it.val;
     o += '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="1" class="disp"/>';
     if (!off) o += text(it.x, it.y + 2.6, val, 'disp-txt' + (it.amber ? ' amber' : ''), 7);
     o += '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="1" class="glass"/>';
@@ -1163,13 +1163,14 @@
     }
     states[i] = press(it, st);
     // Code keypad (ATC squawk): digits type into the panel's code display; after
-    // four digits that is the new code. CLR removes the last digit typed.
+    // four digits that is the new code. CLR always removes the right-hand digit
+    // shown (owner's request), whether typing or not; the next digits refill it.
     if (it.code) {
       var di = items.findIndex(function (x) { return x.k === 'disp' && x.code; }), ds = Object.assign({}, states[di] || {});
-      if (it.code === 'CLR') ds.typed = ds.typed ? ds.typed.slice(0, -1) || null : null;
+      if (it.code === 'CLR') ds.typed = (ds.typed != null ? ds.typed : ds.val || items[di].val).slice(0, -1);
       else { ds.typed = (ds.typed || '') + it.code; if (ds.typed.length === 4) { ds.val = ds.typed; ds.typed = null; } }
       states[di] = ds;
-      return ds.typed ? 'Typing: ' + ds.typed + ' (' + (4 - ds.typed.length) + ' more)' : 'Code ' + (ds.val || items[di].val) + '.';
+      return ds.typed != null ? 'Typing: ' + (ds.typed || '-') + ' (' + (4 - ds.typed.length) + ' more)' : 'Code ' + (ds.val || items[di].val) + '.';
     }
     if (it.k === 'fire' && !st.guardOpen) return 'Guard lifted. Tap again to push the ' + it.label + ' FIRE pushbutton.';
     // Radio groups (AUTO BRK LO/MED/MAX): selecting one deselects the others.
