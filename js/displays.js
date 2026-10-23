@@ -242,7 +242,7 @@
     var caCls = p.cabAlt >= 9550 ? 'r' : 'g';
     o += t(258, 54, 'CAB ALT', 'w', 10, 'middle') + t(258, 64, 'FT', 'c', 8, 'middle') + dial(250, 100, 24, 225, 0, (p.cabAlt + 625) / 12500, 's' + caCls, true) + t(232, 118, '0', 'w', 8) + t(268, 92, '10', 'w', 8);
     o += t(306, 124, Math.round(p.cabAlt / 10) * 10, caCls, 11, 'end');
-    o += '<path d="M30 168 L272 156 L272 200 L262 200 L262 238 L196 240 L196 252 L30 256 Z" class="sw" fill="none" stroke-width="1.2"/>';
+    o += '<path d="M30 168 L272 156 L272 200 L262 200 L262 238 L196 238 L196 252 L30 252 Z" class="sw" fill="none" stroke-width="1.2"/>';
     for (var i = 0; i < 2; i++) {
       var f = p.sys[i] === 'fault', active = !f && p.active === i && p.mode !== 'man';
       if (active || f) o += t(i ? 196 : 110, 192, 'SYS ' + (i + 1), f ? 'a' : 'g', 10, 'middle');
@@ -250,9 +250,9 @@
     if (p.mode === 'man') o += t(110, 206, 'MAN', 'g', 10, 'middle');
     o += t(262, 150, 'SAFETY', 'w', 9, 'middle') + ln(268, 156, 268, 168, 'sg', 1.5) + circ(268, 170, 2, 'sw', 1);
     o += t(126, 228, 'VENT', 'w', 9, 'middle') + t(88, 268, 'INLET', 'w', 8, 'middle') + t(148, 262, 'OUTLET', 'w', 8, 'middle');
-    o += ln(80, 256, 96, 255, 'sg', 1.5) + circ(80, 256, 2, 'sw', 1) + ln(140, 253, 156, 252, 'sg', 1.5) + circ(140, 253, 2, 'sw', 1);
-    var q = pt(230, 240, 20, 180 - (p.ofv / 100) * 90);
-    o += ln(212, 240, 230, 240, 'sw', 1) + ln(230, 240, q[0], q[1], p.ofv > 95 ? 'sa' : 'sg', 2) + circ(230, 240, 2, 'sw', 1);
+    o += ln(80, 252, 96, 252, 'sg', 1.5) + circ(80, 252, 2, 'sw', 1) + ln(140, 252, 156, 252, 'sg', 1.5) + circ(140, 252, 2, 'sw', 1);
+    var q = pt(230, 238, 20, 180 - (p.ofv / 100) * 90);
+    o += ln(212, 238, 230, 238, 'sw', 1) + ln(230, 238, q[0], q[1], p.ofv > 95 ? 'sa' : 'sg', 2) + circ(230, 238, 2, 'sw', 1);
     o += t(64, 280, 'PACK 1', s.bleed.packFlow[0] ? 'g' : 'a', 9, 'middle') + t(262, 262, 'PACK 2', s.bleed.packFlow[1] ? 'g' : 'a', 9, 'middle');
     return o + footer(s);
   }
