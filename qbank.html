@@ -169,13 +169,13 @@ a.reveal{display:inline-block;text-decoration:none}
 .fig-steps b::before{content:counter(fs) " "}
 .brief .fig-steps b.c-c{color:var(--cyan)} .brief .fig-steps b.c-a{color:var(--amber)}
 @media (max-width:600px){.fig-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.replay .rp-read{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:1px;margin-top:8px;background:var(--rule);border:1px solid var(--rule)}
-.replay .rp-read div{background:var(--panel);padding:6px 8px;font:600 15px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
-.replay .rp-read small{display:block;font:600 10px/1.2 var(--f-mono);letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:2px}
-.replay .rp-note{margin:10px 0 0;max-width:72ch}
-.replay .rp-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
-.replay .rp-ctl button{background:var(--panel-2);border:1px solid var(--rule-2);padding:9px 14px;font:700 13px/1 var(--f-mono);letter-spacing:.06em;cursor:pointer}
-.replay .rp-ctl button:disabled{opacity:.4;cursor:default}
+.replay .rp-read,.fig .rp-read{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:1px;margin-top:8px;background:var(--rule);border:1px solid var(--rule)}
+.replay .rp-read div,.fig .rp-read div{background:var(--panel);padding:6px 8px;font:600 15px/1.2 var(--f-mono);font-variant-numeric:tabular-nums}
+.replay .rp-read small,.fig .rp-read small{display:block;font:600 10px/1.2 var(--f-mono);letter-spacing:.1em;color:var(--muted);text-transform:uppercase;margin-bottom:2px}
+.replay .rp-note,.fig .rp-note{margin:10px 0 0;max-width:72ch}
+.replay .rp-ctl,.cards .rp-ctl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.replay .rp-ctl button,.cards .rp-ctl button{background:var(--panel-2);border:1px solid var(--rule-2);padding:9px 14px;font:700 13px/1 var(--f-mono);letter-spacing:.06em;cursor:pointer}
+.replay .rp-ctl button:disabled,.cards .rp-ctl button:disabled{opacity:.4;cursor:default}
 .replay .rp-ctl .rp-n{font:600 12px var(--f-mono);color:var(--muted);margin-left:auto}
 .replay .rp-ask{margin-top:12px;padding:12px;border:1px solid var(--amber);background:rgba(255,179,38,.06)}
 .replay .rp-ask p{margin:0 0 8px;font-weight:600}
@@ -183,7 +183,25 @@ a.reveal{display:inline-block;text-decoration:none}
 .replay .rp-ask button.ok{border-color:var(--green);color:var(--green)}
 .replay .rp-ask button.no{border-color:var(--red);color:var(--red)}
 .replay .rp-fb{margin:8px 0 0}
+.rp-scene{display:grid;gap:8px}
+.rp-scene.two{grid-template-columns:minmax(0,2.6fr) minmax(0,1fr);align-items:center}
+.rp-scene svg{display:block;width:100%;height:auto}
+.rp-pfd svg{border:1px solid var(--rule-2);border-radius:4px}
+@media (max-width:600px){.rp-scene.two{grid-template-columns:minmax(0,1fr)}.rp-pfd{max-width:240px;justify-self:center;width:100%}}
 .replay .ac{transition:transform .8s ease}
+.cards .cd-q{margin:4px 0 8px;font-weight:600;max-width:72ch}
+.cards .cd-o{display:block;width:100%;text-align:left;margin-top:6px;background:var(--panel);border:1px solid var(--rule-2);padding:10px 12px;cursor:pointer;font:inherit}
+.cards .cd-o.ok{border-color:var(--green);color:var(--green)} .cards .cd-o.no{border-color:var(--red);color:var(--red)}
+.sl-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;margin-top:10px;font:600 12px var(--f-mono);color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.sl-row input{width:100%;accent-color:var(--cyan)} .sl-row output{color:var(--fg);min-width:7ch;text-align:right}
+@media (max-width:520px){.sl-row{grid-template-columns:minmax(0,1fr) auto}.sl-row span{grid-column:1/-1}}
+.fig .hs{cursor:pointer} .fig .hs:focus{outline:none} .fig .hs:focus circle{stroke:#fff}
+.hs-info{margin-top:8px;min-height:2.6em} .hs-info p{margin:0;max-width:72ch}
+.tblw{overflow-x:auto;margin:10px 0;border:1px solid var(--rule)}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--rule)}
+.tbl thead th{font:600 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
+.tbl tbody tr:last-child td{border-bottom:0}
 @media (prefers-reduced-motion:reduce){.replay .ac{transition:none}}
 </style>
 
@@ -375,6 +393,7 @@ brief:`<h4>The events</h4>
 <li><b>Discrepancies not logged.</b> An intermittent FQIC (FQI Computer) failure produced a 500 kg arrival discrepancy, then about 3 000 kg on the next sector. The crew put the second one down to a direct routing. Nothing went in the tech log. On the third sector LO LVL triggered on one side, then the other. The aircraft landed with about 900 kg.</li>
 </ol>
 <h4>Key points</h4>
+<div data-fig="fuel_sources"></div>
 <ul>
 <li><b>Three sources of fuel information.</b>
   <ul>
@@ -393,7 +412,8 @@ brief:`<h4>The events</h4>
 <li><b>Tolerance.</b> On the ground the FQI tolerance is ±(1% of current FOB + 1% of maximum FOB).</li>
 <li><b>Water in the tanks</b> causes over-reading and gauge fluctuation.</li>
 </ul>
-<p class="take">"Should the LO LVL alert trigger, it is to be trusted. It is the independent voice from the tanks themselves."</p>`},
+<p class="take">"Should the LO LVL alert trigger, it is to be trusted. It is the independent voice from the tanks themselves."</p>
+<div data-cards="fuel"></div>`},
 
 {id:"idg",tag:"Electrics",title:"Preventing Loss of Engine Generators",url:"https://safetyfirst.airbus.com/preventing-loss-of-engine-generators-on-a320-family-a330-and-a340-aircraft/",
 summary:"Both IDGs fail in sequence in an idle descent and the aircraft drops into emergency electrical configuration. Why it happens and what to do after the first GEN FAULT.",
@@ -460,6 +480,7 @@ brief:`<h4>The event (A320)</h4>
 <li>The in-flight resets stopped the BSCU detecting a <b>dual tachometer failure</b>. The BSCU took the wheel speed as 0 kt. After 15 s it recovered braking with a default deceleration, but it could not compute antiskid, so it sent full pressure to the brakes and the tyres burst.</li>
 </ul>
 <h4>When the flight crew may reset</h4>
+<div data-fig="reset_tree"></div>
 <ol>
 <li><b>Case 1:</b> the reset is a step in an ECAM, OEB (Operations Engineering Bulletin), FCOM or QRH procedure.</li>
 <li><b>Case 2:</b> the reset is optional, after the ECAM. The PF calls <b>"STOP ECAM"</b> before the STATUS review, then checks the FCOM/QRH <b>System Reset table</b>. If that alert or malfunction is not listed, <b>do not reset</b>. Follow the table's conditions: maximum number of attempts, and ground-only or in-flight.</li>
@@ -474,7 +495,8 @@ brief:`<h4>The event (A320)</h4>
 <li><b>Log every reset</b>, successful or not, with the number of attempts.</li>
 <li>A ground-only reset done in flight can trigger tests that move flight control surfaces, or cause a law reversion with loss of protections.</li>
 <li>Third-party reset apps are not authorised by Airbus.</li>
-</ul>`},
+</ul>
+<div data-cards="reset"></div>`},
 
 {id:"desc",tag:"Energy",title:"Control your Speed: Descent, Approach and Landing",url:"https://safetyfirst.airbus.com/control-your-speed-during-descent-approach-and-landing/",
 summary:"Managed-descent speed range, VAPP construction, decelerated and early-stabilised approaches, and why ground speed mini differs on the neo.",
@@ -561,6 +583,7 @@ brief:`<h4>The event (A330)</h4>
 <li>On landing, alternate braking did not work. The crew applied the LOSS OF BRAKING memory items, then stopped the aircraft with <b>3 parking brake applications</b>. All main gear tyres burst.</li>
 <li>Root cause: air in the alternate braking low-pressure control circuit, introduced by incorrect servicing after a master cylinder was replaced. There had been three earlier crew reports of low pressure and a "spongy" pedal.</li>
 </ol>
+<div data-replay="altn"></div>
 <h4>A320 family relevance</h4>
 <ul>
 <li><b>Hydromechanical alternate braking</b> (pedals drive master cylinders, which open a dual valve on the <b>Yellow</b> system) is fitted to A320 family aircraft delivered <b>before 2007</b>. On these aircraft the SOP calls for a manual check.</li>
@@ -755,6 +778,7 @@ brief:`<h4>MMEL and MEL</h4>
   </ol></li>
 <li><b>Each item's status</b> is GO, GO IF (with dispatch conditions) or NO GO.</li>
 </ul>
+<div data-fig="mel_tree"></div>
 <h4>When it applies</h4>
 <ul>
 <li>The MEL must be applied <b>before departure</b>, and the Captain must accept it. "Departure" means the <b>commencement of the flight: when the aircraft first moves under its own power for takeoff</b>, i.e. the start of taxi.</li>
@@ -772,7 +796,8 @@ brief:`<h4>MMEL and MEL</h4>
 <li><b>Log:</b> maintenance logs the item and sets the rectification deadline from the repair interval category.</li>
 <li><b>First dispatch:</b> apply every (m) maintenance and (o) operational procedure.</li>
 <li><b>Later flights:</b> check every open item is still within its interval for the coming sector. When a new item is added, recheck all the existing items.</li>
-</ol>`},
+</ol>
+<div data-cards="mel"></div>`},
 
 {id:"wb",tag:"Loadsheet",title:"Understanding Weight and Balance",url:"https://safetyfirst.airbus.com/understanding-weight-and-balance/",
 summary:"A tail strike on the second sector after passengers were left sitting aft. Why forward and aft CG each bite, and how small the A320's CG range really is.",
@@ -783,6 +808,7 @@ brief:`<h4>Events</h4>
 <li><b>Cargo shift.</b> Cargo moving aft after takeoff caused pitch-ups and, in one case, a stall and crash.</li>
 <li>Of weight-and-balance accidents, about 21% involved overweight and 35% a CG outside the certified limits.</li>
 </ul>
+<div data-slider="wb"></div>
 <h4>The physics</h4>
 <p>The CG sits ahead of the CP (Centre of Pressure, where lift acts), which creates a nose-down moment. The THS (Trimmable Horizontal Stabiliser) balances it with a downforce, and the wing must carry that extra load as well.</p>
 <h4>Forward CG beyond the limit</h4>
@@ -810,6 +836,7 @@ brief:`<h4>Events</h4>
 summary:"The safety nets that catch wrong ZFW, speeds, flaps, trim, runway or intersection from cockpit preparation to brake release. Which alerts mean you reject.",
 brief:`<h4>Why it exists</h4>
 <p>Events have included takeoffs with the wrong flaps or trim, wrong performance inputs, data not updated after a late runway change, takeoffs from the wrong intersection, from a taxiway or from the opposite runway direction, and residual braking. They happen under stress, high workload, late changes and demanding ATC (Air Traffic Control) requests.</p>
+<div data-fig="tos_phases"></div>
 <h4>Cockpit preparation</h4>
 <ul>
 <li><b>TOS1 (Takeoff Surveillance step 1)</b>, on the A320 family since 2009, gives these MCDU (Multipurpose Control and Display Unit) messages:
@@ -844,7 +871,8 @@ brief:`<h4>Why it exists</h4>
 <li>Both pilots compute performance independently and cross-check.</li>
 <li>Always insert <b>T.O SHIFT</b> for an intersection departure.</li>
 <li>These functions are a <b>safety net, not a replacement for the SOP</b>, and need an up-to-date database.</li>
-</ul>`},
+</ul>
+<div data-cards="tos"></div>`},
 
 {id:"thr",tag:"Takeoff thrust",title:"Thrust Setting at Takeoff",url:"https://safetyfirst.airbus.com/engine-thrust-management-thrust-setting-at-takeoff/",
 summary:"An A320 left the runway at 31 kt after applying thrust from uneven idle without a proper stabilisation step. Why the two-step thrust setting exists.",
@@ -1393,6 +1421,107 @@ brief:`<h4>Case study 1: A320, bounce, go-around, tailstrike</h4>
 <p class="take">Near the ground: no big pull, accept the gear contact, wait for VAPP, then fly away and clean up.</p>`}
 );
 
+FILES.push(
+{id:"seat",tag:"Cockpit prep",title:"Are You Properly Seated?",url:"https://safetyfirst.airbus.com/are-you-properly-seated/",
+summary:"The cockpit is built around one eye position. Sit off it and you lose part of the view outside, part of the panel, or full control travel.",
+brief:`<h4>The eye reference point</h4>
+<p>Certification (CS/FAR 25.773 and 25.777) requires a cockpit that pilots from 1.58 m to 1.91 m can use, with a means of finding the best eye position. The windows, controls, displays and instruments are all placed around that <b>eye reference point</b>. The <b>eye reference indicator</b> on the centre windshield post shows it: the white ball must be hidden behind the red one.</p>
+<div data-slider="seat"></div>
+<h4>Too low or too high</h4>
+<ul>
+<li><b>Too low:</b> overhead controls are harder to reach; on the ground, less awareness near airbridges and vehicles; on final, the flight path angle can look wrong; the glareshield cuts the view ahead, so the <b>cut-off angle</b> and the <b>visual segment</b> shrink. In low visibility that makes a go-around more likely.</li>
+<li><b>Too high:</b> the glareshield hides the top of the <b>PFD and ND</b>, the flight path angle can look wrong, and full rudder travel is harder to reach.</li>
+<li>Late in a long flight, fatigue makes you sink. <b>Re-adjust before the approach.</b> In cruise you may sit off the point for comfort, but keep every control in reach and the panel in view.</li>
+</ul>
+<h4>Adjust before the aircraft moves (before pushback or start)</h4>
+<ol><li><b>Seat:</b> fore/aft and height to the eye reference indicator; check the top of the PFD and ND is not hidden.</li>
+<li><b>Armrest:</b> the hand grips the sidestick with a straight wrist and the forearm resting; only the hand and fingers move. A poor armrest gives over-reaction and excessive inputs, and steadies the arm in turbulence.</li>
+<li><b>Pedals:</b> full rudder travel and full manual braking (engine failure, crosswind, rejected take-off). Note the armrest and pedal indicator positions for next time.</li></ol>
+<p class="take">Eyes on the reference point, wrist straight, full pedal travel: before the aircraft moves, and again before the approach.</p>`},
+{id:"iceridge",tag:"Walkaround",title:"Look out for Ice Ridges on the Lower Nose Fuselage",url:"https://safetyfirst.airbus.com/look-out-for-ice-ridges-on-the-lower-nose-fuselage/",
+summary:"A de-iced A320 with an iced lower nose lost Normal law, the A/THR, FDs and AP at lift-off. Thin ice ridges ahead of the pitot probes made the speeds read low.",
+brief:`<h4>The event</h4>
+<div data-replay="iceridge"></div>
+<div data-fig="iceridge_bars"></div>
+<h4>The phenomenon</h4>
+<div data-fig="iceridge_view"></div>
+<ul>
+<li>Ridges form during a <b>long stay on the ground in the cold</b>: most events were on the first flight of the day. Snow melting on the heated windshield and refreezing below it is another source.</li>
+<li>One large ridge, or several thin ones, disturbs the airflow into the probes and the ADR airspeed reads <b>lower than the real speed</b>. They can stay on for the whole flight.</li>
+<li>A320 family: one probe affected, no system loss. <b>Two or three</b> affected and the flight controls and auto flight may reject all three ADRs: no characteristic speeds, AP, FD, A/THR or rudder travel limiter, and <b>Alternate law</b>.</li>
+</ul>
+<h4>Prevent it</h4>
+<ul>
+<li>Walkaround in cold weather: check the <b>lower nose fuselage ahead of the air data probes</b>. It is hard to see on a white fuselage at night.</li>
+<li>Ridges, even thin ones: ask the de-icing crew to remove them. Thin hoarfrost on the top of the fuselage is allowed; ridges on the lower nose are not.</li>
+<li>De-icing fluid is sprayed from rear to front, never straight onto the static ports or AOA probes.</li>
+<li>Any airspeed discrepancy: apply <b>UNRELIABLE SPEED INDICATION</b>.</li>
+</ul>`},
+{id:"pitot",tag:"Walkaround",title:"Pitot Probe Performance Covered On the Ground",url:"https://safetyfirst.airbus.com/pitot-probe-performance-covered-on-the-ground/",
+summary:"Wasps partly blocked an A330 pitot in under two hours on the ground. Why covers matter even on short turnarounds, and what the crew can catch.",
+brief:`<h4>The event</h4>
+<div data-replay="pitot"></div>
+<h4>How fast a probe can block</h4>
+<div data-fig="pitot_time"></div>
+<p>Sand, dust, dirt and insects are the main cause of rejected take-offs and turn-backs for airspeed discrepancy below FL250.</p>
+<div data-fig="pitot_principle"></div>
+<h4>What helps</h4>
+<ul>
+<li><b>Approved Airbus covers</b> (other manufacturers' covers may not fit). They are in the flight kit; fit them about <b>30 minutes</b> after engine shutdown.</li>
+<li>Operators assess each airport (wildlife plans, wasp NOTAMs) and may require covers there <b>whatever the turnaround time</b>.</li>
+<li><b>Walkaround:</b> look carefully at each pitot probe, check every cover is off and the probe is undamaged.</li>
+<li><b>Take-off:</b> scan the speeds; the PF cross-checks the airspeed at <b>100 kt</b>. A blocked probe gives a low, fluctuating or flagged speed on one side.</li>
+<li>Report every obstruction to the airport and Airbus.</li>
+</ul>
+<div data-cards="pitot"></div>`},
+{id:"oeb",tag:"Briefing",title:"Mind the OEBs!",url:"https://safetyfirst.airbus.com/mind-the-oebs/",
+summary:"An OEB is a temporary procedure for specific conditions. Applying one that does not apply to your aircraft, or without its entry conditions, is a hazard too.",
+brief:`<h4>What an OEB is</h4>
+<p>An Operations Engineering Bulletin is a <b>temporary</b> procedure, applied only in specific conditions, until a permanent fix is installed. On the A320 family they are in the QRH.</p>
+<div data-fig="oeb_types"></div>
+<h4>What the crew must know before each flight</h4>
+<ul>
+<li><b>Which OEBs apply to this aircraft.</b> Crews flying mixed fleets have applied OEBs that did not apply to the aircraft they were flying. Review them in the <b>preliminary cockpit preparation of every flight</b>, even in transit, with the <b>LEOEB</b> (List of Effective OEBs) in the QRH: only this aircraft's OEBs, red first, with their ECAM entries.</li>
+<li><b>The entry conditions:</b> an ECAM alert or a defined event. Apply an OEB only when they are confirmed.</li>
+<li><b>The effects</b> on the cockpit and systems, from the explanation attached to each OEB.</li>
+<li><b>OEB reminder:</b> the ECAM shows <b>REFER TO QRH PROC</b> in place of a procedure affected by an OEB.</li>
+</ul>
+<h4>An OEB's life</h4>
+<div data-fig="oeb_life"></div>
+<div data-cards="oeb"></div>`},
+{id:"egt",tag:"Engine start",title:"Prevention of EGT Overlimit Events",url:"https://safetyfirst.airbus.com/prevention-of-egt-overlimit-events/",
+summary:"An A321 had both EGTs over the limit at 90 ft on a hot day. What raises EGT, how crews can gain margin, and what to do when it happens.",
+brief:`<h4>The event</h4>
+<div data-replay="egt"></div>
+<h4>What raises the EGT</h4>
+<ul>
+<li><b>OAT and altitude:</b> each extra 1 °C of OAT costs about 3 °C of EGT for the same take-off thrust.</li>
+<li><b>Bleed demand:</b> packs and anti-ice. <b>Contamination:</b> dirt, pollution. <b>A cold engine:</b> EGT about equal to OAT before start gives a higher peak at take-off.</li>
+<li><b>Wear:</b> eroded blades and worn seals. The EGT margin shrinks over time, which is why operators ask for regular TOGA take-offs to measure it.</li>
+<li>The redline is <b>not a hard limit</b>: above it the engine still gives thrust, at the cost of wear. Hence an amber caution, not a red warning.</li>
+</ul>
+<h4>What the crew can do</h4>
+<ul><li>Extend the <b>warm-up</b> (2 to 5 minutes usual; 10 minutes can save about 10 °C).</li>
+<li>Use <b>reduced thrust</b> (FLEX or derate). Or take off with <b>packs OFF</b>, or with <b>APU BLEED ON</b> when it is too hot for packs off.</li></ul>
+<h4>If it happens at take-off</h4>
+<div data-fig="egt_zones"></div>
+<p>Report every overlimit and make a logbook entry.</p>
+<div data-cards="egt"></div>`},
+{id:"turn180",tag:"Backtrack",title:"180° Turns on Runway",url:"https://safetyfirst.airbus.com/180-turns-on-runway/",
+summary:"More than 20 runway excursions in U-turns in ten years, on dry runways and with experienced crews. The technique that keeps the wheels on the pavement.",
+brief:`<h4>Not just for the inexperienced</h4>
+<div data-fig="turn180_stats"></div>
+<p>A worn or freshly painted surface can be as slippery as contamination: painted threshold marks fill the texture or hold water after the rest has dried.</p>
+<h4>The technique, step by step</h4>
+<div data-replay="turn180"></div>
+<h4>Divergence angle (A330-300 example)</h4>
+<div class="tblw"><table class="tbl"><thead><tr><th>Divergence</th><th>Width needed, 95% steering</th><th>Width needed, 80% steering</th></tr></thead>
+<tbody><tr><td>10°</td><td>56.2 m</td><td>65.6 m</td></tr><tr><td>20° (FCOM)</td><td>56.4 m</td><td>65.7 m</td></tr><tr><td>40°</td><td>58.1 m</td><td>67.4 m</td></tr></tbody></table></div>
+<p>Too little divergence and the main gear can leave the runway as the turn starts; too much widens the turn. Using less steering costs far more width than the angle does.</p>
+<p><b>A320 family:</b> the braked pivot turn is commonly used without adverse effect on the gear (unlike the larger types).</p>
+<p class="take">Check the width, steady at 5 to 10 kt, start over the edge, progressive full tiller, release it before you stop, and if in doubt, stop and call a tug.</p>`}
+);
+
 const FILES_BY_ID = Object.fromEntries(FILES.map(f=>[f.id,f]));
 
 /* Safety First issue for each stop, from the magazines in jonfrance78-byte/a320-references.
@@ -1402,16 +1531,22 @@ const ISSUES = {fuel:"#20, July 2015",clb:"#20, July 2015",radar:"#22, July 2016
   mel:"#25, January 2018",thr:"#27, January 2019",gnss:"#29, January 2020",tos:"#29, January 2020",turb:"#29, January 2020",park:"#29, January 2020",
   flare:"#31, January 2021",unstab:"#31, January 2021",rot:"#31, January 2021",uas:"#32, July 2021",reset:"#32, July 2021",
   tcas:"#33, January 2022",gs:"#33, January 2022",brakes:"#35, January 2023",baro:"#35, January 2023",gaclean:"#36, July 2023",rev:"#36, July 2023",
-  tailga:"#39, January 2025",idg:"#40, July 2025",xls:"#40, July 2025",fleak:"#41, January 2026",rops:"#41, January 2026"};
+  tailga:"#39, January 2025",seat:"#25, January 2018",iceridge:"#26, July 2018",pitot:"#22, July 2016",oeb:"#30, July 2020",egt:"#34, July 2022",turn180:"#22, July 2016",idg:"#40, July 2025",xls:"#40, July 2025",fleak:"#41, January 2026",rops:"#41, January 2026"};
 Object.keys(ISSUES).forEach(id=>{ FILES_BY_ID[id].issue = ISSUES[id]; });
 
 /* Gate-to-gate order: each Safety First file is a stop on one flight */
 const ROUTE = [
   {id:"altn",   phase:"Preflight",          step:"Preliminary cockpit preparation"},
   {id:"mel",    phase:"Preflight",          step:"Tech log and MEL dispatch"},
+  {id:"oeb",    phase:"Preflight",          step:"OEBs for this aircraft"},
   {id:"wb",     phase:"Preflight",          step:"Loadsheet, weight and CG"},
   {id:"fuel",   phase:"Preflight",          step:"Fuel check before start"},
+  {id:"pitot",  phase:"Preflight",          step:"Walkaround: air data probes"},
+  {id:"iceridge",phase:"Preflight",         step:"Walkaround in the cold"},
+  {id:"seat",   phase:"Preflight",          step:"Seat, armrest and pedals"},
+  {id:"egt",    phase:"Engine start & taxi",step:"Engine start and warm-up"},
   {id:"reset",  phase:"Engine start & taxi",step:"Faults at engine start and taxi"},
+  {id:"turn180",phase:"Engine start & taxi",step:"Backtrack and U-turn"},
   {id:"tos",    phase:"Engine start & taxi",step:"Takeoff data checks and line-up"},
   {id:"thr",    phase:"Takeoff",            step:"Setting takeoff thrust"},
   {id:"uas",    phase:"Takeoff",            step:"Airspeed check on the roll"},
@@ -1883,6 +2018,109 @@ a:`<p>Retracting the flaps early needs a higher pitch early in the manoeuvre, wh
 src:"Safety First #39 (January 2025): Preventing Tailstrike During Go-around near the Ground"}
 );
 
+/* batch 1: preflight, engine start and taxi */
+Q.push(
+{id:"sf-seat-1",s:"sf",t:"seat",q:"What does the eye reference indicator show when you are correctly seated?",
+a:`<p>Its balls line up so the <b>white ball is hidden behind the red one</b>. Your eyes are then on the eye reference point that the windows, displays and controls were designed around.</p>`,
+src:"Safety First #25, January 2018: Are You Properly Seated?"},
+{id:"sf-seat-2",s:"sf",t:"seat",q:"Name three effects of sitting too low.",
+a:`<ul><li>Overhead controls harder to reach.</li><li>Less awareness when taxiing near airbridges, buildings and vehicles.</li><li>A reduced cut-off angle over the glareshield: bigger blind area, shorter visual segment (worse in low visibility), and a misleading view of the flight path angle on final.</li></ul>`,
+src:"Safety First #25, January 2018: Are You Properly Seated?"},
+{id:"sf-seat-3",s:"sf",t:"seat",q:"What do you lose by sitting too high?",
+a:`<p>The glareshield hides the <b>top of the PFD and ND</b>; the flight path angle can look wrong on final; and full rudder pedal travel is harder to reach.</p>`,
+src:"Safety First #25, January 2018: Are You Properly Seated?"},
+{id:"sf-seat-4",s:"sf",t:"seat",q:"When must the seat be adjusted, and when should you check it again?",
+a:`<p>Before the aircraft moves: before pushback or engine start (FCOM SOP). Check again <b>before the approach</b>, because fatigue on a long sector makes you sink.</p>`,
+src:"Safety First #25, January 2018: Are You Properly Seated?"},
+{id:"sf-seat-5",s:"sf",t:"seat",q:"Why does the armrest setting matter for manual flying?",
+a:`<p>Set right, the forearm rests and the wrist is straight, so only the hand and fingers move the sidestick: precise inputs, and a steadied arm in turbulence. Set wrong, pilots are more prone to over-reaction and excessive inputs.</p>`,
+src:"Safety First #25, January 2018: Are You Properly Seated?"},
+{id:"sf-seat-6",s:"sf",t:"seat",q:"Why check full pedal travel when adjusting the seat?",
+a:`<p>Full rudder is needed for an engine failure on take-off or in the initial climb, strong crosswinds, and the flare and roll-out; and full manual braking may be needed after a rejected take-off or on landing.</p>`,
+src:"Safety First #25, January 2018: Are You Properly Seated?"},
+{id:"sf-iceridge-1",s:"sf",t:"iceridge",q:"Why can ice ridges on the lower nose fuselage cause unreliable airspeed?",
+a:`<p>Ridges ahead of the pitot probes disturb the airflow into them, so the ADR airspeed reads <b>lower than the real speed</b>. One large ridge or several thin ones can do it.</p>`,
+src:"Safety First #26, July 2018: Look out for Ice Ridges on the Lower Nose Fuselage"},
+{id:"sf-iceridge-2",s:"sf",t:"iceridge",q:"In the A320 event, what happened at lift-off and 12 s later?",
+a:`<p>At lift-off: Alternate law and AUTO FLT A/THR OFF. 12 s later: FDs, characteristic speeds, TLU and AP lost, with SPD LIM and FD red flags on both PFDs. At 1 500 ft the ECAM showed NAV ADR DISAGREE, F/CTL ALTN LAW and AUTO FLT RUD TRV LIM SYS.</p>`,
+src:"Safety First #26, July 2018: Look out for Ice Ridges on the Lower Nose Fuselage"},
+{id:"sf-iceridge-3",s:"sf",t:"iceridge",q:"By how much did the airspeeds under-read in that event?",
+a:`<p>ADR 3 by up to 40 kt from the start of the take-off roll; ADR 1 by up to 10 kt in the roll and up to 35 kt from rotation.</p>`,
+src:"Safety First #26, July 2018: Look out for Ice Ridges on the Lower Nose Fuselage"},
+{id:"sf-iceridge-4",s:"sf",t:"iceridge",q:"On an A320 family aircraft, how many affected probes does it take to lose the ADRs, and what is lost?",
+a:`<p>One probe: no system loss. <b>Two or three</b>: the flight controls and auto flight may reject all three ADRs: characteristic speeds, AP, FDs, A/THR and the rudder travel limiter are lost, and the law reverts to <b>Alternate</b>.</p>`,
+src:"Safety First #26, July 2018: Look out for Ice Ridges on the Lower Nose Fuselage"},
+{id:"sf-iceridge-5",s:"sf",t:"iceridge",q:"When are ice ridges most likely, and what is the second known cause?",
+a:`<p>After a long cold stay on the ground: most events were on the <b>first flight of the day</b>. Also: snow melting on the heated windshield and refreezing below it.</p>`,
+src:"Safety First #26, July 2018: Look out for Ice Ridges on the Lower Nose Fuselage"},
+{id:"sf-iceridge-6",s:"sf",t:"iceridge",q:"Walkaround: you find thin ice ridges on the lower nose, but hoarfrost on the top of the fuselage. What is acceptable?",
+a:`<p>Thin hoarfrost on the top of the fuselage is allowed. <b>Ice ridges on the lower nose must be removed</b>, even thin ones: ask the de-icing crew.</p><div data-fig="iceridge_view"></div>`,
+src:"Safety First #26, July 2018: Look out for Ice Ridges on the Lower Nose Fuselage"},
+{id:"sf-pitot-1",s:"sf",t:"pitot",q:"How quickly can a probe be blocked on the ground?",
+a:`<p>A mud dauber wasp can build a nest able to block a probe in about <b>20 minutes</b> (CASA). In the A330 event a probe was partly blocked in <b>less than 2 hours</b>.</p>`,
+src:"Safety First #22, July 2016: Pitot Probe Performance Covered On the Ground"},
+{id:"sf-pitot-2",s:"sf",t:"pitot",q:"When can pitot covers be fitted after engine shutdown, and why the wait?",
+a:`<p>About <b>30 minutes</b> after shutdown. Probe heat stops with the engines; the tip takes about 15 minutes to cool to 70 °C and another 15 to reach ambient.</p>`,
+src:"Safety First #22, July 2016: Pitot Probe Performance Covered On the Ground"},
+{id:"sf-pitot-3",s:"sf",t:"pitot",q:"What made the A330 event worse on the second take-off?",
+a:`<p>The aircraft had been dispatched under the MEL with <b>ADIRU 2 inoperative</b>. A wrong Captain airspeed with ADIRU 2 out removed the A/THR and FDs, reverted the law to Alternate and left the AP unavailable.</p>`,
+src:"Safety First #22, July 2016: Pitot Probe Performance Covered On the Ground"},
+{id:"sf-pitot-4",s:"sf",t:"pitot",q:"What is the main cause of rejected take-offs and turn-backs for airspeed discrepancy below FL250?",
+a:`<p>Pitot inlet obstruction by <b>sand, dust, dirt or insects</b>.</p>`,
+src:"Safety First #22, July 2016: Pitot Probe Performance Covered On the Ground"},
+{id:"sf-pitot-5",s:"sf",t:"pitot",q:"What two SOP barriers does the crew have against a blocked pitot?",
+a:`<ul><li><b>Exterior walkaround:</b> look at each probe, every cover removed, no damage.</li><li><b>Take-off:</b> scan the speeds; the PF cross-checks the airspeed at <b>100 kt</b>.</li></ul><div data-fig="pitot_principle"></div>`,
+src:"Safety First #22, July 2016: Pitot Probe Performance Covered On the Ground"},
+{id:"sf-oeb-1",s:"sf",t:"oeb",q:"What is the difference between a red and a white OEB?",
+a:`<p><b>Red:</b> not applying it may significantly affect the <b>safe</b> operation of the aircraft. <b>White:</b> not applying it may significantly affect <b>efficient</b> operation (diversions, delays).</p>`,
+src:"Safety First #30, July 2020: Mind the OEBs!"},
+{id:"sf-oeb-2",s:"sf",t:"oeb",q:"What are the three things a crew must know about OEBs before a flight?",
+a:`<ul><li>Which OEBs apply to this aircraft.</li><li>Their entry conditions (an ECAM alert or a defined event).</li><li>Their cockpit and system effects when applied.</li></ul>`,
+src:"Safety First #30, July 2020: Mind the OEBs!"},
+{id:"sf-oeb-3",s:"sf",t:"oeb",q:"When does the SOP ask you to review the OEBs, and with what?",
+a:`<p>In the <b>preliminary cockpit preparation of every flight, even in transit</b>, using the <b>LEOEB</b> in the QRH: only this aircraft's OEBs, red first, with their ECAM entries.</p>`,
+src:"Safety First #30, July 2020: Mind the OEBs!"},
+{id:"sf-oeb-4",s:"sf",t:"oeb",q:"What does REFER TO QRH PROC on the ECAM mean?",
+a:`<p>It is the <b>OEB reminder</b>: the operator activated it for an alert affected by an OEB. Apply the OEB procedure in the QRH.</p>`,
+src:"Safety First #30, July 2020: Mind the OEBs!"},
+{id:"sf-oeb-5",s:"sf",t:"oeb",q:"Why is it a risk if an OEB stays in the documents after its fix is installed?",
+a:`<p>A crew could apply a procedure that no longer applies to the aircraft. The aircraft configuration and the onboard documentation must stay aligned.</p>`,
+src:"Safety First #30, July 2020: Mind the OEBs!"},
+{id:"sf-egt-1",s:"sf",t:"egt",q:"In the A321 event, what combination led to the dual EGT overlimit?",
+a:`<p>Two degraded engines (dirty, eroded, worn), a 30 °C day (ISA +15) and <b>TOGA with packs ON</b>. Both engines also stalled.</p>`,
+src:"Safety First #34, July 2022: Prevention of EGT Overlimit Events"},
+{id:"sf-egt-2",s:"sf",t:"egt",q:"EGT overlimit before 100 kt, between 100 kt and V1, and after V1: what does the guidance say?",
+a:`<ul><li><b>Before 100 kt:</b> consider rejecting; with vibration it can mean engine damage.</li><li><b>100 kt to V1:</b> continue, establish the climb, ECAM above 400 ft. The Captain may still reject (dual event, mountains).</li><li><b>After V1 or lift-off:</b> continue; above 400 ft, ECAM and gently reduce thrust on the affected engine.</li></ul><div data-fig="egt_zones"></div>`,
+src:"Safety First #34, July 2022: Prevention of EGT Overlimit Events"},
+{id:"sf-egt-3",s:"sf",t:"egt",q:"Why is an EGT overlimit an amber caution rather than a red warning?",
+a:`<p>The redline is not a hard limit: without severe damage the engine still gives thrust above it, at the cost of faster wear. Certification tests showed this.</p>`,
+src:"Safety First #34, July 2022: Prevention of EGT Overlimit Events"},
+{id:"sf-egt-4",s:"sf",t:"egt",q:"When is the EGT OVER LIMIT alert inhibited?",
+a:`<p>From <b>80 kt to lift-off</b> on take-off (to avoid a high-energy reject) and from touchdown to 80 kt on landing (to keep the reversers in use). Watch for the red EGT on the engine display.</p>`,
+src:"Safety First #34, July 2022: Prevention of EGT Overlimit Events"},
+{id:"sf-egt-5",s:"sf",t:"egt",q:"Name four ways the crew can lower the take-off EGT.",
+a:`<ul><li>Longer warm-up (10 minutes can save about 10 °C).</li><li>Reduced thrust (FLEX or derate).</li><li>Packs OFF.</li><li>APU BLEED ON when it is too hot for packs off.</li></ul>`,
+src:"Safety First #34, July 2022: Prevention of EGT Overlimit Events"},
+{id:"sf-turn180-1",s:"sf",t:"turn180",q:"Who should fly a right U-turn on the runway, and why?",
+a:`<p>The <b>left seat</b>: the pilot on the side opposite the turn has the better view. For a left turn, the right seat.</p>`,
+src:"Safety First #22, July 2016: 180° Turns on Runway"},
+{id:"sf-turn180-2",s:"sf",t:"turn180",q:"What divergence angle and ground speed does the technique use?",
+a:`<p>About <b>15 to 25°</b> from the runway axis (type dependent) and a steady <b>5 to 10 kt</b>, towards 5 kt on a degraded surface.</p>`,
+src:"Safety First #22, July 2016: 180° Turns on Runway"},
+{id:"sf-turn180-3",s:"sf",t:"turn180",q:"When do you start the turn, and how do you use the tiller?",
+a:`<p>When you are physically <b>over the runway edge</b> (on most Airbus types). Then bring the tiller <b>progressively</b> to full. An aggressive full tiller makes the nosewheels skid.</p>`,
+src:"Safety First #22, July 2016: 180° Turns on Runway"},
+{id:"sf-turn180-4",s:"sf",t:"turn180",q:"What assumptions lie behind the FCOM minimum runway width for a 180\u00b0 turn?",
+a:`<p>A <b>dry</b> runway, a <b>good surface</b> and the <b>recommended technique</b> with full steering throughout. Add margin for contamination or a worn or painted surface.</p>`,
+src:"Safety First #22, July 2016: 180° Turns on Runway"},
+{id:"sf-turn180-5",s:"sf",t:"turn180",q:"A wheel left the pavement during the turn but you got back on. What now?",
+a:`<p>Report it, and have the aircraft <b>inspected before flight</b>. One crew realigned and took off; gear damage was found on arrival.</p>`,
+src:"Safety First #22, July 2016: 180° Turns on Runway"},
+{id:"sf-turn180-6",s:"sf",t:"turn180",q:"How do you keep the speed steady during the turn?",
+a:`<p>Small asymmetric thrust, <b>idle on the inside engine</b>. The PM watches the ground speed and heading and calls deviations; the PF looks outside.</p><div data-fig="turn180_stats"></div>`,
+src:"Safety First #22, July 2016: 180° Turns on Runway"}
+);
+
 const SECTIONS = {
   proc:{key:"proc",hash:"procedures",title:"Procedures",cls:"proc",desc:"Normal procedures: takeoff, climb and cruise, descent and approach, landing, go-around. FCOM PRO-NOR and FCTM PR-NP."},
   abn:{key:"abn",hash:"abnormal",title:"Abnormal Procedures",cls:"abn",desc:"Memory items, RTO and engine failure, ECAM and systems failures, emergencies. FCOM PRO-ABN, QRH and FCTM PR-AEP."},
@@ -2011,67 +2249,131 @@ function renderSafetyIndex(sec){
   </div>`;
 }
 
+/* ================= DRAWINGS =================
+   Our own drawings of the A320 family (side and top views), a PFD and a runway,
+   used by the Safety First figures and replays. Nothing here is traced from
+   Airbus artwork. Colours follow the page tokens. */
+const DRAW = (()=>{
+  // Side view, nose right, main-gear contact at the origin, 7 units per metre.
+  // The aft lower fuselage corner is at (-120,-27): with the main gear on the
+  // ground it touches at atan(27/120) = 12.7° of pitch.
+  const defs = `<defs>
+   <linearGradient id="dw-fus" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f7fa"/><stop offset=".55" stop-color="#d9e0e7"/><stop offset="1" stop-color="#9fadbb"/></linearGradient>
+   <linearGradient id="dw-tail" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2a4f8a"/><stop offset="1" stop-color="#16305c"/></linearGradient>
+   <linearGradient id="dw-eng" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e3e8ee"/><stop offset=".6" stop-color="#b8c3ce"/><stop offset="1" stop-color="#7d8b99"/></linearGradient>
+   <linearGradient id="dw-wing" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c7d0d9"/><stop offset="1" stop-color="#8996a4"/></linearGradient>
+   <radialGradient id="dw-tyre" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#3a414a"/><stop offset="1" stop-color="#0d1014"/></radialGradient>
+   <linearGradient id="dw-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1b5fa8"/><stop offset="1" stop-color="#3f8fd6"/></linearGradient>
+   <linearGradient id="dw-gnd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a5a2b"/><stop offset="1" stop-color="#5e3b1a"/></linearGradient>
+  </defs>`;
+  const win = ()=>{let o="";for(let x=-82;x<=84;x+=5.6){ if(x>-12&&x<6) continue; o+=`<rect x="${x.toFixed(1)}" y="-35.5" width="2.6" height="3.6" rx="1.2" fill="#22303f"/>`;} return o;};
+  const side = `<g class="dw-side">
+   <!-- vertical fin and rudder -->
+   <path d="M-96 -43 L-131 -112 L-147 -112 L-140 -44 Z" fill="url(#dw-tail)" stroke="#0e1f3d" stroke-width=".8"/>
+   <path d="M-133.5 -106 L-146 -106 L-140 -46" fill="none" stroke="#0e1f3d" stroke-width=".7"/>
+   <path d="M-131 -112 L-147 -112 L-146.4 -108 L-132 -108 Z" fill="#c9d3dc"/>
+   <!-- far horizontal stabiliser -->
+   <path d="M-112 -38 L-139 -44 L-147 -43.5 L-133 -37 Z" fill="#8a97a5"/>
+   <!-- fuselage -->
+   <path d="M-140 -36 C-136 -36 -128 -33 -120 -27 L-50 -15 L92 -15 C106 -15 118 -18 124 -24 C128 -28 127 -33 121 -37 C113 -42 102 -44 92 -44 L-60 -44 C-90 -44 -112 -43 -128 -41 C-135 -40 -140 -38.5 -140 -36 Z" fill="url(#dw-fus)" stroke="#5a6878" stroke-width=".9"/>
+   <path d="M-139 -36.6 L-136 -36.6" stroke="#5a6878" stroke-width="2"/>
+   <path d="M-126 -32 C-100 -30 -60 -29 110 -29" fill="none" stroke="#1f3b6b" stroke-width="2.2"/>
+   <path d="M-120 -30.4 C-96 -28.6 -60 -27.6 112 -27.6" fill="none" stroke="#3fc8f0" stroke-width=".8" opacity=".8"/>
+   ${win()}
+   <path d="M108 -37.5 L116 -37.5 L120.5 -33.5 L111 -33.5 Z M117.4 -37.4 L120 -37.4 L123.4 -34 L121.4 -34 Z" fill="#22303f"/>
+   <rect x="95" y="-39" width="5.2" height="11.5" rx="1.4" fill="none" stroke="#7a8896" stroke-width=".7"/>
+   <rect x="-8.5" y="-37" width="3.6" height="7" rx="1" fill="none" stroke="#7a8896" stroke-width=".6"/>
+   <rect x="-1" y="-37" width="3.6" height="7" rx="1" fill="none" stroke="#7a8896" stroke-width=".6"/>
+   <rect x="-84" y="-39" width="5.2" height="11.5" rx="1.4" fill="none" stroke="#7a8896" stroke-width=".7"/>
+   <!-- belly fairing and wing root -->
+   <path d="M-30 -15 C-24 -11 18 -11 26 -15 Z" fill="#b8c3ce" stroke="#6f7d8c" stroke-width=".6"/>
+   <!-- far sharklet and wing tip -->
+   <path d="M-36 -29 L-40 -52 L-35 -52 L-29 -29 Z" fill="url(#dw-tail)" stroke="#0e1f3d" stroke-width=".5"/>
+   <!-- near wing (seen edge on) with flap-track fairings -->
+   <path d="M30 -19 C18 -22 -6 -22.5 -34 -27 L-37 -25.5 C-10 -20 14 -16.5 30 -17 Z" fill="url(#dw-wing)" stroke="#5a6878" stroke-width=".6"/>
+   <path d="M-2 -19.5 l-6 3 h-3 l2 -3.6 Z M-16 -21.5 l-6 3 h-3 l2 -3.6 Z" fill="#8a97a5"/>
+   <!-- pylon and LEAP nacelle -->
+   <path d="M30 -20 L6 -20.5 L2 -16 L26 -14.5 Z" fill="#a9b5c1" stroke="#5a6878" stroke-width=".5"/>
+   <path d="M40 -22.5 C44 -22.5 45 -6 40 -6 L6 -7.5 C2 -8.5 1 -20 6 -21 Z" fill="url(#dw-eng)" stroke="#5a6878" stroke-width=".8"/>
+   <ellipse cx="40.5" cy="-14.2" rx="2.2" ry="8.2" fill="#2a323b"/>
+   <path d="M6 -21 C4 -18 4 -11 6 -7.5" fill="none" stroke="#5a6878" stroke-width=".6"/>
+   <path d="M2 -16 L-4 -15 L-4 -13 L2 -12 Z" fill="#7d8b99"/>
+   <!-- main gear -->
+   <path d="M-1.6 -15 L1.6 -15 L1.2 -5 L-1.2 -5 Z" fill="#8a97a5" stroke="#3a454f" stroke-width=".5"/>
+   <path d="M1.4 -11 L4 -8 L1.4 -6" fill="none" stroke="#3a454f" stroke-width=".8"/>
+   <circle cx="0" cy="-4.6" r="4.6" fill="url(#dw-tyre)"/><circle cx="0" cy="-4.6" r="1.8" fill="#9aa6b2"/>
+   <!-- nose gear -->
+   <path d="M86.9 -15 L89.1 -15 L88.8 -4 L87.2 -4 Z" fill="#8a97a5" stroke="#3a454f" stroke-width=".4"/>
+   <circle cx="88" cy="-3.6" r="3.6" fill="url(#dw-tyre)"/><circle cx="88" cy="-3.6" r="1.3" fill="#9aa6b2"/>
+   <circle cx="54" cy="-14.6" r=".9" fill="#ff5a52"/>
+  </g>`;
+
+  // Top view, nose up, centred on the main gear, same scale.
+  const top = `<g class="dw-top">
+   <path d="M0 -120 C5 -116 6 -108 6 -96 L6 70 C6 92 4 104 0 118 C-4 104 -6 92 -6 70 L-6 -96 C-6 -108 -5 -116 0 -120 Z" fill="url(#dw-fus)" stroke="#5a6878" stroke-width=".8"/>
+   <path d="M5 -14 L120 32 L122 40 L6 18 Z M-5 -14 L-120 32 L-122 40 L-6 18 Z" fill="url(#dw-wing)" stroke="#5a6878" stroke-width=".7"/>
+   <path d="M120 32 l5 2 l-1 7 l-2 -1 Z M-120 32 l-5 2 l1 7 l2 -1 Z" fill="#1f3b6b"/>
+   <rect x="31" y="-22" width="9" height="26" rx="4" fill="url(#dw-eng)" stroke="#5a6878" stroke-width=".7"/>
+   <rect x="-40" y="-22" width="9" height="26" rx="4" fill="url(#dw-eng)" stroke="#5a6878" stroke-width=".7"/>
+   <path d="M4 92 L44 110 L44 115 L4 108 Z M-4 92 L-44 110 L-44 115 L-4 108 Z" fill="url(#dw-wing)" stroke="#5a6878" stroke-width=".6"/>
+   <path d="M0 86 L1.4 118 L-1.4 118 Z" fill="#1f3b6b"/>
+   <path d="M-3.4 -112 L3.4 -112 L2.6 -107 L-2.6 -107 Z" fill="#22303f"/>
+  </g>`;
+
+  // Primary flight display: pitch (deg), bank (deg), speed, target speed, altitude or RA, V/S, FMA [5 columns].
+  function pfd(o){
+    const p = o.pitch||0, k = 3.2, cx = 112, cy = 110;
+    let lad = "";
+    for(let d=-20; d<=30; d+=2.5){ if(d===0) continue; const y = cy - (d - p)*k, w = d%10===0?36:d%5===0?22:10;
+      lad += `<line x1="${cx-w/2}" y1="${y}" x2="${cx+w/2}" y2="${y}" stroke="#fff" stroke-width="1"/>` + (d%10===0?`<text x="${cx-w/2-3}" y="${y+3}" fill="#fff" font-size="8" text-anchor="end">${Math.abs(d)}</text>`:"");
+    }
+    const hy = cy + p*k;
+    const spd = o.spd, tape = v=>{ if(v==null) return ""; let t=""; for(let s=Math.ceil((v-30)/10)*10; s<=v+30; s+=10){ const y=cy-(s-v)*1.9; t+=`<line x1="40" y1="${y}" x2="46" y2="${y}" stroke="#fff"/>`+(s%20===0?`<text x="36" y="${y+3}" fill="#fff" font-size="9" text-anchor="end">${s}</text>`:""); } return t; };
+    const bug = (o.vapp!=null && spd!=null) ? `<path d="M46 ${cy-(o.vapp-spd)*1.9-4} l7 4 l-7 4 Z" fill="${o.vappC||"#e36bdc"}"/>` : "";
+    const fma = (o.fma||[]).map((t,i)=>`<text x="${22+i*44}" y="13" fill="${(t||"").startsWith("*")?"#3fc8f0":"#3ee08a"}" font-size="8.6" text-anchor="middle">${esc((t||"").replace(/^\*/,""))}</text>`).join("");
+    return `<svg viewBox="0 0 224 214" role="img" aria-label="PFD: pitch ${p} degrees${spd!=null?", speed "+spd+" knots":""}">
+    ${defs}<rect width="224" height="214" fill="#05080c"/>
+    <rect x="0" y="0" width="224" height="20" fill="#05080c" stroke="#33435a" stroke-width=".6"/>${[44,88,132,176].map(x=>`<line x1="${x}" y1="2" x2="${x}" y2="18" stroke="#33435a"/>`).join("")}${fma}
+    <clipPath id="dw-att"><rect x="62" y="40" width="100" height="140" rx="10"/></clipPath>
+    <g clip-path="url(#dw-att)"><g transform="rotate(${-(o.bank||0)} ${cx} ${cy})">
+     <rect x="20" y="-200" width="190" height="${hy+200}" fill="url(#dw-sky)"/><rect x="20" y="${hy}" width="190" height="400" fill="url(#dw-gnd)"/>
+     <line x1="20" y1="${hy}" x2="210" y2="${hy}" stroke="#fff" stroke-width="1.4"/>${lad}</g></g>
+    <path d="M${cx-34} ${cy} h16 v6 M${cx+34} ${cy} h-16 v6" fill="none" stroke="#000" stroke-width="5"/><path d="M${cx-34} ${cy} h16 v6 M${cx+34} ${cy} h-16 v6" fill="none" stroke="#ffd23f" stroke-width="3"/>
+    <rect x="${cx-2.5}" y="${cy-2.5}" width="5" height="5" fill="#ffd23f" stroke="#000"/>
+    <rect x="10" y="40" width="40" height="140" fill="#2a323b"/>${tape(spd)}${bug}
+    <path d="M50 ${cy} l8 -5 v10 Z" fill="#ffd23f"/>
+    ${spd!=null?`<rect x="8" y="${cy-9}" width="44" height="18" fill="#05080c" stroke="#ffd23f"/><text x="30" y="${cy+4}" fill="#3ee08a" font-size="10.5" text-anchor="middle">${spd}</text>`:""}
+    <rect x="174" y="40" width="40" height="140" fill="#2a323b"/>
+    <rect x="172" y="${cy-9}" width="44" height="18" fill="#05080c" stroke="#ffd23f"/>
+    <text x="194" y="${cy+4}" fill="#3ee08a" font-size="10.5" text-anchor="middle">${o.alt!=null?o.alt:""}</text>
+    ${o.ra!=null?`<text x="${cx}" y="200" fill="#3ee08a" font-size="12" text-anchor="middle">${o.ra}</text>`:""}
+    ${o.vs!=null?`<text x="194" y="196" fill="#3ee08a" font-size="9" text-anchor="middle">VS ${o.vs}</text>`:""}
+    ${o.warn?`<text x="${cx}" y="34" fill="#ff5a52" font-size="12" font-weight="600" text-anchor="middle">${esc(o.warn)}</text>`:""}
+    </svg>`;
+  }
+  return {defs, side, top, pfd};
+})();
+
 /* ================= REPLAYS =================
-   A drawn side view stepped through an event, with decision points. Data from the
-   named Safety First article; drawing in our own style. The aircraft pivots on its
-   main gear and its tail meets the runway at TAIL_DEG of pitch. */
+   A drawn scene stepped through an event, with decision points. Data from the
+   named Safety First article. Scene "side" shows the aircraft over the runway
+   (it pivots on the main gear and the tail meets the runway at TAIL_DEG) and,
+   when a step has pfd values, the PFD beside it. Other scenes are functions in
+   SCENES that draw the whole picture for a step. */
 const TAIL_DEG = 12.7;
-const REPLAYS = {
-tailga1:{title:"Case study 1 replay · A320 · VAPP 137 kt",
- steps:[
-  {ra:80,raT:"80 ft",pitch:3.5,kt:"VAPP 137",vs:"—",stick:-1/3,thr:"CL",
-   note:"80 ft RA: the PF applies 1/3 nose-down. At the same moment the wind shifts from a 5 kt headwind to a 3 kt tailwind."},
-  {ra:40,raT:"40 ft",pitch:2.5,kt:"VAPP 137",vs:"−800",stick:1/3,thr:"CL",
-   note:"40 ft: pitch down to +2.5° and V/S −800 ft/min. The PF starts the flare: progressive nose-up, full nose-up in the last 10 ft."},
-  {ra:0,raT:"0 (touchdown)",pitch:9,kt:"—",vs:"−350",stick:1,thr:"IDLE",
-   note:"Levers to IDLE at 10 ft. First touchdown at −350 ft/min and +9°. The aircraft bounces as the ground spoilers start to extend."},
-  {ra:4,raT:"bounce",pitch:10.5,pitchT:"+9° rising",kt:"—",vs:"—",stick:1/3,thr:"IDLE",
-   note:"Airborne again in the bounce. The PF keeps about 1/3 nose-up for 2 s, so the pitch keeps rising.",
-   ask:{q:"Go-around called during the bounce. What should the PF do with the pitch?",
-    opts:[["Keep the pitch and accept a possible second touchdown",1,"Correct. Then adjust the pitch, and clean up once established."],
-          ["Pull to full back stick so the aircraft does not touch down again",0,"That is what this PF did: the pitch went on to +12.7° and the tail struck. Do not try to avoid the second touchdown."],
-          ["Push forward to put the aircraft back on the runway and stop",0,"Once a go-around is started, complete it. Keep the pitch and accept a second touchdown."]]}},
-  {ra:2,raT:"settling",pitch:12,kt:"—",vs:"—",stick:1,thr:"TOGA",
-   note:"What happened: at +12° the PF selects TOGA and applies full nose-up, while the ground spoilers are still retracting."},
-  {ra:0,raT:"0 (second touchdown)",pitch:12.7,kt:"127 (VAPP −10)",vs:"—",stick:1,thr:"TOGA ↑",
-   note:"Second touchdown during the spool-up: TAILSTRIKE at +12.7° and 127 kt. The PF holds full nose-up for another second; the speed drops to 122 kt.",
-   ask:{q:"On the runway at VAPP − 15 kt, engines still spooling up to TOGA. When should the PF rotate?",
-    opts:[["Hold the pitch until the speed is at least VAPP, then rotate",1,"Correct. With low energy, wait for VAPP: the engines need a few seconds to spool up."],
-          ["Now, with full back stick, to get airborne as soon as possible",0,"A high nose-up demand on the ground at low speed is what causes these tailstrikes."],
-          ["Select reverse and stop on the remaining runway",0,"Once a go-around is started, complete it."]]}},
-  {ra:0,raT:"0",pitch:11,kt:"122 → 128",vs:"—",stick:1/3,thr:"TOGA",
-   note:"The PF eases to 1/3 nose-up, the pitch settles at +11° and the aircraft lifts off at 128 kt."},
-  {ra:30,raT:"climbing",pitch:11,kt:"—",vs:"+",stick:0,thr:"TOGA",
-   note:"Go-around completed and a second approach flown safely. Once established: PF adjusts the pitch, PM retracts one flap step and the gear."}
- ]}
-};
+const SCENES = {};
 
-/* Side view, nose right, main-gear contact at the origin. The tail cone's lowest
-   point is at (-120, -27): with the gear on the runway it touches at atan(27/120)
-   = 12.7° of pitch. */
-const AC_SVG = `<g class="ac">
- <path d="M-150 -40 L-120 -27 L-60 -15 L60 -15 Q100 -15 112 -26 Q114 -34 100 -38 L-110 -44 Z" fill="#c9d3dc" stroke="#e8edf3" stroke-width="1"/>
- <path d="M-112 -44 L-138 -92 L-122 -92 L-92 -44 Z" fill="#c9d3dc" stroke="#e8edf3" stroke-width="1"/>
- <path d="M-128 -46 L-158 -50 L-150 -42 Z" fill="#8c9aab"/>
- <path d="M-10 -24 L-46 -30 L20 -30 Z" fill="#8c9aab"/>
- <rect x="-4" y="-34" width="34" height="12" rx="6" fill="#8c9aab"/>
- <path d="M70 -37 L96 -37 L100 -32 L74 -32 Z" fill="#33435a"/>
- <line x1="0" y1="-15" x2="0" y2="-5" stroke="#e8edf3" stroke-width="2"/><circle cx="0" cy="-4" r="4" fill="#33435a" stroke="#e8edf3"/>
- <line x1="88" y1="-17" x2="88" y2="-5" stroke="#e8edf3" stroke-width="2"/><circle cx="88" cy="-4" r="4" fill="#33435a" stroke="#e8edf3"/>
- <circle class="ac-hit" cx="-120" cy="-27" r="9" fill="#ff5a52" opacity="0"/>
-</g>`;
-
-function replaySvg(r){
-  const tick = ft=>{const y=200-ft*1.8; return `<line x1="34" y1="${y}" x2="42" y2="${y}" stroke="#33435a"/><text x="30" y="${y+4}" fill="#8c9aab" font-size="11" text-anchor="end">${ft}</text>`;};
-  return `<svg viewBox="0 0 640 250" role="img" aria-label="${esc(r.title)}: side view of the aircraft over the runway">
-  <text x="4" y="14" fill="#8c9aab" font-size="11">RA ft</text>${[0,40,80].map(tick).join("")}
-  <rect x="44" y="200" width="596" height="14" fill="#161e28"/><line x1="44" y1="200" x2="640" y2="200" stroke="#33435a" stroke-width="2"/>
-  ${[0,1,2,3,4,5,6].map(i=>`<rect x="${60+i*90}" y="206" width="44" height="3" fill="#33435a"/>`).join("")}
-  <g class="ac-wrap">${AC_SVG}</g>
-  <text class="ac-strike" x="250" y="236" fill="#ff5a52" font-size="14" font-weight="600" opacity="0">TAILSTRIKE</text>
-  <g transform="translate(588 34)"><text x="0" y="-8" fill="#8c9aab" font-size="10" text-anchor="middle">STICK</text>
+function sideSvg(r){
+  const tick = ft=>{const y=230-ft*1.5; return `<line x1="34" y1="${y}" x2="42" y2="${y}" stroke="#33435a"/><text x="30" y="${y+4}" fill="#8c9aab" font-size="11" text-anchor="end">${ft}</text>`;};
+  return `<svg viewBox="0 -40 640 310" role="img" aria-label="${esc(r.title)}: side view of the aircraft over the runway">${DRAW.defs}
+  <text x="4" y="90" fill="#8c9aab" font-size="11">RA ft</text>${[0,40,80].map(tick).join("")}
+  <rect x="44" y="230" width="596" height="18" fill="#161e28"/><line x1="44" y1="230" x2="640" y2="230" stroke="#4a5a70" stroke-width="2"/>
+  ${[0,1,2,3,4,5,6].map(i=>`<rect x="${60+i*90}" y="238" width="44" height="3" fill="#e8edf3" opacity=".55"/>`).join("")}
+  <g class="ac">${DRAW.side}<circle class="ac-hit" cx="-120" cy="-27" r="10" fill="#ff5a52" opacity="0"/></g>
+  <text class="ac-strike" x="200" y="266" fill="#ff5a52" font-size="14" font-weight="600" opacity="0">TAILSTRIKE</text>
+  <g transform="translate(606 96)"><text x="0" y="-8" fill="#8c9aab" font-size="10" text-anchor="middle">STICK</text>
    <rect x="-6" y="0" width="12" height="96" rx="6" fill="#161e28" stroke="#33435a"/><line x1="-10" y1="48" x2="10" y2="48" stroke="#33435a"/>
-   <text x="14" y="10" fill="#8c9aab" font-size="9">ND</text><text x="14" y="94" fill="#8c9aab" font-size="9">NU</text>
+   <text x="12" y="10" fill="#8c9aab" font-size="9">ND</text><text x="12" y="94" fill="#8c9aab" font-size="9">NU</text>
    <circle class="ac-stick" cx="0" cy="48" r="7" fill="#3fc8f0" style="transition:cy .5s"/></g>
   </svg>`;
 }
@@ -2079,22 +2381,29 @@ function replaySvg(r){
 function mountReplays(root){
   root.querySelectorAll("[data-replay]").forEach(el=>{
     const r = REPLAYS[el.dataset.replay]; if(!r) return;
-    let i = 0, answered = {};
-    el.innerHTML = `<figure class="fig"><figcaption style="margin:0 0 6px">${esc(r.title)}</figcaption>${replaySvg(r)}
+    el.classList.add("replay");
+    const scene = r.scene||"side", withPfd = scene==="side" && r.steps.some(s=>s.pfd);
+    let i = 0; const answered = {};
+    el.innerHTML = `<figure class="fig"><figcaption style="margin:0 0 6px">${esc(r.title)}</figcaption>
+      <div class="rp-scene${withPfd?" two":""}"><div class="rp-main">${scene==="side"?sideSvg(r):""}</div>${withPfd?`<div class="rp-pfd"></div>`:""}</div>
       <div class="rp-read" aria-live="polite"></div><p class="rp-note"></p><div class="rp-q"></div>
       <div class="rp-ctl"><button class="rp-prev">◀ Back</button><button class="rp-next">Next ▶</button><span class="rp-n"></span></div>
-      <figcaption>Drawn from the event data in Safety First #39; heights not to scale.</figcaption></figure>`;
+      <figcaption>${esc(r.credit||"")}</figcaption></figure>`;
     const $ = sel=>el.querySelector(sel);
     function show(){
       const st = r.steps[i], ask = st.ask, open = ask && answered[i]==null;
-      const ra = Math.max(0, st.ra);
-      const g = $(".ac"); g.style.transform = `translate(330px, ${200 - ra*1.8}px) rotate(${-st.pitch}deg)`;
-      const strike = ra === 0 && st.pitch >= TAIL_DEG;
-      $(".ac-hit").setAttribute("opacity", strike ? .9 : 0); $(".ac-strike").setAttribute("opacity", strike ? 1 : 0);
-      $(".ac-stick").setAttribute("cy", 48 + st.stick*44);
-      $(".rp-read").innerHTML = [["RA",st.raT],["Pitch",st.pitchT||((st.pitch>0?"+":"")+st.pitch+"°")],["Speed kt",st.kt],["V/S ft/min",st.vs],["Thrust",st.thr],
-        ["Stick",st.stick===0?"neutral":(Math.abs(st.stick)===1?"full ":Math.round(Math.abs(st.stick)*3)+"/3 ")+(st.stick>0?"nose-up":st.stick<0?"nose-down":"")]]
-        .map(x=>`<div><small>${x[0]}</small>${esc(String(x[1]))}</div>`).join("");
+      if(scene==="side"){
+        const ra = Math.max(0, st.ra||0);
+        $(".ac").style.transform = `translate(360px, ${230 - ra*1.5}px) rotate(${-st.pitch}deg) scale(1.45)`;
+        const strike = ra === 0 && st.pitch >= TAIL_DEG;
+        $(".ac-hit").setAttribute("opacity", strike ? .9 : 0); $(".ac-strike").setAttribute("opacity", strike ? 1 : 0);
+        $(".ac-stick").setAttribute("cy", 48 + (st.stick||0)*44);
+        if(withPfd) $(".rp-pfd").innerHTML = st.pfd ? DRAW.pfd(Object.assign({pitch:st.pitch}, st.pfd)) : "";
+      } else $(".rp-main").innerHTML = SCENES[scene](st, i, r);
+      const read = st.read || (scene==="side" ? [["RA",st.raT],["Pitch",st.pitchT||((st.pitch>0?"+":"")+st.pitch+"°")],["Speed kt",st.kt],["V/S ft/min",st.vs],["Thrust",st.thr],
+        ["Stick",!st.stick?"neutral":(Math.abs(st.stick)===1?"full ":Math.round(Math.abs(st.stick)*3)+"/3 ")+(st.stick>0?"nose-up":"nose-down")]] : []);
+      $(".rp-read").innerHTML = read.map(x=>`<div><small>${esc(x[0])}</small>${esc(String(x[1]))}</div>`).join("");
+      $(".rp-read").hidden = !read.length;
       $(".rp-note").textContent = st.note;
       $(".rp-q").innerHTML = ask ? `<div class="rp-ask"><p>Decision point: ${esc(ask.q)}</p>${ask.opts.map((o,k)=>
         `<button data-k="${k}" class="${answered[i]==null?"":o[1]?"ok":k===answered[i]?"no":""}" ${answered[i]==null?"":"disabled"}>${esc(o[0])}</button>`).join("")}
@@ -2108,6 +2417,452 @@ function mountReplays(root){
     show();
   });
 }
+
+const REPLAYS = {};
+
+/* ================= LEARNING WIDGETS =================
+   Mounted in briefings beside the replays:
+   data-cards  decision cards: one scenario at a time, three answers, feedback, score
+   data-slider one control that redraws a figure and its readouts
+   data-hots   a drawing with numbered spots to tap for an explanation
+   SCENES.timeline draws a replay as a track of events, the current one lit. */
+const CARDS = {}, SLIDERS = {}, HOTS = {}, FIGS = {};
+
+SCENES.timeline = (st, i, r)=>{
+  const ev = r.track, n = ev.length, x = k=>30 + k*(580/(n-1)), at = st.at;
+  return `<svg viewBox="0 0 640 ${r.tall?190:150}" role="img" aria-label="${esc(r.title)}: event ${at+1} of ${n}">
+   <line x1="30" y1="60" x2="610" y2="60" stroke="#33435a" stroke-width="3"/>
+   <line x1="30" y1="60" x2="${x(at)}" y2="60" stroke="${st.c||"#3fc8f0"}" stroke-width="3"/>
+   ${ev.map((e,k)=>`<g><circle cx="${x(k)}" cy="60" r="${k===at?11:7}" fill="${k<at?"#3fc8f0":k===at?(st.c||"#3fc8f0"):"#161e28"}" stroke="${k<=at?(k===at?(st.c||"#3fc8f0"):"#3fc8f0"):"#33435a"}" stroke-width="2"/>
+     <text x="${x(k)}" y="64" fill="${k<=at?"#05080c":"#8c9aab"}" font-size="10" text-anchor="middle" font-weight="600">${k+1}</text>
+     <text x="${x(k)+(k?k<n-1?0:6:-6)}" y="${k%2?96:34}" fill="${k===at?"#e8edf3":"#8c9aab"}" font-size="${k===at?12:10.5}" text-anchor="${k?k<n-1?"middle":"end":"start"}">${esc(e)}</text></g>`).join("")}
+   ${st.big?`<text x="320" y="${r.tall?150:132}" fill="${st.c||"#3fc8f0"}" font-size="17" font-weight="600" text-anchor="middle">${esc(st.big)}</text>`:""}
+  </svg>`;
+};
+
+/* ---------- Batch 1: preflight, engine start and taxi ---------- */
+const C = {bg:"#05080c",panel:"#10161e",rule:"#33435a",fg:"#e8edf3",mut:"#8c9aab",cy:"#3fc8f0",g:"#3ee08a",a:"#ffb326",r:"#ff5a52",m:"#e36bdc"};
+const T = (x,y,s,o={})=>`<text x="${x}" y="${y}" fill="${o.c||C.fg}" font-size="${o.s||12}" ${o.a?`text-anchor="${o.a}"`:""} ${o.w?`font-weight="${o.w}"`:""}>${esc(String(s))}</text>`;
+const box = (x,y,w,h,c,fill)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="4" fill="${fill||C.panel}" stroke="${c||C.rule}" stroke-width="1.4"/>`;
+const arrow = (x1,y1,x2,y2,c)=>{const a=Math.atan2(y2-y1,x2-x1),h=7;return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${c||C.mut}" stroke-width="1.6"/><path d="M${x2} ${y2} L${x2-h*Math.cos(a-.45)} ${y2-h*Math.sin(a-.45)} L${x2-h*Math.cos(a+.45)} ${y2-h*Math.sin(a+.45)} Z" fill="${c||C.mut}"/>`;};
+const wrapT = (x,y,str,o={})=>{ const w=o.w||28, words=String(str).split(" "), L=[]; let l=""; words.forEach(t=>{ if((l+" "+t).trim().length>w){L.push(l.trim());l=t;} else l+=" "+t; }); if(l.trim())L.push(l.trim());
+  return L.map((t,k)=>T(x,y+k*(o.lh||14),t,o)).join(""); };
+const fig = (svg,cap)=>`<figure class="fig">${svg}${cap?`<figcaption>${esc(cap)}</figcaption>`:""}</figure>`;
+const bars = (title,rows,max,cap)=>{ const h=26*rows.length+30;
+  return fig(`<svg viewBox="0 0 600 ${h}" role="img" aria-label="${esc(title)}">${T(0,16,title.toUpperCase(),{c:C.mut,s:11.5})}
+   ${rows.map((r,k)=>{const y=30+k*26, w=Math.max(2,r[1]/max*290);return T(0,y+14,r[0],{c:r[2]||C.fg,s:12.5})+`<rect x="200" y="${y+2}" width="${w}" height="17" fill="${r[2]||C.cy}"/>`+T(206+w,y+15,r[3]||r[1],{c:r[2]||C.fg,s:12});}).join("")}</svg>`,cap); };
+
+/* ---- seat: eye reference point ---- */
+SLIDERS.seat = {title:"Seat height and what you can see", label:"Eye height", min:-3, max:3, step:1, value:0,
+  fmt:v=>v===0?"on the eye reference point":v<0?`${-v} step${v<-1?"s":""} low`:`${v} step${v>1?"s":""} high`,
+  credit:"Our own sketch of the principle in Safety First #25; not to scale.",
+  draw:v=>{
+    const ex=200, ey=110 - v*7, cxp=330, cyp=135, py=156;
+    const cut = Math.atan2(cyp-ey, cxp-ex), deg = cut*180/Math.PI;
+    const yAt330 = ey + (py-ey)*((330-ex)/(380-ex)), pfdOk = yAt330 > 141;
+    const blind = Math.min(540, 30.8/Math.tan(Math.max(cut,.01))*1);
+    return `<svg viewBox="0 0 640 260" role="img" aria-label="Eye ${v===0?"on":"off"} the eye reference point: cut-off angle ${deg.toFixed(0)} degrees, top of PFD ${pfdOk?"visible":"hidden"}.">
+     <path d="M120 40 L330 40 L330 135 L380 135 L380 141 L330 141 L330 128" fill="none" stroke="${C.rule}" stroke-width="2"/>
+     <path d="M330 40 L420 112" stroke="#5f7894" stroke-width="3"/>${T(372,64,"windshield",{c:C.mut,s:10})}
+     <rect x="330" y="135" width="52" height="7" fill="#2a323b" stroke="${C.mut}"/>${T(334,130,"glareshield",{c:C.mut,s:10})}
+     <rect x="378" y="${py}" width="6" height="44" fill="#1b5fa8"/>${T(392,py+16,"PFD / ND",{c:C.mut,s:10})}
+     <line x1="${ex-10}" y1="110" x2="${ex+10}" y2="110" stroke="${C.g}" stroke-dasharray="3 3"/>${T(60,114,"eye reference point",{c:C.g,s:10})}
+     <circle cx="${ex}" cy="${ey}" r="7" fill="${C.fg}"/><circle cx="${ex+3}" cy="${ey}" r="2.6" fill="${C.bg}"/>
+     <line x1="${ex}" y1="${ey}" x2="${ex+(600-ex)}" y2="${ey+(600-ex)*Math.tan(cut)}" stroke="${C.a}" stroke-width="1.6" stroke-dasharray="6 4"/>
+     <line x1="${ex}" y1="${ey}" x2="381" y2="${py}" stroke="${pfdOk?C.g:C.r}" stroke-width="1.6"/>
+     ${!pfdOk?T(392,py+34,"top hidden",{c:C.r,s:11,w:600}):""}
+     ${T(40,212,"OUTSIDE VIEW",{c:C.mut,s:10.5})}
+     <rect x="40" y="238" width="${Math.min(540,blind)}" height="12" fill="#2a323b"/>
+     ${blind<540?`<rect x="${40+blind}" y="238" width="${540-blind}" height="12" fill="${C.g}" opacity=".85"/>`:""}
+     ${T(44,blind>110?248:226,"blind area",{c:C.fg,s:10})}${blind<480?T(Math.min(560,52+blind),226,"visual segment",{c:C.g,s:10}):T(420,226,"no visual segment",{c:C.r,s:10})}
+     ${T(580,233,"RVR",{c:C.mut,s:10,a:"end"})}
+     <g transform="translate(560 70)">${T(0,-26,"indicator",{c:C.mut,s:10,a:"middle"})}<rect x="-26" y="-18" width="52" height="40" rx="6" fill="${C.panel}" stroke="${C.rule}"/>
+      ${v!==0?`<circle cx="0" cy="${-v*4}" r="8" fill="#f2f4f5"/>`:""}<circle cx="0" cy="2" r="8" fill="${C.r}"/></g>
+    </svg>`;},
+  read:v=>[["Cut-off angle",v<0?"reduced":v>0?"larger":"optimum"],["Top of PFD/ND",(()=>{const ey=110-v*7, y=ey+(156-ey)*(130/180);return y>141?"visible":"hidden by the glareshield";})()],["Indicator",v===0?"white ball hidden behind red":"white ball visible"]],
+  note:v=>v===0?"Aligned: the whole panel is in view, the cut-off angle gives the longest visual segment, and the view of the approach path is the one you are used to."
+    : v<0?"Too low: the glareshield cuts off more of the view ahead, so the blind area grows and the visual segment shrinks. On final the flight path angle can look wrong, and overhead controls are harder to reach."
+    :"Too high: the glareshield hides the top of the PFD and ND, the flight path angle can look wrong, and full rudder pedal travel is harder to reach."};
+
+/* ---- ice ridges ---- */
+FIGS.iceridge_view = fig(`<svg viewBox="0 0 640 220" role="img" aria-label="Lower nose seen from below: ice ridges ahead of the pitot probes disturb the airflow.">${DRAW.defs}
+  <path d="M40 110 C40 60 140 40 300 40 L620 40 L620 180 L300 180 C140 180 40 160 40 110 Z" fill="url(#dw-fus)" stroke="#5a6878"/>
+  ${T(60,30,"VIEW FROM BELOW · NOSE LEFT",{c:C.mut,s:11})}
+  ${[[230,70],[230,150],[262,110]].map(p=>`<rect x="${p[0]}" y="${p[1]-3}" width="22" height="6" rx="3" fill="#3a454f"/>`).join("")}
+  ${T(270,64,"pitot probes",{c:C.bg,s:11})}
+  ${[150,168,186].map(x=>`<path d="M${x} 60 C${x+6} 85 ${x-4} 120 ${x+5} 160" fill="none" stroke="#bfe6ff" stroke-width="5" stroke-linecap="round" opacity=".95"/>`).join("")}
+  ${T(120,198,"ice ridges",{c:C.cy,s:12,w:600})}
+  ${[70,110,150].map(y=>`<path d="M60 ${y} C120 ${y} 140 ${y} 196 ${y+(y-110)*.1} C220 ${y+8} 240 ${y-10} 290 ${y+6} C340 ${y+18} 380 ${y-10} 440 ${y}" fill="none" stroke="${C.a}" stroke-width="1.6" stroke-dasharray="5 4"/>`).join("")}
+  ${T(450,110+4,"disturbed airflow",{c:C.a,s:12})}
+ </svg>`,"Our own sketch. Even thin ridges forward of the probes can make the measured airspeed read low.");
+FIGS.iceridge_bars = bars("How far the airspeeds read low",[["ADR 3, take-off roll",40,C.a,"up to 40 kt"],["ADR 1, take-off roll",10,C.a,"up to 10 kt"],["ADR 1, from rotation",35,C.a,"up to 35 kt"]],40,
+  "From the flight data in Safety First #26 (ADR 2 was not recorded).");
+REPLAYS.iceridge = {scene:"timeline", title:"A320 first flight of the day · −5 °C", credit:"Event data from Safety First #26.",
+ track:["Walkaround","Take-off roll","Rotation","Lift-off","+12 s","1 500 ft","Turn-back"], tall:true,
+ steps:[
+  {at:0,big:"Fuselage not de-iced",note:"Overnight snow and ice. A two-step de-icing/anti-icing covered the wings, fin and stabilisers, but not the fuselage.",read:[["OAT","−5 °C"],["De-iced","wings, fin, stabilisers"],["Lower nose","not de-iced"]],
+   ask:{q:"At the walkaround you see thin ice ridges on the lower nose, ahead of the pitot probes. What do you do?",
+    opts:[["Ask the de-icing crew to remove them before departure",1,"Correct. Even thin ridges must be removed. Thin hoarfrost on the top of the fuselage is a different case."],
+          ["Accept them: thin ridges are like hoarfrost and are allowed",0,"Hoarfrost on the top surface is allowed; ridges on the lower nose ahead of the probes must be removed."],
+          ["Accept them: they will blow off in the take-off roll",0,"Ridges can stay on for the whole flight. Here they made the airspeeds read low from the take-off roll."]]}},
+  {at:1,c:C.a,big:"ADR 3 reads up to 40 kt low",note:"From the start of the roll, ADR 3 under-reads by up to 40 kt and ADR 1 by up to 10 kt.",read:[["ADR 1","−10 kt"],["ADR 3","−40 kt"],["Crew aware","no"]]},
+  {at:2,c:C.a,big:"ADR 1 reads up to 35 kt low",note:"From rotation, ADR 1 under-reads by up to 35 kt.",read:[["ADR 1","−35 kt"],["ADR 3","low"]]},
+  {at:3,c:C.r,big:"ALTN LAW · A/THR OFF",note:"At lift-off the flight controls revert to Alternate law and AUTO FLT A/THR OFF triggers.",read:[["Law","ALTN"],["A/THR","off"]]},
+  {at:4,c:C.r,big:"FD, speeds and AP lost",note:"12 s later the flight directors, characteristic speeds, TLU and autopilot are lost. SPD LIM and FD red flags show on both PFDs.",read:[["PFD","SPD LIM, FD flags"],["AP","unavailable"]]},
+  {at:5,c:C.a,big:"NAV ADR DISAGREE",note:"At 1 500 ft, after the take-off inhibition: NAV ADR DISAGREE, F/CTL ALTN LAW and AUTO FLT RUD TRV LIM SYS.",read:[["ECAM","ADR DISAGREE, ALTN LAW, RUD TRV LIM SYS"]],
+   ask:{q:"Airspeeds disagree and the ECAM shows NAV ADR DISAGREE. What is the priority?",
+    opts:[["Fly pitch and thrust and apply UNRELIABLE SPEED INDICATION",1,"Correct. Whenever an airspeed discrepancy is detected, apply the UNRELIABLE SPEED INDICATION procedure."],
+          ["Reset the ADRs one at a time until Normal law returns",0,"There is no such reset. Apply UNRELIABLE SPEED INDICATION."],
+          ["Follow the highest airspeed and continue the climb",0,"With ice ridges the affected ADRs read low, but you cannot know which is right without the procedure."]]}},
+  {at:6,c:C.g,big:"ADR 2 kept, turn-back",note:"The crew compared PFD 1, PFD 2 and the standby speed with the ground speed on the ND, switched ADR 1 and 3 off and returned with ADR 2.",read:[["ADRs","1 and 3 OFF"],["Outcome","safe turn-back"]]}
+ ]};
+
+/* ---- pitot covers ---- */
+FIGS.pitot_principle = fig(`<svg viewBox="0 0 640 176" role="img" aria-label="Pitot probe measures total pressure, the static port static pressure; the ADIRU computes airspeed and Mach.">
+  <rect x="20" y="60" width="120" height="14" rx="7" fill="#9aa6b2"/><rect x="132" y="48" width="12" height="38" fill="#7d8b99"/><circle cx="22" cy="67" r="5" fill="${C.bg}"/>
+  ${T(20,44,"PITOT PROBE",{c:C.mut,s:11})}${T(20,98,"total pressure Pt",{c:C.cy,s:12})}
+  <circle cx="80" cy="140" r="9" fill="#9aa6b2"/><circle cx="80" cy="140" r="3" fill="${C.bg}"/>${T(100,164,"static port: static pressure Ps",{c:C.cy,s:12})}
+  ${arrow(150,67,320,80,C.cy)}${arrow(330,140,330,110,C.cy)}<line x1="100" y1="140" x2="330" y2="140" stroke="${C.cy}" stroke-width="1.6"/>
+  ${box(330,60,140,50,C.cy)}${T(400,90,"ADIRU",{a:"middle",w:600,s:14})}
+  ${arrow(470,75,560,62,C.g)}${arrow(470,95,560,108,C.g)}${T(566,66,"airspeed",{c:C.g})}${T(566,112,"Mach",{c:C.g})}
+ </svg>`,"Our own diagram of the principle in Safety First #22. An obstructed inlet gives a low, fluctuating or flagged airspeed.");
+FIGS.pitot_time = fig(`<svg viewBox="0 -6 640 156" role="img" aria-label="Timeline: wasp nest in about 20 minutes; partial blockage in less than 2 hours; covers can be fitted 30 minutes after engine shutdown.">
+  <line x1="30" y1="70" x2="610" y2="70" stroke="${C.rule}" stroke-width="3"/>
+  ${[[60,"0","engines off: probe heat stops",C.mut],[180,"15 min","probe tip down to 70 °C",C.mut],[250,"20 min","a mud dauber wasp can build a nest that blocks a probe",C.a],[340,"30 min","near ambient: covers can be fitted",C.g],[560,"< 2 h","the A330 event: probe partly blocked by wasps",C.r]]
+    .map((e,k)=>`<circle cx="${e[0]}" cy="70" r="7" fill="${e[3]}"/>${T(e[0],k%2?100:52,e[1],{c:e[3],a:"middle",w:600,s:12})}${wrapT(e[0]-(k===4?110:50),k%2?116:8,e[2],{c:C.fg,s:10.5,w:k===4?32:k===1?24:20,lh:12})}`).join("")}
+ </svg>`,"Times from Safety First #22 (the 20 minutes is from an Australian CASA airworthiness bulletin quoted there).");
+REPLAYS.pitot = {scene:"timeline", title:"A330 · wasps in a pitot probe", credit:"Event from Safety First #22.",
+ track:["1st take-off","Troubleshooting","2nd take-off","Past V1","Turn-back","Inspection"], tall:true,
+ steps:[
+  {at:0,c:C.a,big:"Rejected take-off",note:"The Captain rejects the take-off after an airspeed indication failure.",read:[["Cause found","not yet"]]},
+  {at:1,big:"ADIRUs swapped · MEL",note:"Two ADIRUs are swapped and the aircraft is dispatched under the MEL with ADIRU 2 inoperative.",read:[["ADIRU 2","inoperative (MEL)"]]},
+  {at:2,big:"Second take-off",note:"Take-off again. The faulty pitot is still there, now feeding the Captain's side.",read:[["Pitot","partly blocked"]]},
+  {at:3,c:C.r,big:"Discrepancy past V1",note:"An airspeed discrepancy appears on the Captain's PFD after V1.",read:[["Speed","after V1"]],
+   ask:{q:"The discrepancy shows just after V1. What now?",
+    opts:[["Continue the take-off and handle it in flight",1,"Correct: past V1 the take-off continues. Here A/THR and the FDs disengaged, the law went to Alternate and the AP was unavailable."],
+          ["Reject: the speed cannot be trusted",0,"Past V1 a reject is not the option. Continue and fly pitch and thrust."],
+          ["Continue, but at reduced thrust",0,"Keep take-off thrust; manage the speed problem once safely airborne."]]}},
+  {at:4,c:C.a,big:"A/THR, FD off · ALTN law",note:"A wrong Captain airspeed with ADIRU 2 inoperative: A/THR and the FDs disengaged, Alternate law, AP unavailable. Immediate turn-back and an uneventful landing.",read:[["Law","ALTN"],["AP","unavailable"]]},
+  {at:5,c:C.g,big:"Blocked by wasps in < 2 h",note:"The ground inspection found the pitot partly blocked by nesting wasps, in less than two hours on the ground.",read:[["Root cause","wasp nest"],["Time on ground","< 2 h"]]}
+ ]};
+CARDS.pitot = {title:"Probes on the ground", credit:"From Safety First #22.", items:[
+  {q:"The engines were shut down 10 minutes ago and the ground crew want to fit the pitot covers. Is it time?",
+   opts:[["Not yet: allow about 30 minutes after shutdown",1,"Probe heat stops at shutdown. The tip takes about 15 minutes to cool to 70 °C, and another 15 to reach ambient."],
+         ["Yes, covers can go on as soon as the engines stop",0,"The probe is still hot. Wait about 30 minutes."],
+         ["Never: covers are only for long stays",0,"Where there is a risk (sand, dust, insects), covers are worth using even on short turnarounds."]]},
+  {q:"A NOTAM warns of mud wasp activity. Your turnaround is 45 minutes. Covers?",
+   opts:[["Yes: follow the operator policy for that airport and fit approved covers",1,"Wasps can block a probe in about 20 minutes. Some airlines require covers at certain airports whatever the turnaround."],
+         ["No: 45 minutes is too short for a nest",0,"A nest can block a probe in around 20 minutes."],
+         ["Any cover that fits will do",0,"Use the approved Airbus covers: other manufacturers' covers may not fit or protect fully."]]},
+  {q:"Walkaround: covers are off, but you see material in a pitot inlet.",
+   opts:[["Report it: maintenance must clear and check the probe before flight",1,"Check probes carefully at every walkaround. An obstructed inlet gives low, fluctuating or flagged speeds."],
+         ["Blow it out and go",0,"Report it to maintenance."],
+         ["Go: the other two probes are fine",0,"One wrong speed plus another failure removed the A/THR, FDs, AP and Normal law in the A330 event."]]}]};
+
+/* ---- OEBs ---- */
+FIGS.oeb_types = fig(`<svg viewBox="0 0 640 170" role="img" aria-label="Red OEB: safety related. White OEB: efficiency related.">
+  ${box(10,20,300,130,C.r)}${T(30,50,"RED OEB",{c:C.r,s:16,w:700})}${wrapT(30,74,"Safety related: not applying it may have a significant impact on the safe operation of the aircraft. Listed first in the LEOEB.",{w:36,s:12})}
+  ${box(330,20,300,130,C.fg)}${T(350,50,"WHITE OEB",{s:16,w:700})}${wrapT(350,74,"Efficiency related: not applying it may have a significant impact on efficient operation, for example a diversion or a delay.",{w:36,s:12})}
+ </svg>`,"Both are temporary procedures, applicable only until the fix is installed. Safety First #30.");
+FIGS.oeb_life = fig(`<svg viewBox="0 0 640 140" role="img" aria-label="OEB life: Airbus issues it with an advance copy; documentation updated; applied only in its conditions; a service bulletin fixes it; the fix is reported and the OEB removed.">
+  <line x1="40" y1="60" x2="600" y2="60" stroke="${C.rule}" stroke-width="3"/>
+  ${[["Issued","FOT with advance copy"],["In the QRH","LEOEB updated"],["Applied","only if entry conditions met"],["SB fix","install it soon"],["Reported","docs aligned, OEB removed"]].map((e,k)=>{const x=70+k*125;
+   return `<circle cx="${x}" cy="60" r="9" fill="${k===2?C.a:C.cy}"/>${T(x,36,e[0],{a:"middle",w:600,s:12.5})}${wrapT(x-55,86,e[1],{w:18,s:10.5,c:C.mut,lh:12})}`;}).join("")}
+ </svg>`,"From Safety First #30. Applying an OEB that is no longer applicable is a risk of its own.");
+CARDS.oeb = {title:"OEB or not?", credit:"From Safety First #30.", items:[
+  {q:"Preliminary cockpit preparation in transit. You flew this same aircraft yesterday. Review the OEBs?",
+   opts:[["Yes: review the applicable OEBs at every preparation, even in transit",1,"The SOP asks for it each flight. The LEOEB in the QRH lists only this aircraft's OEBs, red ones first, with their ECAM entries."],
+         ["No: nothing will have changed overnight",0,"OEBs are added and removed as modifications are installed. Review them each flight."],
+         ["Only the red ones",0,"Review all applicable OEBs; red ones are listed first."]]},
+  {q:"An ECAM alert appears that you know has an OEB on another aircraft in the fleet.",
+   opts:[["Check this aircraft's LEOEB: apply the OEB only if it is applicable and its entry conditions are met",1,"Crews on mixed fleets have applied OEBs that did not apply to the aircraft they were flying."],
+         ["Apply the OEB: the alert is the same",0,"Only if the OEB is applicable to this aircraft and its conditions are met."],
+         ["Ignore the ECAM and wait",0,"Follow the ECAM, or the OEB if it applies."]]},
+  {q:"The ECAM shows REFER TO QRH PROC in place of the procedure.",
+   opts:[["This is the OEB reminder: apply the OEB procedure in the QRH",1,"The operator activates the reminder for alerts affected by an OEB."],
+         ["A display fault: ask for the normal ECAM procedure",0,"It is the OEB reminder function."],
+         ["Clear the alert",0,"Apply the QRH OEB procedure."]]},
+  {q:"The parameters look like an event covered by an OEB, but its entry conditions are not all confirmed.",
+   opts:[["Do not apply the OEB",1,"Apply an OEB only when its pre-defined entry conditions are confirmed. The OEB49 overspeed event is the example."],
+         ["Apply it as a precaution",0,"Inappropriate application of an OEB can impair safety."],
+         ["Apply half of it",0,"Apply it fully when the conditions are met, otherwise not at all."]]}]};
+
+/* ---- EGT overlimit ---- */
+SCENES.egt = (st)=>{
+  const g = (cx,lbl,v,state)=>{ // v: 0..1.25 of the arc, redline at 1
+    const a0=-210, span=240, ang=a0+Math.min(v,1.25)/1.25*span, rad=x=>x*Math.PI/180, R=58, p=(an,r)=>[cx+r*Math.cos(rad(an)),95+r*Math.sin(rad(an))];
+    const red0=a0+span/1.25, arc=(f,t,col,w)=>{const s=p(f,R),e=p(t,R);return `<path d="M${s[0]} ${s[1]} A${R} ${R} 0 ${t-f>180?1:0} 1 ${e[0]} ${e[1]}" fill="none" stroke="${col}" stroke-width="${w}"/>`;};
+    const tip=p(ang,R-6), col = state==="red"?C.r:state==="off"?C.mut:C.g;
+    return `${arc(a0,red0,"#e8edf3",3)}${arc(red0,a0+span,C.r,6)}<line x1="${cx}" y1="95" x2="${tip[0]}" y2="${tip[1]}" stroke="${col}" stroke-width="4" stroke-linecap="round"/>
+     <circle cx="${cx}" cy="95" r="5" fill="${col}"/>${T(cx,128,lbl,{a:"middle",c:C.mut,s:12})}${T(cx,150,state==="red"?"OVER LIMIT":state==="off"?"MASTER OFF":state==="idle"?"IDLE":"normal",{a:"middle",c:col,s:13,w:600})}`; };
+  return `<svg viewBox="0 0 640 200" role="img" aria-label="EGT gauges: engine 1 ${st.e1}, engine 2 ${st.e2}">
+    <rect width="640" height="200" fill="${C.bg}"/>${T(320,20,"EGT",{a:"middle",c:C.mut,s:12})}
+    ${g(200,"ENG 1",st.v1,st.e1)}${g(440,"ENG 2",st.v2,st.e2)}
+    ${T(320,186,st.lv||"",{a:"middle",c:C.cy,s:12})}</svg>`; };
+REPLAYS.egt = {scene:"egt", title:"A321 dual EGT overlimit · 30 °C (ISA +15)", credit:"Event data from Safety First #34. Needle positions are illustrative.",
+ steps:[
+  {v1:.8,v2:.8,e1:"normal",e2:"normal",lv:"TOGA · packs ON",note:"A321 at 73 t (MTOW 98.7 t), CONF 2, packs ON, OAT 30 °C. Standard stabilisation, then TOGA. Uneventful until lift-off.",read:[["Thrust","TOGA"],["Packs","ON"],["OAT","30 °C"]]},
+  {v1:1.12,v2:1.1,e1:"red",e2:"red",lv:"90 ft RA",note:"At 90 ft RA: ENG 1 EGT OVER LIMIT and ENG 2 EGT OVER LIMIT.",read:[["RA","90 ft"],["ECAM","ENG 1 + ENG 2 EGT OVER LIMIT"]],
+   ask:{q:"Both EGTs are over the limit at 90 ft. What does the SOP guidance say?",
+    opts:[["Continue the climb; above 400 ft apply the ECAM procedure and gently reduce thrust on the affected engine",1,"Correct. The redline is not a hard limit: the engine still produces thrust, at the cost of wear."],
+          ["Reduce both thrust levers immediately to bring the EGTs back",0,"At 90 ft you need the thrust. Wait until above 400 ft and established on the climb path."],
+          ["Shut down the hotter engine now",0,"Not at 90 ft. Above 400 ft, follow the ECAM; it may call for shutdown if the overlimit persists."]]}},
+  {v1:1.05,v2:1.04,e1:"red",e2:"red",lv:"MCT · AP at 450 ft · CLB",note:"The PF moved both levers to MCT, engaged the AP at 450 ft, then set the levers to CLB.",read:[["Thrust","MCT then CLB"],["AP","on at 450 ft"]]},
+  {v1:.25,v2:1.0,e1:"idle",e2:"red",lv:"890 ft",note:"At 890 ft the PF set ENG 1 to idle. The vertical speed fell and the PF set ENG 2 to MCT.",read:[["ENG 1","idle"],["ENG 2","MCT"]]},
+  {v1:0,v2:.95,e1:"off",e2:"normal",lv:"1 300 ft · level 1 500 ft",note:"ENG 1 master OFF crossing 1 300 ft, level at 1 500 ft, then a turn-back.",read:[["ENG 1","shut down"],["Decision","turn-back"]]},
+  {v1:.6,v2:.8,e1:"normal",e2:"normal",lv:"climb 4 000 ft · relight ~2 700 ft",note:"Climb to 4 000 ft, APU started, descent. ENG 1 relit at about 2 700 ft; approach and landing normal.",read:[["ENG 1","relit"],["Landing","normal"]]},
+  {v1:.8,v2:.8,e1:"normal",e2:"normal",lv:"findings",note:"Both engines had an EGT overlimit and a compressor stall: two degraded engines (dirty, eroded, worn), a 30 °C day, and TOGA with packs ON. A gap in engine data transmission had delayed spotting the wear.",read:[["Cause","two degraded engines + hot day + TOGA packs ON"]]}
+ ]};
+FIGS.egt_zones = fig(`<svg viewBox="0 0 640 170" role="img" aria-label="EGT overlimit during take-off: before 100 knots consider rejecting; 100 knots to V1 continue; after V1 continue, ECAM above 400 feet.">
+  ${[[20,"TAKE-OFF POWER → 100 kt",C.a,"Consider rejecting. Early overlimit, especially with vibration, can mean engine damage."],[230,"100 kt → V1",C.cy,"Continue, establish the climb, ECAM above 400 ft. The Captain may still reject (dual event, mountains)."],[440,"AFTER V1 OR LIFT-OFF",C.g,"Continue. Above 400 ft: ECAM, gently reduce thrust on the affected engine."]]
+   .map(z=>`${box(z[0],10,180,150,z[2])}${T(z[0]+12,34,z[1],{c:z[2],s:11.5,w:700})}${wrapT(z[0]+12,58,z[3],{w:24,s:12})}`).join("")}
+ </svg>`,"From Safety First #34. The alert is inhibited from 80 kt to lift-off; watch for the red EGT on the engine display.");
+CARDS.egt = {title:"Prevent the overlimit", credit:"From Safety First #34.", items:[
+  {q:"First flight of the day at a hot, high airport. Before start the EGT is almost the same as the OAT.",
+   opts:[["Extend the engine warm-up before take-off",1,"Usual warm-up is 2 to 5 minutes; 10 minutes can cut the take-off EGT by about 10 °C, depending on the engine."],
+         ["Use TOGA to be sure of the thrust",0,"TOGA raises the EGT. Use reduced thrust where you can."],
+         ["Nothing: a cold engine runs cooler",0,"A cold engine gives a higher EGT peak at take-off."]]},
+  {q:"Reduced thrust is not possible today. What else lowers the EGT?",
+   opts:[["Take off with packs OFF, or with APU BLEED ON if it is too hot for packs OFF",1,"Both remove bleed demand from the engines."],
+         ["Take off with engine anti-ice ON",0,"Anti-ice adds bleed demand and raises the EGT."],
+         ["Raise the flap setting",0,"That is a performance choice, not a bleed change."]]},
+  {q:"Each 1 °C more OAT means roughly how much more EGT for the same take-off thrust?",
+   opts:[["About 3 °C",1,"About 3 °C per 1 °C of OAT, depending on the engine type."],["About 1 °C",0,"About 3 °C."],["About 10 °C",0,"About 3 °C."]]},
+  {q:"The EGT went into the red for a few seconds after lift-off, then recovered.",
+   opts:[["Report it and make a logbook entry",1,"Every overlimit needs an inspection and troubleshooting before the next flight."],
+         ["No action: it recovered",0,"The engine must be inspected."],["Mention it at the next check",0,"Report it now: logbook entry."]]}]};
+
+/* ---- 180° turn on the runway ---- */
+const UT_PATH = (()=>{ // [x, y, heading°] samples: straight, divergence, right turn, align
+  const pts=[], push=(x,y,h)=>pts.push([x,y,h]);
+  for(let x=60;x<=170;x+=10) push(x,165,0);
+  const d=-20*Math.PI/180; for(let k=0;k<=18;k++) push(170+k*16*Math.cos(d),165+k*16*Math.sin(d),-20);
+  const P=pts[pts.length-1], R=44, h0=-20*Math.PI/180, cx=P[0]-R*Math.sin(h0), cy=P[1]+R*Math.cos(h0);
+  for(let k=1;k<=24;k++){ const h=h0+k*(200/24)*Math.PI/180; push(cx+R*Math.sin(h), cy-R*Math.cos(h), h*180/Math.PI); }
+  const E=pts[pts.length-1]; for(let k=1;k<=10;k++){ const x=E[0]-k*12, y=E[1]+(130-E[1])*Math.min(1,k/8); push(x,y,180); }
+  return pts; })();
+SCENES.uturn = (st)=>{
+  const k=Math.round(st.f*(UT_PATH.length-1)), p=UT_PATH[k];
+  const trail=UT_PATH.slice(0,k+1).map(q=>q.join(",").split(",").slice(0,2).join(",")).join(" ");
+  return `<svg viewBox="0 0 640 260" role="img" aria-label="Runway seen from above: ${esc(st.note)}">${DRAW.defs}
+   <rect x="0" y="40" width="640" height="180" fill="#1b232d"/><line x1="0" y1="40" x2="640" y2="40" stroke="#e8edf3" stroke-width="2"/><line x1="0" y1="220" x2="640" y2="220" stroke="#e8edf3" stroke-width="2"/>
+   ${[0,1,2,3,4,5,6,7].map(i=>`<rect x="${i*84}" y="128" width="44" height="4" fill="#e8edf3" opacity=".6"/>`).join("")}
+   ${[0,1,2,3,4,5].map(i=>`<rect x="600" y="${52+i*28}" width="30" height="12" fill="#e8edf3" opacity=".55"/>`).join("")}${T(596,238,"painted marks: slippery",{c:C.a,s:10,a:"end"})}
+   <polyline points="${trail}" fill="none" stroke="${C.cy}" stroke-width="2.4" stroke-dasharray="6 4"/>
+   <g transform="translate(${p[0]} ${p[1]}) rotate(${p[2]+90}) scale(.2)">${DRAW.top}</g>
+   ${T(10,30,"RUNWAY FROM ABOVE",{c:C.mut,s:10.5})}${st.edge?`<line x1="${p[0]-30}" y1="40" x2="${p[0]+30}" y2="40" stroke="${C.a}" stroke-width="4"/>`:""}
+  </svg>`; };
+REPLAYS.turn180 = {scene:"uturn", title:"Right U-turn on the runway · left seat flying", credit:"Technique from Safety First #22; our own drawing, not to scale.",
+ steps:[
+  {f:0,note:"Before you start: check the runway width against the FCOM minimum (it assumes a dry, good surface and the right technique) and add margin for contamination or worn paint. For a right turn the left seat flies.",read:[["PF","left seat (turn right)"],["Width","≥ FCOM minimum + margin"]]},
+  {f:.22,note:"Stabilise: a divergence angle of about 15 to 25° from the runway axis, and a steady 5 to 10 kt (5 kt on a degraded surface).",read:[["Divergence","15–25°"],["Ground speed","5–10 kt, steady"]]},
+  {f:.4,edge:true,note:"Start the turn when you are physically over the runway edge, then bring the tiller progressively to full. An aggressive full tiller makes the nosewheels skid.",read:[["Start","over the runway edge"],["Tiller","progressive to full"]]},
+  {f:.62,note:"Keep a low, steady speed with small asymmetric thrust, idle on the inside engine. The PF looks outside; the PM watches ground speed and heading and calls deviations.",read:[["Inside engine","idle"],["PM","ground speed, heading"]],
+   ask:{q:"Halfway round the aircraft is slowing down. What do you do?",
+    opts:[["A small amount of thrust on the outside engine, then watch the speed",1,"Keep it within 5 to 10 kt; too much speed widens the turn."],
+          ["A large thrust burst to keep moving",0,"Large thrust changes take the speed out of the window and can push you off the runway."],
+          ["Ease off the tiller to keep the speed",0,"The published width assumes full steering throughout the turn."]]}},
+  {f:.84,note:"Finish: line up on the centreline without giving away runway length, then release the tiller smoothly before you stop, so the nosewheel is straight for the take-off roll.",read:[["Tiller","released before stopping"]]},
+  {f:1,note:"If anything goes wrong at any stage: stop and call for a tug. If a wheel left the pavement, even slightly, report it and have the aircraft inspected before flight.",read:[["Problem","stop, call a tug"],["Left the runway","report, inspect"]],
+   ask:{q:"During the turn the nosewheels start to skid towards the edge.",
+    opts:[["Stop the aircraft and call for a tug",1,"Much better than recovering an aircraft with a gear off the runway."],
+          ["Add thrust to drive through it",0,"Stop and call for help."],
+          ["Finish the turn, then take off",0,"If you left the pavement the aircraft must be inspected first. One crew did take off and found gear damage on arrival."]]}}
+ ]};
+FIGS.turn180_stats = bars("Runway excursions in U-turns reported in 10 years (21)",[["A320 family",7],["A330 family",11],["A300/A310",2],["A350",1],["Contaminated runway",10,C.a],["Dry runway",8,C.a],["No information",3,C.mut]],11,"From Safety First #22. Experienced crews and dry runways are not immune.");
+
+/* ---- existing stops ---- */
+SCENES.triple = (st)=>{
+  const gauge=(cx,cy,R,lbl,v,max,band)=>{ const a0=-200,span=220, ang=a0+v/max*span, rad=x=>x*Math.PI/180, p=(an,r)=>[cx+r*Math.cos(rad(an)),cy+r*Math.sin(rad(an))];
+    const arc=(f,t,col,w)=>{const s=p(f,R),e=p(t,R);return `<path d="M${s[0]} ${s[1]} A${R} ${R} 0 ${t-f>180?1:0} 1 ${e[0]} ${e[1]}" fill="none" stroke="${col}" stroke-width="${w}"/>`;};
+    const ticks=[0,1,2,3].map(n=>{const q=p(a0+n/max*span,R-10);return T(q[0],q[1]+4,n,{a:"middle",c:C.fg,s:11});}).join("");
+    const tip=p(ang,R-4);
+    return `${arc(a0,a0+span,"#e8edf3",2)}${band?arc(a0+band[0]/max*span,a0+band[1]/max*span,C.g,6):""}${ticks}<line x1="${cx}" y1="${cy}" x2="${tip[0]}" y2="${tip[1]}" stroke="#f2f4f5" stroke-width="3" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="4" fill="#f2f4f5"/>${T(cx,cy+R+18,lbl,{a:"middle",c:C.mut,s:11})}`; };
+  return `<svg viewBox="0 0 640 230" role="img" aria-label="Brake triple indicator: accumulator and left and right brake pressures">
+   <rect x="160" y="10" width="320" height="210" rx="16" fill="#0b0f14" stroke="${C.rule}" stroke-width="2"/>
+   ${gauge(320,70,46,"ACCU PRESS",st.acc,4,[2.6,3.6])}
+   ${gauge(240,165,46,"BRAKES L",st.l,3,st.band?[2.0,2.7]:null)}${gauge(400,165,46,"BRAKES R",st.r,3,st.band?[2.0,2.7]:null)}
+   ${T(320,212,"psi × 1000",{a:"middle",c:C.mut,s:10})}
+   ${st.flag?T(560,120,st.flag,{a:"middle",c:C.r,s:16,w:700}):""}
+  </svg>`; };
+REPLAYS.altn = {scene:"triple", title:"Alternate brake check on the triple indicator", credit:"From Safety First; our own drawing of the indicator. Band shown: 2 000–2 700 psi.",
+ steps:[
+  {acc:3.1,l:0,r:0,note:"Before you start, the accumulator pressure must be in the green band. If it is not, run the Yellow ELEC PUMP to recharge it.",read:[["ACCU","green band"]]},
+  {acc:3.1,l:0,r:0,note:"Yellow electric pump OFF, chocks in place, PARK BRK OFF. Brake pressures at zero.",read:[["Y ELEC PUMP","OFF"],["PARK BRK","OFF"]]},
+  {acc:3.0,l:2.4,r:2.4,band:true,note:"Press both pedals fully. Pressure on both sides must be between 2 000 (or 2 200) and 2 700 psi. Then release the pedals and set PARK BRK ON.",read:[["Pedals","fully pressed"],["L / R","in the band"]]},
+  {acc:3.0,l:.42,r:.42,band:true,flag:"416 psi",note:"The event (A330): the check gave only 416 psi.",read:[["Expected","2 200–2 700 psi"],["Measured","416 psi"]],
+   ask:{q:"The check gives 416 psi and the pedals feel spongy. What do you do?",
+    opts:[["Report it: maintenance action before flight",1,"Correct. Spongy pedals mean air in the low-pressure control circuit."],
+          ["Dispatch: alternate braking is only a back-up",0,"That is what happened. On landing it did not work and all main gear tyres burst."],
+          ["Repeat the check until it passes",0,"An out-of-range result needs maintenance, not a retry."]]}},
+  {acc:1.0,l:0,r:0,flag:"TYRES BURST",note:"The crew dispatched. After take-off Green was lost (normal brakes and autobrake). On landing alternate braking failed: LOSS OF BRAKING memory items, then 3 parking brake applications stopped the aircraft. All main gear tyres burst.",read:[["Cause","air in the alternate brake circuit after servicing"]]}
+ ]};
+FIGS.mel_tree = fig(`<svg viewBox="0 0 640 200" role="img" aria-label="MMEL by Airbus, MEL by the operator, then GO, GO IF or NO GO for each item.">
+  ${box(20,20,180,64,C.cy)}${T(110,46,"MMEL",{a:"middle",w:700,s:15})}${T(110,63,"by Airbus, approved",{a:"middle",c:C.mut,s:10})+T(110,76,"by the authority",{a:"middle",c:C.mut,s:10})}
+  ${arrow(200,52,240,52,C.cy)}
+  ${box(240,20,200,64,C.cy)}${T(340,46,"MEL",{a:"middle",w:700,s:15})}${T(340,63,"by the operator, never",{a:"middle",c:C.mut,s:10})+T(340,76,"less restrictive",{a:"middle",c:C.mut,s:10})}
+  ${arrow(440,52,470,52,C.cy)}
+  ${[["GO",C.g],["GO IF",C.a],["NO GO",C.r]].map((g,k)=>`${box(470,8+k*28,150,24,g[1])}${T(545,25+k*28,g[0],{a:"middle",c:g[1],w:700,s:12})}`).join("")}
+  ${T(20,120,"EACH ITEM IS JUSTIFIED BY:",{c:C.mut,s:11})}
+  ${["the failure alone: no worse than MINOR","with the next critical failure: no worse than MAJOR","HAZARDOUS/CATASTROPHIC cases quantified: may limit the time"].map((t,k)=>`${box(20+k*208,130,196,58)}${wrapT(30+k*208,152,t,{w:26,s:11.5})}`).join("")}
+ </svg>`,"From Safety First #25.");
+CARDS.mel = {title:"Does the MEL apply now?", credit:"From Safety First #25.", items:[
+  {q:"An ECAM caution appears at the gate before pushback.",
+   opts:[["The MEL applies: it must be applied before departure",1,"Departure means the aircraft first moving under its own power for take-off: the start of taxi. The Captain accepts the dispatch."],
+         ["The MEL does not apply until take-off",0,"It applies before departure, i.e. before the start of taxi."],["Dispatch is the Captain's choice; the MEL is optional",0,"The MEL must be applied; maintenance proposes, the Captain accepts."]]},
+  {q:"A failure appears during taxi, before the take-off roll.",
+   opts:[["Operator guidance applies; the Captain may continue on judgement and may consult the MEL and maintenance control",1,"EASA requires operator guidance for this window."],
+         ["Return to the gate: MEL dispatch is mandatory",0,"Not necessarily: follow the operator guidance."],["Ignore it until airborne",0,"Assess it using the operator guidance, MEL and maintenance control."]]},
+  {q:"A failure occurs in cruise. Does the MEL apply?",
+   opts:[["No. Log the defect in detail and tell maintenance control; the MEL can help anticipate the next dispatch",1,"Record the ECAM title, time, SD page and flight phase."],
+         ["Yes: apply the MEL in flight",0,"The MEL does not apply in flight. Follow the ECAM/QRH."],["Yes, if the item is GO IF",0,"The MEL does not apply in flight."]]},
+  {q:"A new item is added to an aircraft that already has two open MEL items.",
+   opts:[["Recheck all existing items for incompatible dispatch conditions",1,"Multiple items can conflict. The flight crew decides whether to dispatch."],
+         ["Only check the new item",0,"Recheck them all when a new item is added."],["Maintenance decides alone",0,"Maintenance proposes; the Captain accepts."]]}]};
+SLIDERS.wb = {title:"Where is the centre of gravity?", label:"CG position", min:-2, max:2, step:1, value:0,
+  fmt:v=>["beyond aft limit","aft limit","mid","forward limit","beyond forward limit"][v+2], credit:"From Safety First; our own drawing, the CG band exaggerated to show it.",
+  draw:v=>{ const x=320+v*60;
+    return `<svg viewBox="0 0 640 210" role="img" aria-label="CG ${["beyond aft limit","at aft limit","mid","at forward limit","beyond forward limit"][v+2]}">${DRAW.defs}
+     <g transform="translate(330 150) scale(1.6)">${DRAW.side}</g>
+     <rect x="260" y="168" width="120" height="14" fill="${C.g}" opacity=".25"/><line x1="260" y1="160" x2="260" y2="190" stroke="${C.g}" stroke-width="2"/><line x1="380" y1="160" x2="380" y2="190" stroke="${C.g}" stroke-width="2"/>
+     ${T(380,204,"FWD limit",{a:"middle",c:C.g,s:10.5})}${T(260,204,"AFT limit",{a:"middle",c:C.g,s:10.5})}
+     <g transform="translate(${x} 175)"><circle r="11" fill="${Math.abs(v)===2?C.r:C.cy}"/><path d="M0 -11 A11 11 0 0 1 11 0 L0 0 Z M0 11 A11 11 0 0 1 -11 0 L0 0 Z" fill="${C.bg}"/></g>
+     ${T(620,24,"NOSE →",{c:C.mut,s:10.5,a:"end"})}</svg>`;},
+  read:v=>v===2?[["Rotation","may be impossible to reach the right rate"],["Performance","worse than computed"],["Structure","nose gear may be overloaded"]]
+    : v===-2?[["Take-off","light nose, poor steering; may over- or self-rotate"],["Go-around","TOGA pitch-up may be hard to counter"],["Structure","main gear and wing may be overloaded"]]
+    : [["Within limits","yes"],["A320 CG range","1.34 m (about 4% of 37.57 m)"]],
+  note:v=>Math.abs(v)<2?"Inside the envelope. Small changes matter: a 150 kg trolley rolled from the back to the front moves the CG by more than 5 cm, and free seating below 80% full can put the real CG 2–3% from the calculated one."
+    : v>0?"Forward of the limit: the elevator and THS can run out of authority at rotation, worst at low speed, and the real performance is worse than the computed one."
+    :"Aft of the limit: as in the transit-stop tail strike, where everyone continuing sat aft with their bags in the aft hold on a loadsheet made for the first sector only."};
+FIGS.fuel_sources = fig(`<svg viewBox="0 0 640 230" role="img" aria-label="Three fuel information sources: FQI probes and FQIC give FOB; flow meters and FADEC give fuel used; independent low-level sensors give LO LVL.">
+  ${box(10,20,190,190,C.rule,"#0b1219")}${T(105,42,"WING TANK",{a:"middle",c:C.mut,s:11})}
+  ${[50,85,120,155].map(x=>`<rect x="${x-3}" y="56" width="6" height="96" fill="${C.cy}"/>`).join("")}${T(105,170,"capacitance probes",{a:"middle",c:C.cy,s:11})}
+  ${[60,105,150].map(x=>`<circle cx="${x}" cy="196" r="6" fill="${C.a}"/>`).join("")}${T(105,186,"3 low-level sensors",{a:"middle",c:C.a,s:11})}
+  ${arrow(200,100,268,70,C.cy)}${box(270,44,150,52,C.cy)}${T(345,66,"FQIC",{a:"middle",w:700})}${T(345,84,"volume × density",{a:"middle",c:C.mut,s:10.5})}
+  ${arrow(420,70,470,70,C.cy)}${T(476,66,"FOB (FQI)",{c:C.cy,w:600})}${T(476,82,"± tolerance",{c:C.mut,s:10.5})}
+  ${box(270,108,150,52,C.g)}${T(345,130,"FADEC",{a:"middle",w:700})}${T(345,148,"engine flow meters",{a:"middle",c:C.mut,s:10.5})}${arrow(420,134,470,134,C.g)}${T(476,138,"FUEL USED",{c:C.g,w:600})}
+  ${arrow(230,196,470,196,C.a)}${T(476,192,"LO LVL alert",{c:C.a,w:600})}${T(476,208,"~750 kg, 2 dry > 30 s",{c:C.mut,s:10.5})}
+  ${T(260,226,"independent of the FQI · not shown on the SD page",{c:C.a,s:10.5})}
+ </svg>`,"From Safety First #20. Cross-check: FOB + fuel used = initial FOB ± Δ, at each waypoint or every 30 minutes.");
+CARDS.fuel = {title:"Trust the right number", credit:"From Safety First #20.", items:[
+  {q:"FUEL L WING TK LO LVL triggers, but the SD fuel page shows a normal quantity in that tank.",
+   opts:[["Trust LO LVL: it comes from independent sensors and is not shown on the SD",1,"In one event the FQI over-read by 1 t, the crew treated LO LVL as spurious and engine 1 flamed out on approach."],
+         ["Treat it as spurious: the SD agrees with the plan",0,"The SD uses the FQI, which can over-read. LO LVL is the independent voice."],["Reset the FQIC",0,"Trust the LO LVL alert and act on it."]]},
+  {q:"On arrival, FOB + fuel used differs from the initial FOB by 500 kg.",
+   opts:[["Make a tech log entry",1,"Unlogged discrepancies (500 kg, then 3 000 kg) preceded a landing with about 900 kg."],
+         ["Ignore it: within normal tolerance",0,"Log it so maintenance can find an intermittent fault."],["Blame the direct routing",0,"That crew did exactly that; the fault went on."]]},
+  {q:"In cruise one wing tank is going down faster than the other.",
+   opts:[["Before using crossfeed, rule out a leak with the FOB + fuel used check",1,"In the leak event the crew opened crossfeed for the imbalance, and the leak kept draining fuel; engine 1 later shut down."],
+         ["Open crossfeed straight away to balance",0,"If it is a leak, crossfeed can feed the leak from the good side."],["Wait for the LO LVL alert",0,"Check now: FOB + fuel used against the initial FOB."]]},
+  {q:"How often should the in-flight fuel check be done?",
+   opts:[["At each waypoint or every 30 minutes",1,"FOB + fuel used = initial FOB ± Δ, and against the OFP."],["Once at top of climb",0,"Repeat it at each waypoint or every 30 minutes."],["Only when an alert appears",0,"The check is how you find a leak before an alert."]]}]};
+FIGS.reset_tree = fig(`<svg viewBox="0 0 640 250" role="img" aria-label="When to reset: step in a procedure, do it; optional after ECAM, only if in the System Reset table; ground transient, per the table or the general guidelines; otherwise no reset.">
+  ${[["1","A step in an ECAM, OEB, FCOM or QRH procedure?","Do it, read and do.",C.g],["2","Optional, after the ECAM: STOP ECAM, then the System Reset table. Listed?","Yes: apply its conditions (attempts, ground or flight). No: do not reset.",C.cy],["3","A320, on the ground, a fault from an electrical transient?","System listed: only the listed alerts. Not listed: QRH general guidelines.",C.a]]
+   .map((r,k)=>`${box(10,10+k*76,330,66,r[3])}${T(26,32+k*76,"CASE "+r[0],{c:r[3],s:11,w:700})}${wrapT(26,50+k*76,r[1],{w:42,s:11.5})}${arrow(340,43+k*76,370,43+k*76,r[3])}${wrapT(378,36+k*76,r[2],{w:34,s:11.5,c:r[3]})}`).join("")}
+  ${T(10,246,"None of these? No reset. Log every reset with the number of attempts.",{c:C.r,s:11.5,w:600})}
+ </svg>`,"From Safety First #32.");
+CARDS.reset = {title:"Reset or not?", credit:"From the A320 event in Safety First #32.", items:[
+  {q:"BRAKES AUTO BRK FAULT at engine start. Cycle A/SKID & N/W STRG?",
+   opts:[["No: that reset is listed only for BRAKES SYS 1(2) FAULT and BSCU CH 1(2) FAULT",1,"This crew cycled it, the alert cleared, and the fault came back."],
+         ["Yes: it is a ground transient at engine start",0,"Case 3 still only allows the alerts listed for that system."],["Yes, twice at most",0,"There is no reset for this alert."]]},
+  {q:"BRAKES A/SKID N/WS FAULT on the take-off roll. Airborne, cycle the switch to clear it?",
+   opts:[["No",1,"The in-flight resets hid a dual tachometer failure; the BSCU sent full pressure at touchdown and all four main tyres burst."],["Yes, before landing",0,"Not listed. Do not reset."],["Yes, it is harmless in flight",0,"It hid the real failure."]]},
+  {q:"A ground-only reset is in the table, but you are in flight.",
+   opts:[["Do not do it in flight",1,"It can start tests that move flight control surfaces or cause a law reversion with loss of protections."],["Do it carefully",0,"Ground-only means ground only."],["Do it if the ECAM is complete",0,"Ground-only means ground only."]]},
+  {q:"A phone app lists a reset for your alert.",
+   opts:[["Not authorised: use the FCOM/QRH table only",1,"Third-party reset apps are not authorised by Airbus."],["Use it if maintenance agrees",0,"Use the FCOM/QRH only."],["Use it from memory next time",0,"Resets are read and do, never from memory."]]}]};
+FIGS.tos_phases = fig(`<svg viewBox="0 0 640 230" role="img" aria-label="Take-off surveillance by phase">
+  ${[["COCKPIT PREP",C.cy,["TOS1: ENTRY OUT OF RANGE","TO SPEED TOO LOW","V1/VR/V2 DISAGREE","CHECK TAKE OFF DATA","TOS2: T.O RWY TOO SHORT"]],
+     ["ENGINE START",C.cy,["TOS2 rechecks the lift-off distance with the actual fuel"]],
+     ["TAXI: T.O CONFIG",C.a,["FLAP/MCDU DISAGREE","PITCH TRIM/MCDU/CG DISAGREE","T.O SPEEDS TOO LOW / DISAGREE / NOT INSERTED","T.O RWY TOO SHORT"]],
+     ["TAKE-OFF THRUST",C.r,["NAV ON TAXIWAY","NAV NOT ON FMS RUNWAY","T.O RWY TOO SHORT","→ reject the take-off"]]]
+   .map((c,k)=>`${box(4+k*159,8,152,214,c[1])}${T(14+k*159,30,c[0],{c:c[1],s:11,w:700})}${c[2].map((l,j)=>wrapT(14+k*159,54+j*36,l,{w:20,s:10.5,lh:12})).join("")}`).join("")}
+ </svg>`,"From Safety First #29. A safety net, not a replacement for the SOP, and it needs an up-to-date database.");
+CARDS.tos = {title:"What do you do?", credit:"From Safety First #29.", items:[
+  {q:"Take-off thrust set: NAV ON TAXIWAY.",opts:[["Reject the take-off",1,"Airbus recommends rejecting for NAV ON TAXIWAY, NAV NOT ON FMS RUNWAY or T.O RWY TOO SHORT at take-off thrust."],["Continue and check after lift-off",0,"Reject."],["Clear the alert and continue",0,"Reject."]]},
+  {q:"Runway change during taxi; the MCDU shows CHECK TAKE OFF DATA.",opts:[["Recompute and re-enter or confirm the take-off data",1,"The runway change invalidated the speeds."],["Clear the message",0,"The speeds were invalidated; check them."],["Keep the old speeds",0,"Recompute for the new runway."]]},
+  {q:"Intersection departure.",opts:[["Insert the T.O SHIFT",1,"TOS2 uses it to compute the lift-off distance against the runway left."],["Nothing: TOS2 knows your position",0,"Always insert the T.O SHIFT."],["Turn T.O SURV off",0,"Insert the shift instead."]]},
+  {q:"A NOTAM has shortened the runway and the database is not updated.",opts:[["Switch TOS2 off with the T.O SURV pushbutton",1,"Otherwise it would compute against the wrong length."],["Keep it on",0,"Its runway length is wrong."],["Ignore the NOTAM",0,"Never."]]}]};
+
+function mountWidgets(root){
+  root.querySelectorAll("[data-fig]").forEach(el=>{ const f = FIGS[el.dataset.fig]; if(f) el.outerHTML = typeof f==="function" ? f() : f; });
+  mountReplays(root);
+  root.querySelectorAll("[data-cards]").forEach(el=>{
+    const c = CARDS[el.dataset.cards]; if(!c) return;
+    let i = 0, ans = {};
+    const draw = ()=>{
+      const it = c.items[i], a = ans[i], done = Object.keys(ans).length, right = Object.keys(ans).filter(k=>c.items[k].opts[ans[k]][1]).length;
+      el.innerHTML = `<figure class="fig cards"><figcaption style="margin:0 0 8px">${esc(c.title)} · card ${i+1} of ${c.items.length}${done?` · ${right}/${done} right`:""}</figcaption>
+        ${it.fig||""}<p class="cd-q">${esc(it.q)}</p>
+        ${it.opts.map((o,k)=>`<button class="cd-o ${a==null?"":o[1]?"ok":k===a?"no":""}" data-k="${k}" ${a==null?"":"disabled"}>${esc(o[0])}</button>`).join("")}
+        ${a!=null?`<p class="rp-fb ${it.opts[a][1]?"c-g":"c-a"}">${esc(it.opts[a][2])}</p>`:""}
+        <div class="rp-ctl"><button class="cd-prev" ${i?"":"disabled"}>◀ Back</button><button class="cd-next" ${i<c.items.length-1&&a!=null?"":"disabled"}>Next card ▶</button></div>
+        ${c.credit?`<figcaption>${esc(c.credit)}</figcaption>`:""}</figure>`;
+      el.querySelectorAll(".cd-o").forEach(b=>b.onclick=()=>{ans[i]=+b.dataset.k;draw();});
+      el.querySelector(".cd-prev").onclick=()=>{i--;draw();};
+      el.querySelector(".cd-next").onclick=()=>{i++;draw();};
+    };
+    draw();
+  });
+  root.querySelectorAll("[data-slider]").forEach(el=>{
+    const s = SLIDERS[el.dataset.slider]; if(!s) return;
+    const id = "sl-"+el.dataset.slider;
+    el.innerHTML = `<figure class="fig"><figcaption style="margin:0 0 6px">${esc(s.title)}</figcaption><div class="sl-fig"></div>
+      <label class="sl-row" for="${id}"><span>${esc(s.label)}</span><input id="${id}" type="range" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}"><output></output></label>
+      <div class="rp-read"></div><p class="rp-note"></p>${s.credit?`<figcaption>${esc(s.credit)}</figcaption>`:""}</figure>`;
+    const inp = el.querySelector("input");
+    const upd = ()=>{ const v = +inp.value;
+      el.querySelector(".sl-fig").innerHTML = s.draw(v);
+      el.querySelector("output").textContent = s.fmt ? s.fmt(v) : v;
+      const rd = s.read ? s.read(v) : []; el.querySelector(".rp-read").innerHTML = rd.map(x=>`<div><small>${esc(x[0])}</small>${esc(String(x[1]))}</div>`).join(""); el.querySelector(".rp-read").hidden = !rd.length;
+      el.querySelector(".rp-note").textContent = s.note ? s.note(v) : ""; };
+    inp.oninput = upd; upd();
+  });
+  root.querySelectorAll("[data-hots]").forEach(el=>{
+    const h = HOTS[el.dataset.hots]; if(!h) return;
+    let sel = -1;
+    const draw = ()=>{
+      const spots = h.spots.map((p,k)=>`<g class="hs${k===sel?" on":""}" data-k="${k}" tabindex="0" role="button" aria-label="${esc(p.t)}">
+        <circle cx="${p.x}" cy="${p.y}" r="${p.r||13}" fill="${k===sel?"#3fc8f0":"#05080c"}" fill-opacity="${k===sel?.9:.75}" stroke="#3fc8f0" stroke-width="2"/>
+        <text x="${p.x}" y="${p.y+4.5}" fill="${k===sel?"#05080c":"#3fc8f0"}" font-size="13" font-weight="700" text-anchor="middle">${k+1}</text></g>`).join("");
+      el.innerHTML = `<figure class="fig"><figcaption style="margin:0 0 6px">${esc(h.title)} · tap a number</figcaption>
+        ${h.svg.replace("</svg>", spots+"</svg>")}
+        <div class="hs-info" aria-live="polite">${sel<0?`<p class="small">${h.spots.length} points to explore.</p>`:`<p><b>${sel+1}. ${esc(h.spots[sel].t)}.</b> ${esc(h.spots[sel].i)}</p>`}</div>
+        ${h.credit?`<figcaption>${esc(h.credit)}</figcaption>`:""}</figure>`;
+      el.querySelectorAll(".hs").forEach(g=>{ const go=()=>{sel=+g.dataset.k;draw();}; g.onclick=go; g.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();go();}}; });
+    };
+    draw();
+  });
+}
+
+
+REPLAYS.tailga1 = {title:"Case study 1 replay · A320 · VAPP 137 kt", credit:"Drawn from the event data in Safety First #39; heights not to scale.",
+ steps:[
+  {ra:80,raT:"80 ft",pitch:3.5,kt:"VAPP 137",vs:"—",stick:-1/3,thr:"CL",pfd:{ra:80,vapp:137,fma:["SPEED"]},
+   note:"80 ft RA: the PF applies 1/3 nose-down. At the same moment the wind shifts from a 5 kt headwind to a 3 kt tailwind."},
+  {ra:40,raT:"40 ft",pitch:2.5,kt:"VAPP 137",vs:"−800",stick:1/3,thr:"CL",pfd:{ra:40,vs:-800,fma:["SPEED"]},
+   note:"40 ft: pitch down to +2.5° and V/S −800 ft/min. The PF starts the flare: progressive nose-up, full nose-up in the last 10 ft."},
+  {ra:0,raT:"0 (touchdown)",pitch:9,kt:"—",vs:"−350",stick:1,thr:"IDLE",pfd:{ra:0,vs:-350},
+   note:"Levers to IDLE at 10 ft. First touchdown at −350 ft/min and +9°. The aircraft bounces as the ground spoilers start to extend."},
+  {ra:4,raT:"bounce",pitch:10.5,pitchT:"+9° rising",kt:"—",vs:"—",stick:1/3,thr:"IDLE",pfd:{},
+   note:"Airborne again in the bounce. The PF keeps about 1/3 nose-up for 2 s, so the pitch keeps rising.",
+   ask:{q:"Go-around called during the bounce. What should the PF do with the pitch?",
+    opts:[["Keep the pitch and accept a possible second touchdown",1,"Correct. Then adjust the pitch, and clean up once established."],
+          ["Pull to full back stick so the aircraft does not touch down again",0,"That is what this PF did: the pitch went on to +12.7° and the tail struck. Do not try to avoid the second touchdown."],
+          ["Push forward to put the aircraft back on the runway and stop",0,"Once a go-around is started, complete it. Keep the pitch and accept a second touchdown."]]}},
+  {ra:2,raT:"settling",pitch:12,kt:"—",vs:"—",stick:1,thr:"TOGA",pfd:{fma:["MAN TOGA"]},
+   note:"What happened: at +12° the PF selects TOGA and applies full nose-up, while the ground spoilers are still retracting."},
+  {ra:0,raT:"0 (second touchdown)",pitch:12.7,kt:"127 (VAPP −10)",vs:"—",stick:1,thr:"TOGA ↑",pfd:{spd:127,vapp:137,ra:0,fma:["MAN TOGA"],warn:"TAILSTRIKE"},
+   note:"Second touchdown during the spool-up: TAILSTRIKE at +12.7° and 127 kt. The PF holds full nose-up for another second; the speed drops to 122 kt.",
+   ask:{q:"On the runway at VAPP − 15 kt, engines still spooling up to TOGA. When should the PF rotate?",
+    opts:[["Hold the pitch until the speed is at least VAPP, then rotate",1,"Correct. With low energy, wait for VAPP: the engines need a few seconds to spool up."],
+          ["Now, with full back stick, to get airborne as soon as possible",0,"A high nose-up demand on the ground at low speed is what causes these tailstrikes."],
+          ["Select reverse and stop on the remaining runway",0,"Once a go-around is started, complete it."]]}},
+  {ra:0,raT:"0",pitch:11,kt:"122 → 128",vs:"—",stick:1/3,thr:"TOGA",pfd:{spd:128,vapp:137,ra:0,fma:["MAN TOGA"]},
+   note:"The PF eases to 1/3 nose-up, the pitch settles at +11° and the aircraft lifts off at 128 kt."},
+  {ra:30,raT:"climbing",pitch:11,kt:"—",vs:"+",stick:0,thr:"TOGA",pfd:{fma:["MAN TOGA"]},
+   note:"Go-around completed and a second approach flown safely. Once established: PF adjusts the pitch, PM retracts one flap step and the gear."}
+ ]};
 
 function renderBrief(sec,f){
   const s = statsOf(fileQs(f.id));
@@ -2130,7 +2885,7 @@ function renderBrief(sec,f){
     ${stopNav(f)}
   </div>`;
   document.getElementById("startQ").onclick=()=>{ui.stage="quiz";ui.idx=0;ui.shown=false;renderSection(sec);window.scrollTo(0,0);};
-  mountReplays(app);
+  mountWidgets(app);
 }
 
 function renderSection(sec){
@@ -2216,6 +2971,7 @@ function renderSection(sec){
     renderSection(sec);
     open.forEach(id=>{const d=app.querySelector(`.list details[data-id="${id}"]`); if(d) d.open=true;});
   });
+  mountWidgets(app);
 }
 
 function step(sec,dir){
