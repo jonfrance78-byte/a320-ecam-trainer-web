@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.6';
+  var VERSION = '0.7.7';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -136,54 +136,42 @@
       }).join('') + '</ul>' +
       '<footer class="start-foot"><span class="ver-pill">Version ' + VERSION + '</span><span>Training aid only, simplified. Follow the FCOM, QRH and your operator\'s procedures.</span></footer></section>';
   }
-  /* Deck windows: each part of the flight deck sits in a window that can be made
-   * smaller or bigger (buttons or by dragging its corner), minimised to its title
-   * bar or maximised to the full width, like windows on a PC. Sizes are saved. */
+  /* Deck windows: each part of the flight deck sits in a window with no title bar
+   * (owner's request, 0.7.7: bars took too much room). Dragging its bottom-right
+   * corner sets the width (w, %) and height (h, px); the drawing stretches to fill
+   * the window. Sizes are saved; "Reset window sizes" restores the defaults. */
   var WIN_DEFAULT = { aft: 60, fwd: 68, main: 100, ped: 72, cons: 60 };
   var WIN = {};
   try { WIN = JSON.parse(localStorage.getItem('ecam-win') || '{}'); } catch (e) { WIN = {}; }
   function win(id) { return WIN[id] || (WIN[id] = { w: WIN_DEFAULT[id] || 100 }); }
   function saveWin() { try { localStorage.setItem('ecam-win', JSON.stringify(WIN)); } catch (e) { /* not saved */ } }
   function winHtml(sec) {
-    var w = win(sec.id), width = w.max ? 100 : w.w;
-    var btn = function (act, label, icon) { return '<button class="win-btn" data-act="' + act + '" data-win="' + sec.id + '" aria-label="' + label + '" title="' + label + '">' + icon + '</button>'; };
-    return '<div class="win' + (w.min ? ' min' : '') + (w.max ? ' max' : '') + '" data-win="' + sec.id + '" style="width:' + width + '%">' +
-      '<div class="win-bar" data-winbar="' + sec.id + '"><span class="win-t">' + esc(sec.title) + '</span>' +
-      (w.min ? '' : btn('winSmaller', 'Smaller', '&minus;') + '<span class="win-pct">' + Math.round(width) + '%</span>' + btn('winBigger', 'Bigger', '+')) +
-      btn('winMin', w.min ? 'Restore' : 'Minimise', w.min ? '&#9633;' : '&#9601;') + (w.min ? '' : btn('winMax', w.max ? 'Restore size' : 'Maximise', w.max ? '&#10697;' : '&#9744;')) + '</div>' +
-      (w.min ? '' : '<div class="win-body">' + sec.svg + '</div><div class="win-grip" data-grip="' + sec.id + '" aria-hidden="true"></div>') + '</div>';
+    var w = win(sec.id);
+    return '<div class="win' + (w.h ? ' stretch' : '') + '" data-win="' + sec.id + '" style="width:' + w.w + '%" aria-label="' + esc(sec.title) + '">' +
+      '<div class="win-body"' + (w.h ? ' style="height:' + w.h + 'px"' : '') + '>' + sec.svg.replace('<svg ', '<svg preserveAspectRatio="none" ') + '</div>' +
+      '<div class="win-grip" data-grip="' + sec.id + '" aria-hidden="true"></div></div>';
   }
-  function winAct(act, id) {
-    var w = win(id);
-    if (act === 'winSmaller') { w.max = false; w.w = Math.max(25, Math.round(w.w / 10) * 10 - 10); }
-    else if (act === 'winBigger') { w.max = false; w.w = Math.min(100, Math.round(w.w / 10) * 10 + 10); }
-    else if (act === 'winMin') w.min = !w.min;
-    else if (act === 'winMax') { w.max = !w.max; w.min = false; }
-    saveWin(); refreshHome();
-  }
-  // Drag a window's bottom-right corner to resize it.
+  // Drag a window's bottom-right corner to resize it, sideways and up or down.
   var DRAG = null;
   document.addEventListener('pointerdown', function (e) {
     var g = e.target.closest && e.target.closest('.win-grip');
     if (!g) return;
     var el = g.closest('.win'), box = el.parentNode.getBoundingClientRect();
-    DRAG = { id: g.getAttribute('data-grip'), el: el, x: e.clientX, w0: el.getBoundingClientRect().width, cw: box.width };
+    var body = el.querySelector('.win-body');
+    DRAG = { id: g.getAttribute('data-grip'), el: el, body: body, x: e.clientX, y: e.clientY, w0: el.getBoundingClientRect().width, h0: body.getBoundingClientRect().height, cw: box.width };
     g.setPointerCapture(e.pointerId); e.preventDefault();
   });
   document.addEventListener('pointermove', function (e) {
     if (!DRAG) return;
     var pct = Math.max(25, Math.min(100, (DRAG.w0 + (e.clientX - DRAG.x)) / DRAG.cw * 100));
     DRAG.el.style.width = pct + '%'; DRAG.pct = pct;
-    var lab = DRAG.el.querySelector('.win-pct'); if (lab) lab.textContent = Math.round(pct) + '%';
+    DRAG.h = Math.max(60, DRAG.h0 + e.clientY - DRAG.y);
+    DRAG.body.style.height = DRAG.h + 'px'; DRAG.el.classList.add('stretch');
   });
   document.addEventListener('pointerup', function () {
     if (!DRAG) return;
-    if (DRAG.pct) { var w = win(DRAG.id); w.w = DRAG.pct; w.max = false; saveWin(); }
+    if (DRAG.pct) { var w = win(DRAG.id); w.w = DRAG.pct; w.h = DRAG.h; saveWin(); }
     DRAG = null;
-  });
-  document.addEventListener('dblclick', function (e) {
-    var b = e.target.closest && e.target.closest('.win-bar');
-    if (b && !e.target.closest('.win-btn')) winAct('winMax', b.getAttribute('data-winbar'));
   });
   function renderHome() {
     if (VIEW === 'start') return renderStart();
@@ -562,7 +550,6 @@
     return '<div class="pv-ewd' + (Date.now() - (DR.pulse || 0) < 1300 ? ' flash' : '') + '" aria-label="E/WD procedure">' + DISP.renderEWD(DR.s, ewdView()).replace('viewBox="0 0 320 320"', 'viewBox="0 188 320 132"') + '</div>' + bar;
   }
   function showEcam() {
-    if (win('main').min) { win('main').min = false; saveWin(); refreshHome(); }
     var g = document.querySelector('.hot[data-panel="EWD"]');
     if (!g) return;
     g.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
@@ -862,7 +849,6 @@
     switch (el.getAttribute('data-act')) {
       case 'menu': drawerOpen = true; renderDrawer(); break;
       case 'home': goHome(); break;
-      case 'winSmaller': case 'winBigger': case 'winMin': case 'winMax': winAct(el.getAttribute('data-act'), el.getAttribute('data-win')); break;
       case 'winReset': WIN = {}; saveWin(); refreshHome(); break;
       case 'choose': var v = el.getAttribute('data-v'); if (v === 'quiz') { QZ = null; setView('quiz'); } else setView('deck', v); break;
       case 'failures': drawerOpen = true; renderDrawer(); break;
