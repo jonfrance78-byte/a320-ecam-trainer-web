@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.8';
+  var VERSION = '0.7.9';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -314,7 +314,7 @@
     // ECP: the SD sits on top of the panel, the same width, with no gap (no top margin in the viewBox).
     document.getElementById('pv-stage').innerHTML = PV.photo ? renderPhotoStage(PV.photo) :
       (fm ? '<div class="fm-wrap">' + FMGC.guideHtml() : '') + (ecp ? '<div class="ecp-wrap"><div class="pv-sdtop" aria-label="System display">' + sdSvg() + '</div>' : '') +
-      '<svg viewBox="-4 ' + (ecp ? 0 : -4) + ' ' + (p.w + 8) + ' ' + (p.h + (ecp ? 4 : 8)) + '" class="pv-svg' + (/^MCDU[12]$/.test(PV.id) ? ' pv-mcdu' : '') + '" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
+      '<svg viewBox="-4 ' + (ecp ? 0 : -4) + ' ' + (p.w + 8) + ' ' + (p.h + (ecp ? 4 : 8)) + '" class="pv-svg' + (/^MCDU[12]$/.test(PV.id) ? ' pv-mcdu' : '') + (PV.id === 'ATC' ? ' pv-atc' : '') + '" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' + (fm || ecp ? '</div>' : '') +
       (FMGC && /^MCDU[12]$/.test(PV.id) ? FMGC.simHtml() : '') + miniEwd();
     document.getElementById('pv-info').innerHTML = infoHtml(p);

@@ -463,9 +463,9 @@
       tog(32, 19, 'ALT RPTG', ['ON', 'OFF'], 0, 'Altitude reporting by the transponder (mode C/S).', { noname: true }),
       rnd(34, 43, 'IDENT', 'Sends the identification pulse (SPI) for about 18 s when ATC asks you to squawk ident.', { s: 7, noname: true }),
       ann(64, 6.5, 'ATC FAIL', 'FAIL:a', '', 'Amber: the selected transponder has failed.', { s: 5, w: 11, noname: true }),
-      disp(106, 12, 26, '2000', 'Code', 'Squawk code of the selected transponder.', { amber: true, lbl: ' ' })
+      disp(106, 12, 26, '2000', 'Code', 'Squawk code of the selected transponder. Type a new code with the keypad: four digits.', { amber: true, lbl: ' ', code: true })
     ].concat(KP.map(function (d, i) {
-      return key(54 + (i % 3) * 10, 17 + Math.floor(i / 3) * 10, d, d === 'CLR' ? 'Clears the code being typed.' : 'Types ' + d + ' into the squawk code (digits 0 to 7).', { s: 7, w: 8 });
+      return key(54 + (i % 3) * 10, 17 + Math.floor(i / 3) * 10, d, d === 'CLR' ? 'Clears the code being typed.' : 'Types ' + d + ' into the squawk code (digits 0 to 7).', { s: 7, w: 8, code: d });
     })).concat([
       raw(t(106, 26, 'TCAS', 2.8)),
       sel(95, 42, 'TCAS traffic', ['THRT', 'ALL', 'ABV', 'BLW'], 1, 'TCAS traffic shown on the ND. THRT: only intruders that cause a TA or RA. ALL: traffic within 2700 ft above and below. ABV: 9900 ft above to 2700 ft below. BLW: 2700 ft above to 9900 ft below.', { r: 3.8, fs: 2.4, noname: true, light: true }),

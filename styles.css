@@ -222,7 +222,10 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .pv-photo image { image-rendering: auto; }
 /* MCDU: taller panel, no highlight box on the keys (the key cap shows the press) */
 .pv-svg.pv-mcdu { max-height: 86vh; max-width: 640px; }
-.pv-mcdu .ctl.sel .ctl-hit, .pv-mcdu .ctl:focus-visible .ctl-hit, .pv-mcdu .ctl:hover .ctl-hit { fill: transparent; stroke: none; }
+.pv-mcdu .ctl.sel .ctl-hit, .pv-mcdu .ctl:focus-visible .ctl-hit, .pv-mcdu .ctl:hover .ctl-hit,
+.pv-atc .ctl.sel .ctl-hit, .pv-atc .ctl:focus-visible .ctl-hit, .pv-atc .ctl:hover .ctl-hit { fill: transparent; stroke: none; }
+/* ATC/TCAS (owner's requests, 0.7.9): no highlight box; drawn smaller so the panel and its card fit on one screen */
+.pv-svg.pv-atc { max-width: 640px; }
 .photo-hit { fill: transparent; }
 .photo-mask { fill: #111417; opacity: .93; }
 .pv-credit { margin: 0; padding: 6px 16px 0; text-align: center; color: var(--ink-2); font-size: 12px; }
