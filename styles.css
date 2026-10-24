@@ -561,6 +561,8 @@ body.drill-on .home, body.drill-on .pv-card { padding-bottom: 150px; }
 .m-title { margin: 2px 0 10px; font: 700 20px var(--font-mono); letter-spacing: .01em; }
 .m-title.q { font: 600 17px/1.35 var(--font-head); }
 .m-card { position: relative; }
+.abrk-tip { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 52px); left: 50%; transform: translateX(-50%); z-index: 66; width: min(560px, calc(100% - 20px)); }
+.abrk-tip .m-card { max-height: 62vh; box-shadow: 0 12px 40px rgba(0, 0, 0, .55); }
 .m-x { position: absolute; top: 8px; right: 8px; }
 .m-card:has(.m-x) .eyebrow { padding-right: 36px; }
 .m-h { margin: 14px 0 6px; font-size: 14px; color: var(--ink-2); }

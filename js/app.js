@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.42';
+  var VERSION = '0.7.43';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -346,12 +346,13 @@
     if (st[i] && st[i].down) setTimeout(function () { st[i].down = false; if (PV && PV.disp) renderStage(); }, 180);
   }
   function deckFcu(pid, i, dir) {
-    var apBefore = apLit().length, abBefore = JSON.stringify(PSTATE.AUTOBRK || {});
+    var apBefore = apLit().length, abBefore = JSON.stringify(PSTATE.AUTOBRK || {}), abMode = autoBrk();
     PN.pressItems(PN.P[pid].items, i, PSTATE[pid] || (PSTATE[pid] = {}), dir);
     if (pid === 'FCU' && apLit().length < apBefore) apOff();
     var st = PSTATE[pid][i];
     if (pid === 'LGLEVER') gearMoved();
     abrkKeep(abBefore);
+    if (autoBrk() && autoBrk() !== abMode) showAbrkTip();
     refreshHome();
     if (st && st.down) setTimeout(function () { st.down = false; if (!PV) refreshHome(); }, 180);
   }
@@ -437,7 +438,7 @@
     var it = PV.items[i];
     if (!it) return;
     if (!PV.photo) drillPress(PV.id, i);
-    var apBefore = apLit().length, abBefore = JSON.stringify(PSTATE.AUTOBRK || {});
+    var apBefore = apLit().length, abBefore = JSON.stringify(PSTATE.AUTOBRK || {}), abMode = autoBrk();
     if (it.master && !PV.photo) PV.note = pressMaster(it.master) || 'Lights only with a warning or caution.';
     else if (it.clrKey && DR && DR.s) { PN.pressItems(PV.items, i, PV.states); pressClr(); PV.note = DR && DR.flash; }
     else if (it.clrKey && APOFF && !PV.photo) { PN.pressItems(PV.items, i, PV.states); pressClr(); PV.note = 'AUTO FLT AP OFF cleared from the E/WD.'; }
@@ -447,7 +448,7 @@
       apOff(); PV.note = 'Autopilot disconnected: AUTO FLT AP OFF (red) on the E/WD, MASTER WARN and the AP OFF aural. MASTER WARN silences it; CLR removes the message.';
     }
     if (PV.id === 'LGLEVER' && !PV.photo && it.k === 'slide') PV.note = gearMoved();
-    if (!PV.photo) { var dis = abrkKeep(abBefore); if (dis) PV.note = dis; }
+    if (!PV.photo) { var dis = abrkKeep(abBefore); if (dis) PV.note = dis; if (autoBrk() && autoBrk() !== abMode) showAbrkTip(); }
     if (it.sdPage || it.sdAll) PV.note = setSd(it.sdAll ? 'ALL' : it.sdPage);
     if (FMGC && /^MCDU[12]$/.test(PV.id) && it.k === 'pb' && it.name) FMGC.key(PV.id, it.name.replace(/\n/g, ' '));
     if (!PV) return;
@@ -978,9 +979,17 @@
         DR.mist.map(function (m) { return '<li class="bad">' + esc(m) + '</li>'; }).join('') +
         '<li>Time: ' + Math.floor(secs / 60) + ' min ' + (secs % 60) + ' s</li></ul>' +
         '<div class="m-btns"><button class="btn" data-act="stopDrill">Back to normal</button><button class="btn primary" data-act="againDrill">Run again</button></div>';
-    } else if (kind === 'abrk') {
-      // Owner's request (0.7.42), from the owner's FCOM page DSC-32-30-10 Auto Brake.
-      h = '<button class="icon-btn sm m-x" data-act="closeModal" aria-label="Close">' + ICON.close + '</button>' +
+    }
+    el.innerHTML = '<div class="m-card" role="dialog" aria-modal="true">' + h + '</div>';
+    el.hidden = false;
+  }
+  // Autobrake card (owner's request, 0.7.42-0.7.43), from the owner's FCOM page DSC-32-30-10:
+  // shown when a mode is armed (and from the panel's button), floating at the top so the
+  // panels stay usable; it closes with its x or by itself after 20 s.
+  var abrkTipT = null;
+  function showAbrkTip() {
+    var el = document.getElementById('abrk-tip');
+    el.innerHTML = '<div class="m-card" role="dialog" aria-label="Auto brake">' + '<button class="icon-btn sm m-x" data-act="abrkTipClose" aria-label="Close">' + ICON.close + '</button>' +
         '<p class="eyebrow">FCOM DSC-32-30-10</p><h2 class="m-title">Auto brake</h2>' +
         '<h3 class="m-h">General</h3><p>The purposes of the autobrake system are to:</p><ul class="m-list">' +
         '<li>Reduce the braking distance in case of an aborted takeoff.</li>' +
@@ -989,12 +998,11 @@
         '<li>Green pressure available</li><li>Anti-skid electrically powered</li><li>No failure in the braking system</li><li>At least one ADIRU available</li></ul>' +
         '<p class="small">Note: 1. Auto brake may be armed with the parking brake on. 2. MAX autobrake mode cannot be armed in flight.</p>' +
         '<p>The armed AUTO BRK mode is displayed in blue on the FMA.</p>' +
-        '<p class="small">In this trainer: green pressure and the A/SKID &amp; N/W STRG switch are checked, a mode disarms when they are lost, and MAX cannot be armed in flight. Due to differences between fleet and airlines - refer to own OMs</p>' +
-        '<div class="m-btns"><button class="btn primary" data-act="closeModal">Close</button></div>';
-    }
-    el.innerHTML = '<div class="m-card" role="dialog" aria-modal="true">' + h + '</div>';
+        '<p class="small">In this trainer: green pressure and the A/SKID &amp; N/W STRG switch are checked, a mode disarms when they are lost, and MAX cannot be armed in flight. Due to differences between fleet and airlines - refer to own OMs</p>' + '</div>';
     el.hidden = false;
+    clearTimeout(abrkTipT); abrkTipT = setTimeout(hideAbrkTip, 20000);
   }
+  function hideAbrkTip() { clearTimeout(abrkTipT); var el = document.getElementById('abrk-tip'); el.hidden = true; el.innerHTML = ''; }
   function hideModal() { MODAL.kind = null; var el = document.getElementById('modal'); el.hidden = true; el.innerHTML = ''; }
 
   function failureMenu() {
@@ -1183,7 +1191,8 @@
       case 'beginDrill': begin(); break;
       case 'cancelDrill': stopDrill(); break;
       case 'closeModal': hideModal(); break;
-      case 'abrkInfo': showModal('abrk'); break;
+      case 'abrkInfo': showAbrkTip(); break;
+      case 'abrkTipClose': hideAbrkTip(); break;
       case 'answer': answer(+el.getAttribute('data-k')); break;
       case 'quizDone': quizDone(); break;
       case 'quizSkip': quizSkip(); break;
@@ -1295,7 +1304,8 @@
       '<div id="search" class="search" hidden></div>' +
       '<div id="pv" class="pv" hidden></div>' +
       '<div id="drill" class="drill" hidden aria-live="polite"></div>' +
-      '<div id="modal" class="modal" hidden></div>';
+      '<div id="modal" class="modal" hidden></div>' +
+      '<div id="abrk-tip" class="abrk-tip" hidden></div>';
     setView('start');
     showUpdatedNote();
     hideBarOnScroll();
