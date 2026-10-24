@@ -794,6 +794,18 @@
     if (!it.noname) o += nameLines(x, y - r - 5, it.name, 4.8);
     return o;
   }
+  // ENG MASTER lever (owner's FCOM picture, 0.7.44): a square cap marked ENG 1/2 over a round
+  // base, up at ON and down at OFF; ON and OFF on the outer side.
+  function drawEngMaster(it, cur) {
+    var x = it.x, y = it.y, d = it.labelsLeft ? -1 : 1, cy = cur === 0 ? y - 3 : y + 2.6, o = '';
+    o += text(x + d * 9.5, y - 4.2, 'ON', 'pn-pos' + (cur === 0 ? ' cur' : ''), 3.2, d < 0 ? 'end' : 'start');
+    o += text(x + d * 9.5, y + 7.4, 'OFF', 'pn-pos' + (cur === 1 ? ' cur' : ''), 3.2, d < 0 ? 'end' : 'start');
+    o += '<circle cx="' + (x + 0.6) + '" cy="' + (y + 4.6) + '" r="6.6" class="shadow"/><circle cx="' + x + '" cy="' + (y + 4) + '" r="6.4" class="eng-base"/><circle cx="' + x + '" cy="' + (y + 4) + '" r="4.8" class="eng-well"/>';
+    o += '<rect x="' + (x - 4.6) + '" y="' + (cy - 4) + '" width="10" height="9.4" rx="0.8" class="shadow"/>';
+    o += '<rect x="' + (x - 5) + '" y="' + (cy - 4.7) + '" width="10" height="9.4" rx="0.8" class="eng-cap"/>';
+    o += text(x, cy - 0.6, 'ENG', 'eng-cap-t', 3.2) + text(x, cy + 3.5, it.engCap, 'eng-cap-t', 3.4);
+    return o;
+  }
   function drawTog(it, st) {
     var x = it.x, y = it.y, n = it.pos.length, cur = st.cur != null ? st.cur : it.cur, o = '';
     if (it.vee) {
@@ -805,6 +817,7 @@
       o += '<line x1="' + x + '" y1="' + y + '" x2="' + (x + tip[0]) + '" y2="' + (y + tip[1]) + '" class="tog-lever"/><circle cx="' + (x + tip[0]) + '" cy="' + (y + tip[1]) + '" r="1.7" class="tog-tip"/>';
       return o;
     }
+    if (it.engCap) return drawEngMaster(it, cur);
     var span = it.round ? 11 : 13, top = y - span / 2;
     it.pos.forEach(function (p, i) {
       var py = n === 1 ? y : top + i * span / (n - 1);

@@ -404,7 +404,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .trim-wheel { fill: #1f252b; stroke: #050607; stroke-width: .5; }
 .trim-grip { stroke: #5a646c; stroke-width: 1.4; }
 .trim-stripe { fill: #fff; opacity: .7; }
-.eng-tag { fill: #2860b0; }
+.eng-base { fill: url(#g-boss); } .eng-well { fill: #1d2228; }
+.eng-cap { fill: #3f5560; stroke: #c9d3d8; stroke-width: .5; } .eng-cap-t { fill: #f2f2ee; font-weight: 700; }
 .grav-boss { fill: url(#g-boss); stroke: #0b0d0f; }
 .grav-handle { fill: url(#g-fire); stroke: #3c0705; stroke-width: .5; }
 .grav-txt { fill: #f3eee6; font-weight: 700; }

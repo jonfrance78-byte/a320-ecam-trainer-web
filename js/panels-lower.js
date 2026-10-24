@@ -466,17 +466,20 @@
     ]
   };
 
+  // Laid out from the owner's FCOM picture (DSC-70-80-20, owner's request, 0.7.44): light panel,
+  // MASTER 1 and 2 with their ENG caps, the mode selector below with CRANK, MODE NORM and IGN
+  // START on an arc, and the FIRE/FAULT lights under each master.
   P.ENGPED = {
-    title: '', name: 'ENG panel', w: 84, h: 52, tone: 'dark', sys: 'ENG',
+    title: '', name: 'ENG panel', w: 84, h: 52, sys: 'ENG',
     desc: 'ENG MASTER levers, engine fire and fault lights, and the engine mode selector.',
     items: [
-      raw(rect(9, 3, 16, 8, 'eng-tag', 1) + t(17, 6.6, 'ENG', 2.8) + t(17, 10, '1', 3) + rect(59, 3, 16, 8, 'eng-tag', 1) + t(67, 6.6, 'ENG', 2.8) + t(67, 10, '2', 3) + t(42, 9, 'ENG', 4.2) + t(14, 48, '1', 3.4) + t(70, 48, '2', 3.4)),
-      tog(16, 22, 'ENG MASTER 1', ['ON', 'OFF'], 0, 'ENG MASTER 1. ON: opens the LP and HP fuel valves and, with the mode selector at IGN/START, begins the automatic start. OFF: closes the fuel valves and resets the FADEC. Lift the lever to move it.', { noname: true, round: true }),
-      tog(66, 22, 'ENG MASTER 2', ['ON', 'OFF'], 0, 'ENG MASTER 2. Same function for engine 2.', { noname: true, round: true }),
-      sel(42, 30, 'MODE', ['CRANK', 'NORM', 'IGN'], 1, 'Engine mode selector. CRANK: dry or wet crank, no ignition. NORM: ignition selected automatically when needed. IGN/START: starts the engines on the ground; in flight it gives continuous ignition.', { r: 6, light: true, fs: 2.6, noname: true }),
-      raw(t(42, 17, 'MODE', 3)),
-      ann(24, 43, 'ENG 1 FIRE / FAULT', 'FIRE:r', 'FAULT:a', 'Red FIRE: engine 1 fire warning (with the overhead fire pushbutton). Amber FAULT: engine 1 start fault, or the HP fuel valve position disagrees with the ENG MASTER.', { s: 11, noname: true }),
-      ann(60, 43, 'ENG 2 FIRE / FAULT', 'FIRE:r', 'FAULT:a', 'Red FIRE: engine 2 fire warning. Amber FAULT: engine 2 start fault or HP fuel valve disagreement.', { s: 11, noname: true })
+      raw(t(23, 6.6, 'MASTER 1', 3) + t(42, 7.4, 'ENG', 4.6) + t(61, 6.6, 'MASTER 2', 3) + t(16, 50.6, '1', 3.2) + t(68, 50.6, '2', 3.2) +
+        t(42, 25.6, 'MODE', 2.8) + t(52.6, 38.8, 'START', 2.6) + '<path d="M35.2 36.8 A8 8 0 0 1 48.8 36.8" class="pn-arc"/>'),
+      tog(23, 16, 'ENG MASTER 1', ['ON', 'OFF'], 0, 'ENG MASTER 1. ON: opens the LP and HP fuel valves and, with the mode selector at IGN/START, begins the automatic start. OFF: closes the fuel valves and resets the FADEC. Lift the lever to move it.', { noname: true, engCap: '1', labelsLeft: true, hit: [22, 24] }),
+      tog(61, 16, 'ENG MASTER 2', ['ON', 'OFF'], 0, 'ENG MASTER 2. Same function for engine 2.', { noname: true, engCap: '2', hit: [22, 24] }),
+      sel(42, 41, 'MODE', ['CRANK', 'NORM', 'IGN'], 1, 'Engine mode selector. CRANK: dry or wet crank, no ignition. NORM: ignition selected automatically when needed. IGN/START: starts the engines on the ground; in flight it gives continuous ignition.', { r: 5.6, light: true, fs: 2.6, noname: true, angs: [-58, 0, 58] }),
+      ann(16, 38.5, 'ENG 1 FIRE / FAULT', 'FIRE:r', 'FAULT:a', 'Red FIRE: engine 1 fire warning (with the overhead fire pushbutton). Amber FAULT: engine 1 start fault, or the HP fuel valve position disagrees with the ENG MASTER.', { s: 10, noname: true }),
+      ann(68, 38.5, 'ENG 2 FIRE / FAULT', 'FIRE:r', 'FAULT:a', 'Red FIRE: engine 2 fire warning. Amber FAULT: engine 2 start fault or HP fuel valve disagreement.', { s: 10, noname: true })
     ]
   };
 
