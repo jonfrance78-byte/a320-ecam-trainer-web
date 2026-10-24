@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.49';
+  var VERSION = '0.7.50';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -406,17 +406,17 @@
   }
   function guidedOn() { return GUIDED && DECK_MODE === 'abnormal' && !!(DR && DR.s) && DR.phase !== 'done'; }
   // The panel the current step is worked on: MASTER on the glareshield, an action's panel,
-  // a task's panel. CLR and SD page steps need no move: the ECAM control panel is on the right.
+  // a task's panel; otherwise (CLR, STATUS, SD pages) the ECAM control panel (owner's request, 0.7.50).
   function guidePanel() {
     var f = DR.f, t = null;
     if (DR.phase === 'run') {
       var st = f.steps[DR.i];
       if (st && st.k === 'master') return 'GSL';
-      if (DR.f.pre && DR.f.pre.length && !DR.preClr) return null;
+      if (DR.f.pre && DR.f.pre.length && !DR.preClr) return 'ECP';
       if (st && st.k === 'act') return st.ctls[0][0];
       if (st && st.k === 'task') t = st.want;
     } else if (DR.phase === 'seq') t = f.seq[DR.si].task && !DR.stTask ? f.seq[DR.si].task.want : null;
-    return t ? t.panel || (t.ctl ? t.ctl[0] : null) : null;
+    return t && (t.panel || t.ctl) ? t.panel || t.ctl[0] : 'ECP';
   }
   // After each change, open the next step's panel (a short pause first, so the result shows).
   function guideSync() {

@@ -765,3 +765,14 @@ body:not(:has(.appbar.slim)) .drill-task { color: var(--ink); }
   .pv-guide .pv-svg { max-height: 72vh; }
   body.drill-on .pv-guide { padding-bottom: 24px; }
 }
+
+/* Guided (owner's request, 0.7.50): the panel information on the same white background as the
+   instruction box. */
+.pv-guide > .pv-body { background: #fff; color: #1b1f24; border-radius: 12px; padding: 14px 16px; margin: 12px 0 18px 16px; box-shadow: 0 8px 30px rgba(0, 0, 0, .35); }
+.pv-guide .pv-desc, .pv-guide .pv-info p, .pv-guide .pv-info { color: #1b1f24; }
+.pv-guide .pv-info { background: none; border: 0; padding: 10px 0 0; border-top: 1px solid #d9dde3; border-radius: 0; }
+.pv-guide .pv-info .eyebrow, .pv-guide .pv-hint, .pv-guide .small { color: #5b6470; }
+.pv-guide .pv-info h3, .pv-guide .pv-info h2 { color: #1b1f24; }
+.pv-guide .pv-note { color: #0b6f86; }
+@media (min-width: 1000px) { .pv-guide > .pv-body { padding: 14px 16px; } }
+.pv-guide .pv-ctl, .pv-guide .pv-ctl * { color: #1b1f24; }
