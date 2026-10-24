@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.37';
+  var VERSION = '0.7.38';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -490,7 +490,16 @@
   var DR = null;     // the running drill
   var BEST = {};
   try { BEST = JSON.parse(localStorage.getItem('ecam-best') || '{}'); } catch (e) { BEST = {}; }
-  function liveState() { var s = DR && DR.s ? DR.s : cruiseState(); s.gear = gearView(s); s.gearCtl = gearCtl(s.gear); s.askidOff = askidOff(); s.autoBrk = autoBrk(); return s; }
+  function liveState() { var s = DR && DR.s ? DR.s : cruiseState(); s.gear = gearView(s); s.gearCtl = gearCtl(s.gear); s.askidOff = askidOff(); s.autoBrk = autoBrk();
+    // Brake triple indicator: the yellow accumulator stays charged; brake pressure shows only
+    // with the parking brake ON (yellow/accumulator), none with normal or unused alternate braking.
+    var pk = parkOn() ? 2 : 0; PN.LIVE.brk = { accu: 3, l: pk, r: pk };
+    return s; }
+  function parkOn() {
+    var items = PN.P.PARKBRK.items, st = PSTATE.PARKBRK || {};
+    for (var i = 0; i < items.length; i++) if (items[i].park) return (st[i] && st[i].cur != null ? st[i].cur : items[i].cur) === 1;
+    return false;
+  }
   // Armed autobrake mode (LO, MED or MAX: its blue ON is lit), or null.
   function autoBrk() {
     var st = PSTATE.AUTOBRK || {}, mode = null;
@@ -641,7 +650,19 @@
     var base = '-' + item, dots = 29 - base.length - val.length;
     return dots >= 2 ? base + new Array(dots + 1).join('.') + val : base + ' ' + val;
   }
+  // E/WD memos from the brake controls (owner's FCOM pages, 0.7.38): AUTO BRK LO/MED/MAX and
+  // BRK FAN in green, after the drill's memos.
   function ewdView() {
+    var v = ewdCore(), m = autoBrk();
+    v.memo = (v.memo || []).concat(m ? [{ t: 'AUTO BRK ' + m, c: 'g' }] : [], brkFan() ? [{ t: 'BRK FAN', c: 'g' }] : []);
+    return v;
+  }
+  function brkFan() {
+    var items = PN.P.AUTOBRK.items, st = PSTATE.AUTOBRK || {};
+    for (var i = 0; i < items.length; i++) if (items[i].name === 'BRK FAN') return PN.litBits((st[i] || {}).lit, items[i]).lo;
+    return false;
+  }
+  function ewdCore() {
     if (!DR || !DR.s) return { lines: APOFF ? [AP_OFF_LINE] : [], memo: [] };
     var f = DR.f, out = [], cls = f.level === 3 ? 'r' : 'a';
     if (f.level >= 2 && (DR.phase === 'run' || DR.phase === 'clr1' || DR.phase === 'quiz')) {

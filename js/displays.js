@@ -463,6 +463,10 @@
     o += brake(66, 206, 1) + brake(104, 206, 2) + t(85, 202, '°C', 'c', 8, 'middle') + t(85, 214, 'REL', 'w', 8, 'middle');
     o += brake(216, 206, 3) + brake(254, 206, 4) + t(235, 202, '°C', 'c', 8, 'middle') + t(235, 214, 'REL', 'w', 8, 'middle');
     if (s.autoBrk && ok.G) o += t(160, 228, 'AUTO BRK', 'g', 10, 'middle') + t(160, 240, s.autoBrk, 'g', 10, 'middle');
+    // Tyre pressures (FCOM DSC-32-40-20, where the TPIS is fitted): green; nose under its gear,
+    // mains under their brakes.
+    function tyres(x, y, a, b2) { return t(x - 23, y, a, 'g', 10, 'middle') + t(x, y, 'PSI', 'c', 8, 'middle') + t(x + 23, y, b2, 'g', 10, 'middle') + arc(x - 23, y - 4, 9, -30, -150, 'sw', 1) + arc(x + 23, y - 4, 9, -30, -150, 'sw', 1); }
+    o += tyres(160, 104, '165', '165') + tyres(85, 240, '195', '195') + tyres(235, 240, '195', '195');
     return o + footer(s);
   }
 

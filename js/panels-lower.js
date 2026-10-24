@@ -236,8 +236,12 @@
       pb(30, 49, 'MED', 'DECEL:g', 'ON', 'Arms MED autobrake for landing: braking starts 2 s after the ground spoilers extend, for 3 m/s². Blue ON: armed. Green DECEL: the deceleration is being achieved.', { s: 13, group: 'abrk' }),
       pb(47, 49, 'MAX', 'DECEL:g', 'ON', 'Arms MAX autobrake for take-off. In a rejected take-off above 72 kt, maximum braking starts as soon as the ground spoilers extend. Blue ON: armed.', { s: 13, group: 'abrk' }),
       ln([[59, 10], [59, 58]]),
-      raw(t(71, 11, 'A/SKID &', 3.4) + t(71, 15, 'N/W STRG', 3.4)),
-      tog(68, 33, 'A/SKID & N/W STRG', ['ON', 'OFF'], 0, 'ON: anti-skid and nose wheel steering available. OFF: no anti-skid and no nose wheel steering; braking moves to the alternate (yellow) system and the brake pressure has to be watched on the triple indicator.', { noname: true })
+      // BRK FAN (owner's FCOM page, 0.7.38): above the A/SKID & N/W STRG switch.
+      raw(t(71, 8, 'BRK FAN', 3.4)),
+      pb(71, 18, 'BRK FAN', 'HOT:a', 'ON', 'Brake fans. ON: the fans run if the left main gear is down and locked; the BRK FAN memo shows on the E/WD. Off: the fans stop. HOT (amber): the brakes are too hot, with an ECAM caution.', { s: 11, noname: true }),
+      ln([[61, 27], [82, 27]]),
+      raw(t(71, 33, 'A/SKID &', 3.4) + t(71, 37, 'N/W STRG', 3.4)),
+      tog(68, 49, 'A/SKID & N/W STRG', ['ON', 'OFF'], 0, 'ON: anti-skid and nose wheel steering available. OFF: no anti-skid and no nose wheel steering; braking moves to the alternate (yellow) system and the brake pressure has to be watched on the triple indicator.', { noname: true })
     ]
   };
 
@@ -264,7 +268,10 @@
 
   // Brake triple indicator as in photos/lower: octagonal plate, round dial,
   // ACCU PRESS scale on top (0-4) and the two BRAKES scales below (3-0-3).
-  function brakeArt(x, y) {
+  // b: { accu, l, r } in PSI x 1000 (PN.LIVE.brk, set by the app); accumulator charged and no
+  // brake pressure when not given.
+  function brakeArt(x, y, b) {
+    b = b || { accu: 3, l: 0, r: 0 };
     var o = '', R = 12.6, arc = function (cx, cy, r, a0, a1, cls) {
       var p0 = polar(cx, cy, r, a0), p1 = polar(cx, cy, r, a1);
       return '<path d="M' + p0[0] + ' ' + p0[1] + ' A' + r + ' ' + r + ' 0 0 ' + (a1 > a0 ? 1 : 0) + ' ' + p1[0] + ' ' + p1[1] + '" class="' + cls + '"/>';
@@ -278,7 +285,7 @@
     var l0 = polar(ax, ay, ar + 1.8, -40), l4 = polar(ax, ay, ar + 1.8, 40);
     o += t(l0[0], l0[1] + 0.8, '0', 1.9, 'gauge-num') + t(l4[0], l4[1] + 0.8, '4', 1.9, 'gauge-num');
     o += t(x - 6, y - 7, 'ACCU', 1.9, 'gauge-num') + t(x + 6, y - 7, 'PRESS', 1.9, 'gauge-num');
-    var an = polar(ax, ay, ar - 0.6, 18);
+    var an = polar(ax, ay, ar - 0.6, -38 + Math.max(0, Math.min(4, b.accu)) * 19);
     o += line(ax, ay - 7.5, an[0], an[1], 'gauge-needle');
     // BRAKES: left 3 .. 0 and right 0 .. 3, zero at the bottom centre
     [[-1, x - 4.6], [1, x + 4.6]].forEach(function (q) {
@@ -287,7 +294,7 @@
       o += arc(cx, cy, r, s2 < 0 ? -130 : 130, s2 < 0 ? -160 : 160, 'gauge-green');
       var e3 = polar(cx, cy, r + 1.6, s2 < 0 ? -78 : 78);
       o += t(e3[0], e3[1] + 0.8, '3', 1.9, 'gauge-num');
-      var n = polar(cx, cy, r - 0.5, s2 < 0 ? -158 : 158);
+      var v = Math.max(0, Math.min(3, s2 < 0 ? b.l : b.r)), n = polar(cx, cy, r - 0.5, s2 * (158 - v / 3 * 80));
       o += line(cx, cy, n[0], n[1], 'gauge-needle');
     });
     o += t(x, y + 9.4, '0', 1.9, 'gauge-num') + t(x, y + 11.4, 'BRAKES', 1.7, 'gauge-num') + t(x, y + 13, 'PSI x 1000', 1.2, 'gauge-num');
@@ -303,7 +310,7 @@
       { k: 'slide', x: 18, y0: 17, y1: 39, pos: ['UP', 'DOWN'], cur: 0, side: 'n', style: 'gear', hw: 14, name: 'Landing gear lever', noname: true, info: 'Landing gear lever. UP retracts and DOWN extends the gear with the green hydraulic system, through the LGCIUs. On the ground a safety interlock stops it being moved up.' },
       raw(t(66, 7, 'TERR ON ND', 3)),
       pb(66, 17, 'TERR ON ND', '', 'ON:w', 'Shows the EGPWS terrain picture on the F/O\'s ND instead of the weather radar (ON lit). Terrain shows automatically with a terrain caution or warning.', { s: 10, noname: true }),
-      part(64, 40, 32, 28, 'Brake triple indicator', 'Brake pressure triple indicator for the alternate (yellow) brakes: accumulator pressure on top, left and right brake pressure below, in PSI x 1000. It shows the parking brake pressure on the ground and reads zero with normal braking.', brakeArt(64, 40), { kindName: 'Indicator' })
+      part(64, 40, 32, 28, 'Brake triple indicator', 'Brake pressure triple indicator for the alternate (yellow) brakes: accumulator pressure on top, left and right brake pressure below, in PSI x 1000. It shows the parking brake pressure on the ground and reads zero with normal braking.', brakeArt(64, 40), { kindName: 'Indicator', artFn: function () { return brakeArt(64, 40, PN.LIVE.brk); } })
     ]
   };
 
