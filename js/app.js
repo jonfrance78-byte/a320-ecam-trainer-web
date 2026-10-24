@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.13';
+  var VERSION = '0.7.14';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -277,7 +277,7 @@
     if (PV.selected == null) return '<p class="pv-hint">Tap any pushbutton, guard, selector or switch to work it and see what it does.</p>';
     var it = PV.items[PV.selected], st = PV.states[PV.selected] || {};
     var k = PN.kindOf(it);
-    var kind = it.kindName || { latching: 'Pushbutton', momentary: 'Momentary pushbutton', indicator: 'Indicator light', fire: 'Fire pushbutton', sel: 'Selector', knob: 'Rotary knob', tog: 'Switch', lever: 'Lever', slide: 'Lever', part: 'Part', disp: 'Display', win: 'FCU window' }[k] || 'Control';
+    var kind = it.kindName || { latching: 'Pushbutton', momentary: 'Momentary pushbutton', indicator: 'Indicator light', fire: 'Fire pushbutton', sel: 'Selector', knob: 'Rotary knob', tog: 'Switch', lever: 'Lever', slide: 'Lever', part: 'Part', disp: 'Display', win: 'FCU window', ring: 'Selector ring' }[k] || 'Control';
     var status = PN.statusLegends(it), note = '';
     if (k === 'indicator') note = 'Indicator only: it lights when the system triggers it and can\'t be selected.';
     else if (k === 'momentary') note = 'Momentary: it springs back after each press.';
@@ -344,13 +344,13 @@
     el.hidden = false; document.body.classList.add('pv-open');
     renderStage();
   }
-  function pressCtl(i) {
+  function pressCtl(i, dir) {
     var it = PV.items[i];
     if (!it) return;
     if (!PV.photo) drillPress(PV.id, i);
     if (it.master && !PV.photo) PV.note = pressMaster(it.master) || 'Lights only with a warning or caution.';
     else if (it.clrKey && DR && DR.s) { PN.pressItems(PV.items, i, PV.states); pressClr(); PV.note = DR && DR.flash; }
-    else PV.note = PN.pressItems(PV.items, i, PV.states);
+    else PV.note = PN.pressItems(PV.items, i, PV.states, dir);
     if (it.sdPage || it.sdAll) PV.note = setSd(it.sdAll ? 'ALL' : it.sdPage);
     if (FMGC && /^MCDU[12]$/.test(PV.id) && it.k === 'pb' && it.name) FMGC.key(PV.id, it.name.replace(/\n/g, ' '));
     if (!PV) return;
@@ -832,8 +832,29 @@
   }
 
   /* ------------------------------------------------------------- events */
+  // FCU knobs turn: drag round the knob (one click every 20 degrees), or tap its
+  // left side (anticlockwise) or right side (clockwise).
+  var TURN = null;
+  document.addEventListener('pointerdown', function (e) {
+    var c = e.target.closest && e.target.closest('.ctl.turn');
+    if (!c || !PV) { TURN = null; return; }
+    var b = c.getBoundingClientRect(), cx = b.left + b.width / 2, cy = b.top + b.height / 2;
+    TURN = { i: +c.getAttribute('data-ctl'), cx: cx, cy: cy, a: Math.atan2(e.clientY - cy, e.clientX - cx), moved: false };
+  });
+  document.addEventListener('pointermove', function (e) {
+    if (!TURN || !PV || !(e.buttons & 1) && e.pointerType === 'mouse') return;
+    var a = Math.atan2(e.clientY - TURN.cy, e.clientX - TURN.cx), d = a - TURN.a;
+    if (d > Math.PI) d -= 2 * Math.PI; else if (d < -Math.PI) d += 2 * Math.PI;
+    if (Math.abs(d) < 0.35) return;
+    TURN.a = a; TURN.moved = true; pressCtl(TURN.i, d > 0 ? 1 : -1);
+  });
   document.addEventListener('click', function (e) {
     var ctlEl = e.target.closest('.ctl');
+    if (ctlEl && PV && TURN && TURN.moved) { TURN = null; return; }
+    if (ctlEl && PV && ctlEl.classList.contains('turn')) {
+      var r = ctlEl.getBoundingClientRect();
+      TURN = null; pressCtl(+ctlEl.getAttribute('data-ctl'), e.clientX < r.left + r.width / 2 ? -1 : 1); return;
+    }
     if (ctlEl && PV) { pressCtl(+ctlEl.getAttribute('data-ctl')); return; }
     var sdKey = e.target.closest('.sdkey');
     if (sdKey && !PV) {
@@ -891,6 +912,8 @@
     if (FMGC && PV && /^MCDU[12]$/.test(PV.id) && !e.ctrlKey && !e.metaKey && !e.altKey && /^([a-zA-Z0-9./+-]|Backspace)$/.test(e.key)) {
       e.preventDefault(); FMGC.key(PV.id, e.key === 'Backspace' ? 'CLR' : e.key === '+' || e.key === '-' ? '±' : e.key.toUpperCase()); renderStage(); return;
     }
+    var turnEl = e.target.closest && e.target.closest('.ctl.turn');
+    if (turnEl && PV && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); pressCtl(+turnEl.getAttribute('data-ctl'), e.key === 'ArrowLeft' ? -1 : 1); return; }
     if (e.key !== 'Enter' && e.key !== ' ') return;
     var ctlEl = e.target.closest && e.target.closest('.ctl');
     if (ctlEl && PV) { e.preventDefault(); pressCtl(+ctlEl.getAttribute('data-ctl')); return; }

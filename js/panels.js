@@ -853,19 +853,19 @@
     o += text(it.x, it.y - h / 2 - 2, it.lbl || it.name, 'pn-name', 3.8);
     return o;
   }
-  function drawWin(it) {
-    var w = it.w, h = 12, o = '';
+  function drawWin(it, st) {
+    var w = it.w, h = 12, o = '', val = st && st.val != null ? st.val : it.val;
     if (it.inl) {
       // FCU style: labels and value inside one window
       h = 22;
       o += '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="1" class="disp"/>';
       it.label.split('|').forEach(function (t, i, a) { o += text(it.x - w / 2 + (i + 0.5) * w / a.length, it.y - 4.4, t, 'fcu-lbl', 4.2); });
-      o += text(it.x, it.y + 7, it.val, 'fcu-txt', 10);
+      o += text(it.x, it.y + 7, val, 'fcu-txt', 10);
       return o + '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="1" class="glass"/>';
     }
     o += text(it.x, it.y - h / 2 - 2, it.label, 'pn-name', 3.6);
     o += '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="1" class="disp"/>';
-    o += text(it.x, it.y + 2.8, it.val, 'fcu-txt', 7.4);
+    o += text(it.x, it.y + 2.8, val, 'fcu-txt', 7.4);
     o += '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="1" class="glass"/>';
     return o;
   }
@@ -1040,10 +1040,11 @@
         case 'tog': g = drawTog(it, st); break;
         case 'lever': g = drawLever(it, st); break;
         case 'disp': g = drawDisp(it, off, st); break;
-        case 'win': g = drawWin(it); break;
+        case 'win': g = drawWin(it, st); break;
+        case 'ring': g = drawRing(it, st); break;
       }
       if (opts && opts.interactive) {
-        o += '<g class="ctl' + (opts.selected === i ? ' sel' : '') + '" data-ctl="' + i + '" tabindex="0" role="button" aria-label="' + esc(ctlName(it)) + '">' + hitRect(it) + g + '</g>';
+        o += '<g class="ctl' + (it.fcu ? ' turn' : '') + (opts.selected === i ? ' sel' : '') + '" data-ctl="' + i + '" tabindex="0" role="button" aria-label="' + esc(ctlName(it)) + '">' + hitRect(it) + g + '</g>';
       } else o += g;
     });
     return o;
@@ -1058,6 +1059,7 @@
     else if (it.k === 'win' || it.k === 'disp') { w = it.w + 4; h = it.inl ? 26 : 16; }
     else if (it.k === 'part') { w = it.w; h = it.h; }
     if (it.hit) { w = it.hit[0]; h = it.hit[1]; }
+    if (it.k === 'ring') return '<rect x="' + (it.x - 15) + '" y="' + (it.y - it.r - 11) + '" width="30" height="9" rx="3" class="ctl-hit"/>';
     else if (it.k === 'slide') { var pad = it.style === 'gear' ? 12 : 8; w = (it.hw || 9) + 10; h = Math.abs(it.y1 - it.y0) + 2 * pad; return '<rect x="' + (it.x - w / 2) + '" y="' + (Math.min(it.y0, it.y1) - pad) + '" width="' + w + '" height="' + h + '" rx="3" class="ctl-hit"/>'; }
     return '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="3" class="ctl-hit"/>';
   }
@@ -1108,6 +1110,8 @@
     } else if (it.k === 'sel' || it.k === 'tog') {
       var cur = st.cur != null ? st.cur : it.cur;
       st.cur = (cur + 1) % it.pos.length;
+    } else if (it.k === 'ring') {
+      st.cur = (st.cur != null ? st.cur : it.cur) ? 0 : 1;
     } else if (it.k === 'knob') {
       st.angle = ((st.angle || 0) + 40 + 120) % 240 - 120;
     } else if (it.k === 'lever') {
@@ -1150,8 +1154,40 @@
       return (st.cur != null ? st.cur : it.cur) === it.power;
     });
   }
-  function pressItems(items, i, states) {
+  // FCU knobs (owner's request, 0.7.14): turning a knob changes the number in its
+  // window: SPD 1 kt, HDG 1 degree, V/S 100 ft/min and ALT 100 or 1000 ft, chosen
+  // with the ring around the ALT knob. dir is +1 clockwise, -1 anticlockwise.
+  var FCU_START = { spd: 250, hdg: 360, alt: 37000, vs: 0 };
+  function fcuText(k, n) {
+    if (k === 'hdg') return ('00' + n).slice(-3);
+    if (k === 'vs') return n === 0 ? '00oo' : (n > 0 ? '+' : '-') + ('0' + Math.abs(n) / 100).slice(-2) + 'oo';
+    return String(n);
+  }
+  function turnFcu(items, i, states, dir) {
+    var it = items[i], k = it.fcu, st = Object.assign({}, states[i]);
+    st.angle = (st.angle || 0) + dir * 24;
+    states[i] = st;
+    var wi = items.findIndex(function (x) { return x.k === 'win' && x.fcu === k; }), ws = Object.assign({}, states[wi]);
+    var ri = items.findIndex(function (x) { return x.k === 'ring'; }), ring = ri < 0 ? 1 : ((states[ri] || {}).cur != null ? states[ri].cur : items[ri].cur);
+    var n = ws.n != null ? ws.n : FCU_START[k];
+    if (k === 'spd') n = Math.min(399, Math.max(100, n + dir));
+    else if (k === 'hdg') n = ((n + dir + 359) % 360) + 1;
+    else if (k === 'alt') { var step = ring ? 1000 : 100; n = Math.min(49000, Math.max(100, Math.round((n + dir * step) / step) * step)); }
+    else n = Math.min(6000, Math.max(-6000, n + dir * 100));
+    ws.n = n; ws.val = fcuText(k, n); states[wi] = ws;
+    return { spd: 'Speed ', hdg: 'Heading ', alt: 'Altitude ', vs: 'Vertical speed ' }[k] + ws.val + (k === 'alt' ? ' ft (' + (ring ? 1000 : 100) + ' ft steps)' : '') + '.';
+  }
+  // The 100/1000 ring around the FCU ALT knob: a pointer at 100 or 1000.
+  function drawRing(it, st) {
+    var cur = st.cur != null ? st.cur : it.cur, r = it.r + 3.2, o = '';
+    o += '<circle cx="' + it.x + '" cy="' + it.y + '" r="' + r + '" class="knob-body"/>';
+    var p = polar(it.x, it.y, r - 1.2, cur ? 30 : -30);
+    o += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="1" class="sel-dot"/>';
+    return o;
+  }
+  function pressItems(items, i, states, dir) {
     var it = items[i], st = states[i] || {};
+    if (it.fcu) return turnFcu(items, i, states, dir || 1);
     if (it.power == null && poweredOff(items, states) && (it.k === 'pb' || it.k === 'ann' || it.k === 'knob' || it.k === 'disp'))
       return 'Nothing happens: the panel is switched off. Switch it ON first.';
     if (it.agent && !(it.guard && !st.guardOpen)) {
