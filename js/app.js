@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.24';
+  var VERSION = '0.7.21';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -179,7 +179,7 @@
     if (VIEW === 'start') return renderStart();
     if (VIEW === 'quiz') return renderQuiz();
     var s = liveState();
-    var cap = captDisplays(s), ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: cap.pfd, nd: cap.nd };
+    var ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: DISP.renderPFD(s, fcuPfd(s)), nd: DISP.renderND(s, efisNd()) };
     document.getElementById('view').innerHTML =
       '<section class="home">' +
       '<p class="home-hint">' + (DECK_MODE === 'normal' ? 'Tap any panel to explore it. Normal procedure flows are in the <a href="' + NORMAL_APP + '">Normal Procedures</a>. ' : 'Tap any panel to expand it. Failures are in the menu. ') + '<span class="ver-pill">Version ' + VERSION + '</span> <button class="linkbtn" data-act="winReset">Reset window sizes</button></p>' +
@@ -328,42 +328,18 @@
     f.thr = /CLB/.test(f.vert) ? 'THR CLB' : /DES/.test(f.vert) ? 'THR IDLE' : f.spdSel && !mach ? 'SPEED' : 'MACH';
     f.lat = f.hdgSel ? 'HDG' : 'NAV';
     var e = efisNd(); f.fd = e.fd; f.ls = e.ls; f.baro = e.baro;
-    f.brk = autoBrk();
     return f;
   }
   // A press on the FCU or an EFIS panel drawn on the flight deck (the panel is not expanded).
   function deckFcu(pid, i, dir) {
     PN.pressItems(PN.P[pid].items, i, PSTATE[pid] || (PSTATE[pid] = {}), dir);
     var st = PSTATE[pid][i];
-    if (pid === 'LGLEVER') gearMoved();
     refreshHome();
     if (st && st.down) setTimeout(function () { st.down = false; if (!PV) refreshHome(); }, 180);
   }
   function dispSvg(id) {
     var s = liveState();
-    return id === 'PFD' || id === 'ND' ? captDisplays(s)[id.toLowerCase()] : id === 'EWD' ? DISP.renderEWD(s, ewdView()) : sdSvg();
-  }
-  // Captain's PFD and ND, dimmed by the brightness knobs on the lateral panel (LATL).
-  // 0 is OFF, 1 full bright. PFD/ND XFR swaps the images; with the PFD display off
-  // the PFD image moves to the ND display.
-  function dimLevel(which) {
-    var items = PN.P.LATL.items, st = PSTATE.LATL || {};
-    for (var i = 0; i < items.length; i++) if (items[i].dim === which) { var a = st[i] && st[i].angle != null ? st[i].angle : items[i].a0 || 0; return (a + 120) / 240; }
-    return 1;
-  }
-  function dimmed(svg, b) {
-    return b >= 1 ? svg : svg.replace(/<\/svg>\s*$/, '<rect width="100%" height="100%" fill="#000" opacity="' + (b <= 0 ? 1 : (0.85 * (1 - b)).toFixed(2)) + '" pointer-events="none"/></svg>');
-  }
-  function xfrSwapped() {
-    var items = PN.P.LATL.items, st = PSTATE.LATL || {};
-    for (var i = 0; i < items.length; i++) if (items[i].xfr) return !!(st[i] && st[i].swap);
-    return false;
-  }
-  function captDisplays(s) {
-    var bp = dimLevel('PFD'), bn = dimLevel('ND'), pfd = DISP.renderPFD(s, fcuPfd(s));
-    if (bp <= 0) return { pfd: dimmed(pfd, 0), nd: dimmed(pfd, bn) };
-    var nd = DISP.renderND(s, efisNd()), sw = xfrSwapped();
-    return { pfd: dimmed(sw ? nd : pfd, bp), nd: dimmed(sw ? pfd : nd, bn) };
+    return id === 'PFD' ? DISP.renderPFD(s, fcuPfd(s)) : id === 'ND' ? DISP.renderND(s, efisNd()) : id === 'EWD' ? DISP.renderEWD(s, ewdView()) : sdSvg();
   }
   function renderStage() {
     var p = getP(PV.id);
@@ -413,7 +389,6 @@
     if (it.master && !PV.photo) PV.note = pressMaster(it.master) || 'Lights only with a warning or caution.';
     else if (it.clrKey && DR && DR.s) { PN.pressItems(PV.items, i, PV.states); pressClr(); PV.note = DR && DR.flash; }
     else PV.note = PN.pressItems(PV.items, i, PV.states, dir);
-    if (PV.id === 'LGLEVER' && !PV.photo && it.k === 'slide') PV.note = gearMoved();
     if (it.sdPage || it.sdAll) PV.note = setSd(it.sdAll ? 'ALL' : it.sdPage);
     if (FMGC && /^MCDU[12]$/.test(PV.id) && it.k === 'pb' && it.name) FMGC.key(PV.id, it.name.replace(/\n/g, ' '));
     if (!PV) return;
@@ -444,72 +419,8 @@
   var DR = null;     // the running drill
   var BEST = {};
   try { BEST = JSON.parse(localStorage.getItem('ecam-best') || '{}'); } catch (e) { BEST = {}; }
-  function liveState() { var s = DR && DR.s ? DR.s : cruiseState(); s.gear = gearView(s); s.autoBrk = autoBrk(); return s; }
-  // Armed autobrake mode (LO, MED or MAX: its blue ON is lit), or null.
-  function autoBrk() {
-    var st = PSTATE.AUTOBRK || {}, mode = null;
-    PN.P.AUTOBRK.items.forEach(function (it, i) { if (it.group === 'abrk' && PN.litBits((st[i] || {}).lit, it).lo) mode = it.name; });
-    return mode;
-  }
+  function liveState() { return DR && DR.s ? DR.s : cruiseState(); }
   function refreshHome() { var y = window.scrollY; renderHome(); window.scrollTo(0, y); }
-
-  /* ------------------------------------------------------- landing gear */
-  // Normal extension and retraction (owner's request, 0.7.24), on the green system.
-  // Each leg (left main, nose, right main) opens its doors, moves, locks, then closes
-  // its doors. The LDG GEAR indicator and the SD WHEEL page follow it.
-  var DOOR_T = 3, LEG_T = [8, 7, 8.4]; // seconds: doors open or close, each leg travels
-  var GEAR = { legs: [], timer: null, sig: '' };
-  function gearReset() {
-    GEAR.legs = [0, 1, 2].map(function () { return { pos: 0, door: 0 }; });
-    if (GEAR.timer) clearInterval(GEAR.timer);
-    GEAR.timer = null; GEAR.sig = '';
-  }
-  gearReset();
-  function gearLeverIdx() { var items = PN.P.LGLEVER.items; for (var i = 0; i < items.length; i++) if (items[i].k === 'slide') return i; return -1; }
-  function gearLever() {
-    var i = gearLeverIdx(), st = PSTATE.LGLEVER && PSTATE.LGLEVER[i];
-    return st && st.cur != null ? st.cur : PN.P.LGLEVER.items[i].cur; // 0 UP, 1 DOWN
-  }
-  function greenOk(s) { return s.hyd.G.p >= 1450; }
-  // tri: 'g' down and locked, 'r' unlocked or in transit, null up and locked.
-  function gearView(s) {
-    var down = gearLever() === 1, g = greenOk(s);
-    return GEAR.legs.map(function (L) {
-      var dnLock = L.pos >= 1 && (down || !g), upLock = L.pos <= 0 && (!down || L.door < 1);
-      return { tri: dnLock ? 'g' : upLock ? null : 'r', doorOpen: L.door > 0, unlk: !(dnLock && down) && !(upLock && !down), dnLock: dnLock };
-    });
-  }
-  function gearTick(dt) {
-    var s = liveState(), target = gearLever(), busy = false;
-    if (greenOk(s)) GEAR.legs.forEach(function (L, k) {
-      if (L.pos !== target) {
-        busy = true;
-        if (L.door < 1) L.door = Math.min(1, L.door + dt / DOOR_T);
-        else L.pos = target ? Math.min(1, L.pos + dt / LEG_T[k]) : Math.max(0, L.pos - dt / LEG_T[k]);
-      } else if (L.door > 0) { busy = true; L.door = Math.max(0, L.door - dt / DOOR_T); }
-    });
-    gearLights();
-    if (!busy && GEAR.timer) { clearInterval(GEAR.timer); GEAR.timer = null; }
-  }
-  // LDG GEAR indicator: green triangle when down and locked, red UNLK when not
-  // locked in the position the lever selects. Redraws only when an indication changes.
-  function gearLights() {
-    var v = liveState().gear, sig = JSON.stringify(v);
-    if (sig === GEAR.sig) return;
-    GEAR.sig = sig;
-    ['LDG GEAR left main', 'LDG GEAR nose', 'LDG GEAR right main'].forEach(function (n, k) { setBits(['AUTOBRK', n, 1], { up: v[k].unlk, lo: v[k].dnLock }); });
-    refreshHome();
-    if (PV) renderStage();
-  }
-  // The lever has moved: start the sequence. Without green the gear stays where it is.
-  function gearMoved() {
-    // The SD shows the WHEEL page while it is on its automatic page.
-    if (!DR && !sdPage) { sdPage = 'WHEEL'; PN.LIVE.sdPage = sdPage; }
-    if (!GEAR.timer) GEAR.timer = setInterval(function () { gearTick(0.2); }, 200);
-    gearTick(0);
-    if (!greenOk(liveState())) return 'No green hydraulic pressure: the gear does not move. Use the gravity extension.';
-    return gearLever() ? 'Gear down: the doors open, the gear extends and locks down, then the doors close.' : 'Gear up: the gear unlocks, retracts and locks up, then the doors close.';
-  }
 
   function ctlIndex(c) {
     var items = PN.P[c[0]].items, n = 0;
@@ -550,13 +461,16 @@
       o.start(t); o.stop(t + d + 0.05);
     } catch (e) { /* no audio */ }
   }
-  function chime(level) {
+  // AUTO FLT AP OFF (owner's request, 0.7.21): the owner's recording, looped until MASTER WARN.
+  var apOffSnd = null;
+  function chime(level, apOff) {
     stopChime();
     if (muted) return;
+    if (apOff) { try { apOffSnd = apOffSnd || new Audio('sounds/ap-off.mp3'); apOffSnd.loop = true; apOffSnd.currentTime = 0; var pr = apOffSnd.play(); if (pr) pr.catch(function () {}); } catch (e) { /* no audio */ } return; }
     if (level === 3) { var ring = function () { tone(988, 0, 0.35); tone(784, 0.4, 0.45); }; ring(); crcTimer = setInterval(ring, 1100); }
     else tone(880, 0, 0.9);
   }
-  function stopChime() { if (crcTimer) clearInterval(crcTimer); crcTimer = null; }
+  function stopChime() { if (crcTimer) clearInterval(crcTimer); crcTimer = null; if (apOffSnd) apOffSnd.pause(); }
 
   function fmtAct(item, val) {
     var base = '-' + item, dots = 29 - base.length - val.length;
@@ -611,12 +525,12 @@
   }
   function begin() {
     var f = DR.f;
-    PSTATE = {}; gearReset();
+    PSTATE = {};
     if (PV) closePanel();
     DR.s = cruiseState(); DR.i = 0; DR.done = {}; DR.mist = []; DR.right = 0; DR.asked = 0; DR.flash = null; DR.t0 = Date.now();
     if (f.setup) f.setup(DR.s);
     (f.lights || []).forEach(function (c) { setFault(c, true); });
-    if (f.level >= 2) { masters(f.level === 3 ? 'W' : 'C', true); chime(f.level); }
+    if (f.level >= 2) { masters(f.level === 3 ? 'W' : 'C', true); chime(f.level, JSON.stringify(f.pre || []).indexOf('AP OFF') >= 0); }
     sdPage = f.sd || null; PN.LIVE.sdPage = sdPage; PN.LIVE.clr = false;
     DR.phase = 'run';
     hideModal();
@@ -764,7 +678,7 @@
   // Back to a normal aircraft.
   function stopDrill(quiet) {
     stopChime();
-    DR = null; PSTATE = {}; gearReset(); PN.LIVE.clr = false; sdPage = null; PN.LIVE.sdPage = null;
+    DR = null; PSTATE = {}; PN.LIVE.clr = false; sdPage = null; PN.LIVE.sdPage = null;
     if (!quiet) { hideModal(); if (PV) closePanel(); renderDrill(); refreshHome(); }
   }
 

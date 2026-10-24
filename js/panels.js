@@ -757,7 +757,7 @@
     return o;
   }
   function drawKnob(it, st) {
-    var r = (it.r || 9) * (st.down ? (st.out ? 1.08 : 0.94) : 1), x = it.x, y = it.y, a = st.angle != null ? st.angle : it.a0 || 0, o = '';
+    var r = (it.r || 9) * (st.down ? (st.out ? 1.08 : 0.94) : 1), x = it.x, y = it.y, a = st.angle != null ? st.angle : 0, o = '';
     if (it.lo || it.hi) {
       for (var d = -120; d <= 120; d += 30) {
         var p1 = polar(x, y, r + 1.4, d), p2 = polar(x, y, r + 3.4, d);
@@ -1044,7 +1044,7 @@
         case 'ring': g = drawRing(it, st); break;
       }
       if (opts && opts.interactive) {
-        o += '<g class="ctl' + (it.fcu || it.dim ? ' turn' : '') + (opts.selected === i ? ' sel' : '') + '" data-ctl="' + i + '" tabindex="0" role="button" aria-label="' + esc(ctlName(it)) + '">' + hitRect(it) + g + '</g>';
+        o += '<g class="ctl' + (it.fcu ? ' turn' : '') + (opts.selected === i ? ' sel' : '') + '" data-ctl="' + i + '" tabindex="0" role="button" aria-label="' + esc(ctlName(it)) + '">' + hitRect(it) + g + '</g>';
       } else o += g;
     });
     return o;
@@ -1248,18 +1248,6 @@
   function pressItems(items, i, states, dir) {
     var it = items[i], st = states[i] || {};
     if (it.fcu) return typeof dir === 'string' ? pushFcu(items, i, states, dir) : turnFcu(items, i, states, dir || 1);
-    // PFD and ND brightness knobs (owner's request, 0.7.23): one step per tap or drag, OFF to BRT.
-    if (it.dim) {
-      if (typeof dir !== 'number') return 'Tap the left side of the knob to dim, the right side to brighten.';
-      var a = Math.max(-120, Math.min(120, (st.angle != null ? st.angle : it.a0 || 0) + 20 * dir));
-      states[i] = Object.assign({}, st, { angle: a });
-      return a <= -120 ? it.dim + ' off.' + (it.dim === 'PFD' ? ' The PFD image moves to the ND display.' : '') : it.dim + ' brightness ' + Math.round((a + 120) / 2.4) + '%.';
-    }
-    // PFD/ND XFR: each press swaps the two images over.
-    if (it.xfr) {
-      states[i] = Object.assign({}, st, { swap: !st.swap, down: true });
-      return states[i].swap ? 'PFD and ND swapped: the ND shows on the outer display, the PFD on the inner one.' : 'PFD and ND back on their normal displays.';
-    }
     if (it.power == null && poweredOff(items, states) && (it.k === 'pb' || it.k === 'ann' || it.k === 'knob' || it.k === 'disp'))
       return 'Nothing happens: the panel is switched off. Switch it ON first.';
     if (it.agent && !(it.guard && !st.guardOpen)) {

@@ -417,25 +417,15 @@
       if (!ok.Y) o += '<path d="M152 242 v8 h6" class="sg" fill="none" stroke-width="1"/>' + t(160, 254, 'ACCU ONLY', 'g', 10);
       o += t(160, 274, 'AUTO BRK', 'a', 10, 'middle');
     }
-    // Landing gear (left main, nose, right main). Doors: green line when closed, amber
-    // and open otherwise. Below, one triangle per LGCIU: green down and locked, red
-    // unlocked or in transit, none when up and locked.
-    function gear(x, y, v) {
-      var r = '';
-      [-1, 1].forEach(function (d) {
-        var hx = x + 15 * d;
-        r += v.doorOpen ? ln(hx, y, hx - 7 * d, y + 12, 'sa', 2) : ln(hx, y, x + 1 * d, y, 'sg', 2);
-        if (v.tri) r += '<path d="M' + (x + 8 * d - 6) + ' ' + (y + 17) + ' h12 l-6 11 z" class="' + (v.tri === 'g' ? 'fg' : 'fr') + '"/>';
-      });
-      return r;
-    }
-    var lg = s.gear || [{}, {}, {}];
-    o += gear(85, 110, lg[0]) + gear(160, 76, lg[1]) + gear(235, 110, lg[2]);
+    function door(x, y, d) { return ln(x - 18, y + 2 * d, x + 18, y - 2 * d, 'sg', 1.4) + circ(x, y, 2.2, 'sw', 1); }
+    o += door(124, 76, 1) + door(174, 74, -1);
+    o += arc(124, 86, 16, 135, 45, 'sw', 1.4) + arc(174, 84, 16, 135, 45, 'sw', 1.4);
+    o += door(70, 132, 1) + door(240, 116, 1);
     function brake(x, y, n) {
       return arc(x, y, 16, 140, 40, 'sw', 1.4) + arc(x, y, 16, -40, -140, 'sw', 1.4) + t(x, y - 2, '0', 'g', 11, 'middle') + t(x, y + 11, String(n), 'w', 10, 'middle');
     }
     o += brake(66, 206, 1) + brake(104, 206, 2) + t(85, 202, '°C', 'c', 8, 'middle') + t(85, 214, 'REL', 'w', 8, 'middle');
-    o += brake(216, 206, 3) + brake(254, 206, 4) + t(235, 202, '°C', 'c', 8, 'middle') + t(235, 214, 'REL', 'w', 8, 'middle');
+    o += brake(214, 178, 3) + brake(252, 178, 4) + t(233, 174, '°C', 'c', 8, 'middle') + t(233, 186, 'REL', 'w', 8, 'middle');
     if (s.autoBrk && ok.G) o += t(160, 220, 'AUTO BRK', 'g', 10, 'middle') + t(160, 232, s.autoBrk, 'g', 10, 'middle');
     return o + footer(s);
   }
@@ -514,8 +504,6 @@
     for (var i = 1; i < 5; i++) o += ln(i * 40, 2, i * 40, 22, 'sw', 0.8);
     [f.thr, f.vert, f.lat].forEach(function (m, k) { o += t(20 + k * 40, 10, m, 'g', m.length > 7 ? 6 : 7, 'middle'); });
     if (f.arm) o += t(60, 19, f.arm, 'c', 6.5, 'middle');
-    // Armed autobrake: column 4, third line, blue
-    if (f.brk) o += t(140, 23, 'BRK ' + f.brk, 'c', 6.5, 'middle');
     o += t(180, 9, 'AP1', 'w', 6.5, 'middle') + t(180, 16, f.fd === false ? '-FD2' : '1FD2', 'w', 6.5, 'middle') + t(180, 23, 'A/THR', 'w', 6.5, 'middle');
     // attitude
     o += '<clipPath id="pfd-att"><path d="M64 60 Q66 46 100 44 Q134 46 136 60 L136 132 Q134 148 100 150 Q66 148 64 132 Z"/></clipPath><g clip-path="url(#pfd-att)">';
