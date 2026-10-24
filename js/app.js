@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.34';
+  var VERSION = '0.7.35';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -488,7 +488,7 @@
   var DR = null;     // the running drill
   var BEST = {};
   try { BEST = JSON.parse(localStorage.getItem('ecam-best') || '{}'); } catch (e) { BEST = {}; }
-  function liveState() { var s = DR && DR.s ? DR.s : cruiseState(); s.gear = gearView(s); s.autoBrk = autoBrk(); return s; }
+  function liveState() { var s = DR && DR.s ? DR.s : cruiseState(); s.gear = gearView(s); s.gearCtl = gearCtl(s.gear); s.askidOff = askidOff(); s.autoBrk = autoBrk(); return s; }
   // Armed autobrake mode (LO, MED or MAX: its blue ON is lit), or null.
   function autoBrk() {
     var st = PSTATE.AUTOBRK || {}, mode = null;
@@ -502,11 +502,12 @@
   // Each leg (left main, nose, right main) opens its doors, moves, locks, then closes
   // its doors. The LDG GEAR indicator and the SD WHEEL page follow it.
   var DOOR_T = 3, LEG_T = [8, 7, 8.4]; // seconds: doors open or close, each leg travels
-  var GEAR = { legs: [], timer: null, sig: '' };
+  var GEAR = { legs: [], timer: null, sig: '', t0: 0, ctlT: null };
   function gearReset() {
     GEAR.legs = [0, 1, 2].map(function () { return { pos: 0, door: 0 }; });
     if (GEAR.timer) clearInterval(GEAR.timer);
-    GEAR.timer = null; GEAR.sig = '';
+    clearTimeout(GEAR.ctlT);
+    GEAR.timer = null; GEAR.sig = ''; GEAR.t0 = 0;
   }
   gearReset();
   function gearLeverIdx() { var items = PN.P.LGLEVER.items; for (var i = 0; i < items.length; i++) if (items[i].k === 'slide') return i; return -1; }
@@ -520,8 +521,16 @@
     var down = gearLever() === 1, g = greenOk(s);
     return GEAR.legs.map(function (L) {
       var dnLock = L.pos >= 1 && (down || !g), upLock = L.pos <= 0 && (!down || L.door < 1);
-      return { tri: dnLock ? 'g' : upLock ? null : 'r', doorOpen: L.door > 0, unlk: !(dnLock && down) && !(upLock && !down), dnLock: dnLock };
+      return { tri: dnLock ? 'g' : upLock ? null : 'r', door: L.door <= 0 ? 'closed' : L.door >= 1 ? 'open' : 'transit', unlk: !(dnLock && down) && !(upLock && !down), dnLock: dnLock };
     });
+  }
+  // L/G CTL (WHEEL page): a gear still not locked where the lever selects, 30 s after it moved.
+  function gearCtl(v) { return GEAR.t0 > 0 && Date.now() - GEAR.t0 >= 30000 && v.some(function (g) { return g.unlk; }); }
+  // A/SKID & N/W STRG switch OFF (WHEEL page: ANTI SKID and N/W STEERING lost, alternate braking).
+  function askidOff() {
+    var items = PN.P.AUTOBRK.items, st = PSTATE.AUTOBRK || {};
+    for (var i = 0; i < items.length; i++) if (items[i].name === 'A/SKID & N/W STRG') return (st[i] && st[i].cur != null ? st[i].cur : items[i].cur) === 1;
+    return false;
   }
   function gearTick(dt) {
     var s = liveState(), target = gearLever(), busy = false;
@@ -538,7 +547,7 @@
   // LDG GEAR indicator: green triangle when down and locked, red UNLK when not
   // locked in the position the lever selects. Redraws only when an indication changes.
   function gearLights() {
-    var v = liveState().gear, sig = JSON.stringify(v);
+    var ls = liveState(), v = ls.gear, sig = JSON.stringify([v, ls.gearCtl]);
     if (sig === GEAR.sig) return;
     GEAR.sig = sig;
     ['LDG GEAR left main', 'LDG GEAR nose', 'LDG GEAR right main'].forEach(function (n, k) { setBits(['AUTOBRK', n, 1], { up: v[k].unlk, lo: v[k].dnLock }); });
@@ -549,6 +558,7 @@
   function gearMoved() {
     // The SD shows the WHEEL page while it is on its automatic page.
     if (!DR && !sdPage) { sdPage = 'WHEEL'; PN.LIVE.sdPage = sdPage; }
+    GEAR.t0 = Date.now(); clearTimeout(GEAR.ctlT); GEAR.ctlT = setTimeout(gearLights, 30100);
     if (!GEAR.timer) GEAR.timer = setInterval(function () { gearTick(0.2); }, 200);
     gearTick(0);
     if (!greenOk(liveState())) return 'No green hydraulic pressure: the gear does not move. Use the gravity extension.';

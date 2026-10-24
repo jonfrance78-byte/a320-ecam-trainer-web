@@ -408,35 +408,55 @@
     var o = ul(10, 78, 'WHEEL', 'w', 12), ok = hydOk(s);
     [[50, 54], [74, 50], [98, 46], [122, 42], [146, 38]].forEach(function (q, i) { o += spoiler(q[0], q[1], 4 - i, ok); });
     [[174, 38], [198, 42], [222, 46], [246, 50], [270, 54]].forEach(function (q, i) { o += spoiler(q[0], q[1], i, ok); });
-    // Lost wheel functions, shown only when degraded
-    if (!ok.Y) o += sysBox(116, 130, 'Y', false) + t(126, 130, 'N/W STEERING', 'a', 10);
-    if (!ok.G && !ok.Y) o += t(118, 152, 'ANTI SKID', 'a', 10) + rc(176, 143, 10, 11, 'sg', 1) + t(181, 152, '1', 'a', 9, 'middle') + rc(188, 143, 10, 11, 'sg', 1) + t(193, 152, '2', 'a', 9, 'middle');
-    if (!ok.G) {
-      o += sysBox(136, 222, 'G', false) + t(146, 222, 'NORM BRK', 'a', 10);
-      o += sysBox(136, 238, 'Y', ok.Y) + t(146, 238, 'ALTN BRK', 'g', 10);
-      if (!ok.Y) o += '<path d="M152 242 v8 h6" class="sg" fill="none" stroke-width="1"/>' + t(160, 254, 'ACCU ONLY', 'g', 10);
-      o += t(160, 274, 'AUTO BRK', 'a', 10, 'middle');
+    // Centre column, as on the FCOM WHEEL page: N/W STEERING, L/G CTL, ANTI SKID, the
+    // brakes and AUTO BRK. Each line shows only when it applies.
+    var off = s.askidOff;
+    if (!ok.Y || off) o += (ok.Y ? '' : sysBox(112, 128, 'Y', false)) + t(ok.Y ? 160 : 122, 128, 'N/W STEERING', 'a', 10, ok.Y ? 'middle' : null);
+    if (s.gearCtl) o += t(160, 144, 'L/G CTL', 'a', 10, 'middle');
+    if (!ok.G && !ok.Y) o += t(118, 160, 'ANTI SKID', 'a', 10) + rc(176, 151, 10, 11, 'sg', 1) + t(181, 160, '1', 'a', 9, 'middle') + rc(188, 151, 10, 11, 'sg', 1) + t(193, 160, '2', 'a', 9, 'middle');
+    else if (off) o += t(160, 160, 'ANTI SKID', 'a', 10, 'middle');
+    if (!ok.G) o += sysBox(126, 176, 'G', false) + t(136, 176, 'NORM BRK', 'a', 10);
+    if (!ok.G || off) {
+      o += (ok.G ? t(160, 192, 'ALTN BRK', 'g', 10, 'middle') : sysBox(126, 192, 'Y', ok.Y) + t(136, 192, 'ALTN BRK', 'g', 10));
+      if (!ok.Y) o += '<path d="M142 196 v8 h6" class="sg" fill="none" stroke-width="1"/>' + t(150, 208, 'ACCU ONLY', 'g', 10);
     }
-    // Landing gear (left main, nose, right main). Doors: green line when closed, amber
-    // and open otherwise. Below, one triangle per LGCIU: green down and locked, red
-    // unlocked or in transit, none when up and locked.
-    function gear(x, y, v) {
-      var r = '';
+    if (!ok.G) o += t(160, 228, 'AUTO BRK', 'a', 10, 'middle');
+    // Landing gear, from the FCOM WHEEL page. Two hatched triangles per gear (left LGCIU 1,
+    // right LGCIU 2): green locked down, red in transit, none up and locked. Doors on a
+    // hinge between grey stubs: green and level when closed, amber angled in transit,
+    // amber hanging when open. The nose gear has a door each side; each main gear has one
+    // door on its outer side.
+    function tris(x, y, c) {
+      var cls = c === 'g' ? 'sg' : 'sr', r = '';
       [-1, 1].forEach(function (d) {
-        var hx = x + 15 * d;
-        r += v.doorOpen ? ln(hx, y, hx - 7 * d, y + 12, 'sa', 2) : ln(hx, y, x + 1 * d, y, 'sg', 2);
-        if (v.tri) r += '<path d="M' + (x + 8 * d - 6) + ' ' + (y + 17) + ' h12 l-6 11 z" class="' + (v.tri === 'g' ? 'fg' : 'fr') + '"/>';
+        var a = x + 1.5 * d, b = x + 12 * d;
+        r += '<path d="M' + a + ' ' + y + ' H' + b + ' L' + a + ' ' + (y + 12) + ' Z" class="' + cls + '" fill="none" stroke-width="1.3"/>';
+        [4, 7].forEach(function (k) { var hx = x + (1.5 + k * 0.75) * d; r += ln(hx, y, hx, y + 12 - k * 1.1, cls, 1); });
       });
       return r;
     }
+    function door(hx, y, toward, len, state) {
+      // toward: +1 if the closed door runs right from its hinge, -1 if left
+      var r = ln(hx - 9 * toward, y, hx - 3 * toward, y, 'sw', 1.2) + circ(hx, y, 2.2, 'sw', 1);
+      if (state === 'closed') return r + ln(hx + 2.2 * toward, y, hx + len * toward, y, 'sg', 2);
+      var ang = state === 'open' ? 80 : 45, rad = ang * Math.PI / 180;
+      return r + ln(hx + 1.6 * toward * Math.cos(rad), y + 1.6 * Math.sin(rad), hx + 16 * toward * Math.cos(rad), y + 16 * Math.sin(rad), 'sa', 2);
+    }
     var lg = s.gear || [{}, {}, {}];
-    o += gear(85, 110, lg[0]) + gear(160, 76, lg[1]) + gear(235, 110, lg[2]);
+    function main(x, y, v, side) {
+      // side -1: left main (door hinge to the right of the triangles), +1: right main
+      var hx = x - 16 * side;
+      return door(hx, y, side, 30, v.door || 'closed') + ln(x + 16 * side, y, x + 24 * side, y, 'sw', 1.2) + (v.tri ? tris(x, y + 6, v.tri) : '');
+    }
+    o += main(85, 104, lg[0], -1) + main(235, 104, lg[2], 1);
+    var nv = lg[1];
+    o += door(138, 70, 1, 18, nv.door || 'closed') + door(182, 70, -1, 18, nv.door || 'closed') + (nv.tri ? tris(160, 76, nv.tri) : '');
     function brake(x, y, n) {
       return arc(x, y, 16, 140, 40, 'sw', 1.4) + arc(x, y, 16, -40, -140, 'sw', 1.4) + t(x, y - 2, '0', 'g', 11, 'middle') + t(x, y + 11, String(n), 'w', 10, 'middle');
     }
     o += brake(66, 206, 1) + brake(104, 206, 2) + t(85, 202, '°C', 'c', 8, 'middle') + t(85, 214, 'REL', 'w', 8, 'middle');
     o += brake(216, 206, 3) + brake(254, 206, 4) + t(235, 202, '°C', 'c', 8, 'middle') + t(235, 214, 'REL', 'w', 8, 'middle');
-    if (s.autoBrk && ok.G) o += t(160, 220, 'AUTO BRK', 'g', 10, 'middle') + t(160, 232, s.autoBrk, 'g', 10, 'middle');
+    if (s.autoBrk && ok.G) o += t(160, 228, 'AUTO BRK', 'g', 10, 'middle') + t(160, 240, s.autoBrk, 'g', 10, 'middle');
     return o + footer(s);
   }
 
