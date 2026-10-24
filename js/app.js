@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.29';
+  var VERSION = '0.7.30';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -805,6 +805,10 @@
     m.answered = k; DR.asked++; if (correct) DR.right++;
     showModal('quiz', m);
   }
+  function quizSkip() {
+    if (DR.phase === 'quiz') while (DR.f.steps[DR.i + 1] && DR.f.steps[DR.i + 1].k === 'quiz') { DR.done[DR.i] = true; DR.i++; }
+    quizDone();
+  }
   function quizDone() {
     hideModal();
     if (DR.phase === 'quiz') { DR.done[DR.i] = true; DR.i++; DR.phase = 'run'; advance(); drillCheck(); }
@@ -883,7 +887,10 @@
       var q = data.q;
       data.order = data.order || shuffle(q.options.length);
       var ans = data.answered;
-      h = '<p class="eyebrow">Question · ' + esc(f.title) + '</p><h2 class="m-title q">' + esc(q.q) + '</h2><div class="m-opts">' + data.order.map(function (oi, k) {
+      // A small x skips the questions (owner's request, 0.7.30): this one and any that follow
+      // it before the next action. The drill goes on; skipped questions are not scored.
+      h = '<button class="icon-btn sm m-x" data-act="quizSkip" aria-label="Skip the questions">' + ICON.close + '</button>' +
+        '<p class="eyebrow">Question · ' + esc(f.title) + '</p><h2 class="m-title q">' + esc(q.q) + '</h2><div class="m-opts">' + data.order.map(function (oi, k) {
         var c = ans == null ? '' : oi === 0 ? ' right' : k === ans ? ' wrong' : ' dim';
         return '<button class="opt' + c + '" data-act="answer" data-k="' + k + '"' + (ans != null ? ' disabled' : '') + '>' + esc(q.options[oi]) + '</button>';
       }).join('') + '</div>' +
@@ -1091,6 +1098,7 @@
       case 'closeModal': hideModal(); break;
       case 'answer': answer(+el.getAttribute('data-k')); break;
       case 'quizDone': quizDone(); break;
+      case 'quizSkip': quizSkip(); break;
       case 'againDrill': var id = DR.f.id; brief(id); begin(); break;
       case 'stopDrill': stopDrill(); break;
       case 'backEcam': closePanel(); showEcam(); break;
