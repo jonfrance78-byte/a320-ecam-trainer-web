@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.36';
+  var VERSION = '0.7.37';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -346,11 +346,12 @@
     if (st[i] && st[i].down) setTimeout(function () { st[i].down = false; if (PV && PV.disp) renderStage(); }, 180);
   }
   function deckFcu(pid, i, dir) {
-    var apBefore = apLit().length;
+    var apBefore = apLit().length, abBefore = JSON.stringify(PSTATE.AUTOBRK || {});
     PN.pressItems(PN.P[pid].items, i, PSTATE[pid] || (PSTATE[pid] = {}), dir);
     if (pid === 'FCU' && apLit().length < apBefore) apOff();
     var st = PSTATE[pid][i];
     if (pid === 'LGLEVER') gearMoved();
+    abrkKeep(abBefore);
     refreshHome();
     if (st && st.down) setTimeout(function () { st.down = false; if (!PV) refreshHome(); }, 180);
   }
@@ -435,7 +436,7 @@
     var it = PV.items[i];
     if (!it) return;
     if (!PV.photo) drillPress(PV.id, i);
-    var apBefore = apLit().length;
+    var apBefore = apLit().length, abBefore = JSON.stringify(PSTATE.AUTOBRK || {});
     if (it.master && !PV.photo) PV.note = pressMaster(it.master) || 'Lights only with a warning or caution.';
     else if (it.clrKey && DR && DR.s) { PN.pressItems(PV.items, i, PV.states); pressClr(); PV.note = DR && DR.flash; }
     else if (it.clrKey && APOFF && !PV.photo) { PN.pressItems(PV.items, i, PV.states); pressClr(); PV.note = 'AUTO FLT AP OFF cleared from the E/WD.'; }
@@ -445,6 +446,7 @@
       apOff(); PV.note = 'Autopilot disconnected: AUTO FLT AP OFF (red) on the E/WD, MASTER WARN and the AP OFF aural. MASTER WARN silences it; CLR removes the message.';
     }
     if (PV.id === 'LGLEVER' && !PV.photo && it.k === 'slide') PV.note = gearMoved();
+    if (!PV.photo) { var dis = abrkKeep(abBefore); if (dis) PV.note = dis; }
     if (it.sdPage || it.sdAll) PV.note = setSd(it.sdAll ? 'ALL' : it.sdPage);
     if (FMGC && /^MCDU[12]$/.test(PV.id) && it.k === 'pb' && it.name) FMGC.key(PV.id, it.name.replace(/\n/g, ' '));
     if (!PV) return;
@@ -494,6 +496,26 @@
     var st = PSTATE.AUTOBRK || {}, mode = null;
     PN.P.AUTOBRK.items.forEach(function (it, i) { if (it.group === 'abrk' && PN.litBits((st[i] || {}).lit, it).lo) mode = it.name; });
     return mode;
+  }
+  // Autobrake arming conditions (FCOM DSC-32-30-10): green pressure and anti-skid (A/SKID &
+  // N/W STRG ON); MAX cannot be armed in flight. A mode whose conditions are lost disarms
+  // (its ON goes out). Returns a note when it disarmed something, or null.
+  function abrkCheck() {
+    var s = DR && DR.s ? DR.s : cruiseState(), st = PSTATE.AUTOBRK || {}, why = null;
+    PN.P.AUTOBRK.items.forEach(function (it, i) {
+      if (it.group !== 'abrk' || !PN.litBits((st[i] || {}).lit, it).lo) return;
+      var w = !greenOk(s) ? 'Autobrake not armed: no green hydraulic pressure.' : askidOff() ? 'Autobrake not armed: A/SKID & N/W STRG is OFF.' :
+        it.name === 'MAX' && !s.onGround ? 'MAX autobrake cannot be armed in flight.' : null;
+      if (w) { st[i] = Object.assign({}, st[i], { lit: null }); why = w; }
+    });
+    return why;
+  }
+  // After a press: a MAX that cannot arm in flight leaves the panel as it was (an armed LO or
+  // MED stays armed); other lost conditions disarm.
+  function abrkKeep(before) {
+    var w = abrkCheck();
+    if (w && /MAX/.test(w)) PSTATE.AUTOBRK = JSON.parse(before);
+    return w;
   }
   function refreshHome() { var y = window.scrollY; renderHome(); window.scrollTo(0, y); }
 

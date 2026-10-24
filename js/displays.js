@@ -408,19 +408,24 @@
     var o = ul(10, 78, 'WHEEL', 'w', 12), ok = hydOk(s);
     [[50, 54], [74, 50], [98, 46], [122, 42], [146, 38]].forEach(function (q, i) { o += spoiler(q[0], q[1], 4 - i, ok); });
     [[174, 38], [198, 42], [222, 46], [246, 50], [270, 54]].forEach(function (q, i) { o += spoiler(q[0], q[1], i, ok); });
-    // Centre column, as on the FCOM WHEEL page: N/W STEERING, L/G CTL, ANTI SKID, the
-    // brakes and AUTO BRK. Each line shows only when it applies.
-    var off = s.askidOff;
-    if (!ok.Y || off) o += (ok.Y ? '' : sysBox(112, 128, 'Y', false)) + t(ok.Y ? 160 : 122, 128, 'N/W STEERING', 'a', 10, ok.Y ? 'middle' : null);
+    // Centre column, from the FCOM WHEEL page (DSC-32-20-20, DSC-32-30-20): each line only when
+    // it applies. N/W STEERING (amber, Y box green or amber) when steering is lost: yellow
+    // low pressure or A/SKID & N/W STRG OFF. ANTI SKID amber when it is lost (switch OFF, or
+    // no green or yellow), or with normal braking and yellow low pressure; green when normal
+    // braking or autobrake is lost but anti-skid remains. With normal braking lost: G NORM BRK
+    // amber, Y ALTN BRK green with ACCU PR (yellow available) or ACCU ONLY (accumulator).
+    var off = s.askidOff, normFail = !ok.G || off, asLost = off || (!ok.G && !ok.Y);
+    if (!ok.Y || off) o += sysBox(112, 128, 'Y', ok.Y) + t(122, 128, 'N/W STEERING', 'a', 10);
     if (s.gearCtl) o += t(160, 144, 'L/G CTL', 'a', 10, 'middle');
-    if (!ok.G && !ok.Y) o += t(118, 160, 'ANTI SKID', 'a', 10) + rc(176, 151, 10, 11, 'sg', 1) + t(181, 160, '1', 'a', 9, 'middle') + rc(188, 151, 10, 11, 'sg', 1) + t(193, 160, '2', 'a', 9, 'middle');
-    else if (off) o += t(160, 160, 'ANTI SKID', 'a', 10, 'middle');
-    if (!ok.G) o += sysBox(126, 176, 'G', false) + t(136, 176, 'NORM BRK', 'a', 10);
-    if (!ok.G || off) {
-      o += (ok.G ? t(160, 192, 'ALTN BRK', 'g', 10, 'middle') : sysBox(126, 192, 'Y', ok.Y) + t(136, 192, 'ALTN BRK', 'g', 10));
-      if (!ok.Y) o += '<path d="M142 196 v8 h6" class="sg" fill="none" stroke-width="1"/>' + t(150, 208, 'ACCU ONLY', 'g', 10);
+    if (asLost || (ok.G && !ok.Y)) o += t(160, 160, 'ANTI SKID', 'a', 10, 'middle');
+    else if (normFail) o += t(160, 160, 'ANTI SKID', 'g', 10, 'middle');
+    if (normFail) {
+      o += sysBox(126, 176, 'G', ok.G) + t(136, 176, 'NORM BRK', 'a', 10);
+      o += sysBox(126, 192, 'Y', ok.Y) + t(136, 192, 'ALTN BRK', 'g', 10);
+      o += ok.Y ? '<path d="M126 197 v7 h6" class="sg" fill="none" stroke-width="1"/><path d="M135 204 l-4 -2.5 v5 z" class="fg"/>' + t(138, 208, 'ACCU PR', 'g', 10)
+        : '<path d="M126 206 v-8 M132 206 h-6" class="sg" fill="none" stroke-width="1"/><path d="M126 196 l-2.5 4 h5 z" class="fg"/>' + t(138, 208, 'ACCU ONLY', 'g', 10);
+      if (!s.autoBrk) o += t(160, 228, 'AUTO BRK', 'a', 10, 'middle');
     }
-    if (!ok.G) o += t(160, 228, 'AUTO BRK', 'a', 10, 'middle');
     // Landing gear, from the FCOM WHEEL page. Two hatched triangles per gear (left LGCIU 1,
     // right LGCIU 2): green locked down, red in transit, none up and locked. Doors on a
     // hinge between grey stubs: green and level when closed, amber angled in transit,
@@ -452,7 +457,8 @@
     var nv = lg[1];
     o += door(138, 70, 1, 18, nv.door || 'closed') + door(182, 70, -1, 18, nv.door || 'closed') + (nv.tri ? tris(160, 76, nv.tri) : '');
     function brake(x, y, n) {
-      return arc(x, y, 16, 140, 40, 'sw', 1.4) + arc(x, y, 16, -40, -140, 'sw', 1.4) + t(x, y - 2, '0', 'g', 11, 'middle') + t(x, y + 11, String(n), 'w', 10, 'middle');
+      // The arc above appears only on the hottest brake above 100 °C (none in cruise).
+      return arc(x, y, 16, -40, -140, 'sw', 1.4) + t(x, y - 2, '0', 'g', 11, 'middle') + t(x, y + 11, String(n), 'w', 10, 'middle');
     }
     o += brake(66, 206, 1) + brake(104, 206, 2) + t(85, 202, '°C', 'c', 8, 'middle') + t(85, 214, 'REL', 'w', 8, 'middle');
     o += brake(216, 206, 3) + brake(254, 206, 4) + t(235, 202, '°C', 'c', 8, 'middle') + t(235, 214, 'REL', 'w', 8, 'middle');
