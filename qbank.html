@@ -1553,7 +1553,8 @@ brief:`<h4>Not just for the inexperienced</h4>
 const FILES_BY_ID = Object.fromEntries(FILES.map(f=>[f.id,f]));
 
 /* Safety First issue for each stop, from the magazines in jonfrance78-byte/a320-references.
-   altn, wb and ws are older than #20 and keep their website link only. */
+   altn, wb and ws are older than #20 and keep their website link only.
+   Not shown on the stops from 0.7.36 (owner's request: the source line became the OMs note). */
 const ISSUES = {fuel:"#20, July 2015",clb:"#20, July 2015",radar:"#22, July 2016",desc:"#24, July 2017",
   to:"special edition Control your Speed, February 2018",cruise:"special edition Control your Speed, February 2018",
   mel:"#25, January 2018",thr:"#27, January 2019",gnss:"#29, January 2020",tos:"#29, January 2020",turb:"#29, January 2020",park:"#29, January 2020",
@@ -2904,7 +2905,7 @@ function renderBrief(sec,f){
       <div class="progress" aria-hidden="true">${FLIGHT.map(x=>`<i class="${x.n<f.n?"past":x.n===f.n?"here":""}"></i>`).join("")}</div>
     </header>
     <article class="brief">${f.brief}
-      <p class="srcline">Source: Airbus Safety First${f.issue?` ${esc(f.issue)}`:""}, <a href="${f.url}" target="_blank" rel="noopener">read the full article ↗</a>. Summarised for study; the FCOM, QRH and Jet2 SOPs remain the authority.</p>
+      <p class="srcline">Due to differences between fleet and airlines - refer to own OMs</p>
     </article>
     <div class="card-f startbar">
       <span class="fmeta">${s.n} questions · ${s.k} known</span>
