@@ -138,8 +138,10 @@
   }
 
   /* -------------------------------------------------------------- pedestal */
-  function pedestal() {
-    add('<path d="M266 1456 L634 1456 L634 1830 L596 1834 L596 2056 L304 2056 L304 1834 L266 1830 Z" class="dk-frame"/>');
+  // Two windows (owner's request): the upper pedestal down to the ENG and ATC panels,
+  // and the lower pedestal from the speed brake and flaps down.
+  function pedUpper() {
+    add('<path d="M266 1456 L634 1456 L634 1830 L266 1830 Z" class="dk-frame"/>');
     panel('MCDU1', 272, 1462); panel('MCDU2', 524, 1462);
     panel('SWITCHING', 380, 1462); panel('ECP', 380, 1510);
     plate(380, 1564, 140, 12);
@@ -150,6 +152,9 @@
     panel('FLOODR', 494, 1731); panel('ATC', 494, 1768);
     add('<path d="M410 1731 L490 1731 L486 1759 L414 1759 Z" class="dk-quadbase"/>');
     panel('ENGPED', 408, 1762);
+  }
+  function pedLower() {
+    add('<path d="M304 1826 L596 1826 L596 2056 L304 2056 Z" class="dk-frame"/>');
     panel('SPDBRK', 312, 1832); panel('RUDTRIM', 413, 1832); panel('FLAPS', 490, 1832);
     panel('DOOR', 312, 1903); panel('PRINTER', 490, 1903);
     panel('BLANKP1', 312, 1948); panel('PARKBRK', 413, 1943); panel('BLANKP1', 490, 1948);
@@ -161,7 +166,7 @@
   // The pedestal is drawn larger than the panels above it, so its small controls read well.
   var PED_SCALE = 1.45, PED_Y = 1456;
   // The deck is drawn as separate windows (aft overhead, forward overhead, main
-  // panel, pedestal, side consoles), each its own SVG, so the app can size each one.
+  // panel, upper and lower pedestal, side consoles), each its own SVG, so the app can size each one.
   function section(id, title, vb, draw) {
     out = [];
     add(PN.defs());
@@ -181,12 +186,15 @@
     secs.push(section('main', 'Glareshield and main panel', [8, 1118, 884, 0], function () { mainBottom = mainPanel(opts.ecam); }));
     var mh = mainBottom - 1118 + 6;
     secs[2].svg = secs[2].svg.replace('viewBox="8 1118 884 0"', 'viewBox="8 1118 884 ' + mh.toFixed(0) + '"'); secs[2].h = mh;
-    var pw = 368 * PED_SCALE + 12, ph = 600 * PED_SCALE + 12;
-    secs.push(section('ped', 'Pedestal', [450 - pw / 2, PED_Y - 6, pw, ph], function () {
-      add('<g transform="translate(450 ' + PED_Y + ') scale(' + PED_SCALE + ') translate(-450 -' + PED_Y + ')">');
-      pedestal();
-      add('</g>');
-    }));
+    // y0, y1, half width of each pedestal window, before scaling
+    [['pedU', 'Upper pedestal', 1456, 1830, 184, pedUpper], ['pedL', 'Lower pedestal', 1826, 2056, 146, pedLower]].forEach(function (d) {
+      var S = PED_SCALE, pw = d[4] * 2 * S + 12, ph = (d[3] - d[2]) * S + 12;
+      secs.push(section(d[0], d[1], [450 - pw / 2, PED_Y + (d[2] - PED_Y) * S - 6, pw, ph], function () {
+        add('<g transform="translate(450 ' + PED_Y + ') scale(' + S + ') translate(-450 -' + PED_Y + ')">');
+        d[5]();
+        add('</g>');
+      }));
+    });
     secs.push(section('cons', 'Side consoles', [-6, -6, 482, 198], function () { panel('CONSL', 0, 0); panel('CONSR', 246, 0); }));
     return secs;
   }

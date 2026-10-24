@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.12';
+  var VERSION = '0.7.13';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -142,7 +142,7 @@
    * (owner's request, 0.7.7: bars took too much room). Dragging its bottom-right
    * corner sets the width (w, %) and height (h, px); the drawing stretches to fill
    * the window. Sizes are saved; "Reset window sizes" restores the defaults. */
-  var WIN_DEFAULT = { aft: 60, fwd: 68, main: 100, ped: 72, cons: 60 };
+  var WIN_DEFAULT = { aft: 60, fwd: 68, main: 100, pedU: 72, pedL: 57, cons: 60 };
   var WIN = {};
   try { WIN = JSON.parse(localStorage.getItem('ecam-win') || '{}'); } catch (e) { WIN = {}; }
   function win(id) { return WIN[id] || (WIN[id] = { w: WIN_DEFAULT[id] || 100 }); }
