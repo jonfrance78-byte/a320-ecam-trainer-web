@@ -1199,8 +1199,10 @@
     vs: ['Pushed: level off. V/S engages at zero.', 'Pulled: V/S engaged at ']
   };
   function pushFcu(items, i, states, how) {
+    // A tap on the knob's centre alternates (owner's request, 0.7.19): push, then pull, then push...
+    if (how === 'tap') how = (states[i] || {}).last === 'push' ? 'pull' : 'push';
     var it = items[i], k = it.fcu, pull = how === 'pull';
-    states[i] = Object.assign({}, states[i], { down: true, out: pull });
+    states[i] = Object.assign({}, states[i], { down: true, out: pull, last: how });
     // how and when the knob was last pushed or pulled: the PFD reads it for the FMA
     var wi = items.findIndex(function (x) { return x.k === 'win' && x.fcu === k; }), ws = Object.assign({}, states[wi]);
     var mach = k === 'spd' && ws.mach !== false, n = ws.n != null ? ws.n : mach ? 78 : FCU_START[k];

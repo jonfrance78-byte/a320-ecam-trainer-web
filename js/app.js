@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.18';
+  var VERSION = '0.7.19';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -879,17 +879,17 @@
     if (ctlEl && PV && TURN && TURN.moved) { TURN = null; return; }
     if (ctlEl && PV && ctlEl.classList.contains('turn')) {
       var r = ctlEl.getBoundingClientRect();
-      // The centre of the knob pushes it; either side turns it.
+      // The centre of the knob pushes it, a second tap pulls it; either side turns it.
       var dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
-      TURN = null; pressCtl(+ctlEl.getAttribute('data-ctl'), Math.hypot(dx, dy) < r.width * 0.18 ? 'push' : dx < 0 ? -1 : 1); return;
+      TURN = null; pressCtl(+ctlEl.getAttribute('data-ctl'), Math.hypot(dx, dy) < r.width * 0.18 ? 'tap' : dx < 0 ? -1 : 1); return;
     }
     if (ctlEl && PV) { pressCtl(+ctlEl.getAttribute('data-ctl')); return; }
-    // FCU knobs and buttons on the deck: the centre of a knob pushes it, either side turns it.
+    // FCU knobs and buttons on the deck: the centre of a knob pushes, then pulls; either side turns it.
     var fk = !PV && e.target.closest('.fcukey');
     if (fk) {
       if (TURN && TURN.moved) { TURN = null; return; }
       var fr = fk.getBoundingClientRect(), fdx = e.clientX - (fr.left + fr.width / 2), fdy = e.clientY - (fr.top + fr.height / 2);
-      TURN = null; deckFcu(+fk.getAttribute('data-fcu'), fk.classList.contains('turn') ? (Math.hypot(fdx, fdy) < fr.width * 0.18 ? 'push' : fdx < 0 ? -1 : 1) : undefined); return;
+      TURN = null; deckFcu(+fk.getAttribute('data-fcu'), fk.classList.contains('turn') ? (Math.hypot(fdx, fdy) < fr.width * 0.18 ? 'tap' : fdx < 0 ? -1 : 1) : undefined); return;
     }
     var sdKey = e.target.closest('.sdkey');
     if (sdKey && !PV) {
@@ -949,7 +949,7 @@
       e.preventDefault(); FMGC.key(PV.id, e.key === 'Backspace' ? 'CLR' : e.key === '+' || e.key === '-' ? '±' : e.key.toUpperCase()); renderStage(); return;
     }
     var turnEl = e.target.closest && e.target.closest('.ctl.turn');
-    var turnKey = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: 'pull', ArrowDown: 'push', Enter: 'push' }[e.key];
+    var turnKey = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: 'pull', ArrowDown: 'push', Enter: 'tap' }[e.key];
     if (turnEl && PV && turnKey != null) { e.preventDefault(); pressCtl(+turnEl.getAttribute('data-ctl'), turnKey); return; }
     if (e.key !== 'Enter' && e.key !== ' ') return;
     var ctlEl = e.target.closest && e.target.closest('.ctl');
