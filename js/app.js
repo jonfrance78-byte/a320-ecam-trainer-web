@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.51';
+  var VERSION = '0.7.52';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -400,9 +400,9 @@
       PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' + (fm || ecp ? '</div>' : '') +
       (FMGC && /^MCDU[12]$/.test(PV.id) ? FMGC.simHtml() : '') + (guidedOn() ? '' : miniEwd());
     document.getElementById('pv-info').innerHTML = infoHtml(p);
-    // Guided: the E/WD, the SD and the ECAM control panel on the right, working.
+    // Guided: the E/WD on the right, large.
     var ec = document.getElementById('pv-ecam');
-    if (ec) ec.innerHTML = '<div class="pv-screen">' + DISP.renderEWD(liveState(), ewdView()) + '</div>' + (PV.id === 'ECP' ? '' : '<div class="pv-screen">' + sdSvg() + '</div>' + ecpHtml()); // the ECP panel has its own SD
+    if (ec) ec.innerHTML = '<div class="pv-screen">' + DISP.renderEWD(liveState(), ewdView()) + '</div>'; // E/WD only, large (owner's request, 0.7.52); the ECAM control panel opens itself for CLR and SD steps
   }
   function guidedOn() { return GUIDED && DECK_MODE === 'abnormal' && !!(DR && DR.s) && DR.phase !== 'done'; }
   // The panel the current step is worked on: MASTER on the glareshield, an action's panel,

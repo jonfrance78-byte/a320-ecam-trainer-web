@@ -794,3 +794,9 @@ body:not(:has(.appbar.slim)) .drill-task { color: var(--ink); }
   .pv-guide > .drill { margin-top: 10px; }
   .pv-guide > .pv-body { overflow: auto; max-height: calc(100vh - 230px); margin-top: 10px; }
 }
+
+/* Guided (owner's request, 0.7.52): only the E/WD on the right, as large as the height allows. */
+@media (min-width: 1000px) {
+  .pv-guide { grid-template-columns: minmax(240px, 320px) minmax(0, 1fr) min(44vw, calc(100vh - 60px)); }
+  .pv-guide .pv-ecam .pv-screen { max-width: 100%; }
+}
