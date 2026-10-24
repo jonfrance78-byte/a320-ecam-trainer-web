@@ -199,3 +199,11 @@ html:root { --ok: #1f7a3d; --bad: #121212; --rule: #e1dfdb; --ecam-b: #121212; }
 .np-pill.ok { background: rgba(31, 122, 61, .08); }
 .np-warn { border-color: var(--edge-hi); background: #fff; }
 .np-flows { box-shadow: none; }
+
+/* Home page (owner's request, 0.7.33): on a wide screen the flows sit on the left and the
+   approaches on the right, side by side; narrower screens stack them as before. */
+@media (min-width: 1000px) {
+  .np-home { max-width: 1320px; }
+  .np-cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 32px; align-items: start; }
+  .np-cols .np-appr { grid-template-columns: minmax(0, 1fr); }
+}

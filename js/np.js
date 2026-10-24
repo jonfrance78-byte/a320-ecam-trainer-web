@@ -70,6 +70,8 @@
       modeSeg() +
       '<dl class="np-stats">' + stats().map(function (x) { return '<div><dt>' + esc(x[1]) + '</dt><dd>' + x[0] + '</dd></div>'; }).join('') + '</dl>' +
       '</section>' +
+      // Flows left, approaches right on a wide screen (owner's request, 0.7.33).
+      '<div class="np-cols">' +
       '<section class="np-sec" id="flows" aria-labelledby="flows-h">' +
       '<div class="np-sec-head"><h2 id="flows-h" class="np-h2">Flows and checklists</h2><span class="np-count">' + done + ' of ' + total + ' flown</span></div>' +
       groups.map(function (g) {
@@ -95,6 +97,7 @@
           '</button></li>';
       }).join('') + '</ul>' +
       '</section>' +
+      '</div>' +
       '<section class="np-sec np-notes">' +
       '<h2 class="np-h2">Sources and conventions</h2>' +
       '<p>Built from the Airbus A320 family FCOM standard operating procedures, the Airbus standard normal checklist and the FCTM, simplified for training. <span class="op">◆</span> marks an item where Jet2 procedures, approvals or values apply: check the OM-A, OM-B and OM-C. Training aid only: follow the FCOM, QRH and the operator\'s procedures.</p>' +
