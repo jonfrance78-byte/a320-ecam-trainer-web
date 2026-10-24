@@ -341,7 +341,6 @@
       id: 'p-ils', from: 'appr', pre: IN_APPR, title: 'ILS CAT I — practise', phase: 'Approach',
       steps: [
         S('EFISL/LS', true, 'LS — ON', 'Both pilots: ILS scales on the PFD.'),
-        S('EFISR/LS', true, 'LS — ON'),
         S('MCDU1/RAD\nNAV', 'press', 'RAD NAV — ILS checked', 'ILS frequency, ident and course match the chart. Identify on the PFD.'),
         S('MCDU1/PERF', 'press', 'ACTIVATE APPR PHASE', '', { who: 'PM' }),
         S('FCU/APPR', true, 'APPR', 'On an intercept heading with the approach clearance. FMA: G/S and LOC blue, CAT 1 (or better).', { who: 'PF' }),
