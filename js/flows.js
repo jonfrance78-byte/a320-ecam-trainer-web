@@ -254,7 +254,7 @@
         L('LANDING', [['ECAM MEMO', 'LDG NO BLUE'], ['— LDG GEAR DN · SIGNS ON · CABIN READY · SPLRS ARM · FLAPS SET', '']]),
         C('1000 ft: "Stabilised"', 'On VAPP, on the LOC and G/S, landing configuration, thrust stable, checklist complete. If not stabilised: go around ◆.', { who: 'PM' }),
         C('"Minimum" — "Continue"', 'At DA with the required visual reference: PF calls "Continue" (or "Go around – flaps").', { who: 'PF' }),
-        S('FCU/AP1', false, 'AP — OFF', 'For a manual landing: disconnect with the sidestick takeover pushbutton at or above the minimum use height ◆.', { who: 'PF' }),
+        S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'For a manual landing: disconnect with the takeover pushbutton on the sidestick at or above the minimum use height ◆.', { who: 'PF', after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '"RETARD" auto callout at 20 ft RA for a manual landing: thrust levers to idle. A/THR disconnects.',
           { who: 'PF', after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] }),
         C('Touchdown: "Spoilers" — "Reverse green" — "Decel" — "70 knots"', 'Reverse thrust as required; idle reverse by 70 kt. Hold the autobrake or brake manually.', { who: 'PM' })
@@ -350,7 +350,7 @@
       ].concat(CONFIG, [
         C('1000 ft — "Stabilised"', ''),
         C('"Minimum" — "Continue"', ''),
-        S('FCU/AP1', false, 'AP — OFF', 'Manual landing.', { who: 'PF' }),
+        S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Manual landing: takeover pushbutton on the sidestick.', { who: 'PF', after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD
       ])
     },
@@ -370,8 +370,7 @@
         C('"Minimum" — "Land" (or "Go around – flaps")', 'With a DH: decide at the "Minimum" callout. No DH: continue unless the AUTO LAND light comes on.'),
         S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '"RETARD" at 10 ft RA in autoland.', { who: 'PF', after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] }),
         C('ROLL OUT — "Spoilers" — "Reverse green" — "Decel"', 'The AP keeps the centreline on the localiser.'),
-        S('FCU/AP1', false, 'AP1 — OFF', 'Disconnect the APs at taxi speed, before leaving the runway.', { who: 'PF' }),
-        S('FCU/AP2', false, 'AP2 — OFF')
+        S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Disconnect the APs at taxi speed, before leaving the runway: takeover pushbutton on the sidestick.', { who: 'PF', after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] })
       ])
     },
     {
@@ -387,7 +386,7 @@
         S('FCU/ALT knob', 'press', 'Go-around altitude — set', 'Once FINAL APP is engaged and below the missed approach altitude.', { who: 'PF' }),
         C('Monitor: V/DEV, XTK, GPS PRIMARY', 'Go around if XTK exceeds 0.3 NM, V/DEV is excessive (½ dot ◆) or GPS PRIMARY is lost on both NDs.'),
         C('"Minimum" — "Continue"', ''),
-        S('FCU/AP1', false, 'AP — OFF', 'At or before the minimum.', { who: 'PF' }),
+        S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'At or before the minimum: takeover pushbutton on the sidestick.', { who: 'PF', after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD
       ])
     },
@@ -404,7 +403,7 @@
       ].concat(CONFIG, [
         S('FCU/ALT knob', 'press', 'Go-around altitude — set', '', { who: 'PF' }),
         C('"Minimum" — "Continue"', ''),
-        S('FCU/AP1', false, 'AP — OFF', '', { who: 'PF' }),
+        S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD
       ])
     },
@@ -422,7 +421,7 @@
         S('FCU/ALT knob', 'press', 'Go-around altitude — set', 'Once descending below the missed approach altitude.', { who: 'PF' }),
         C('Distance / altitude checks', 'PM calls the check heights each mile; PF adjusts the FPA to regain the path.', { who: 'PM' }),
         C('"Minimum" — "Continue"', 'No level-off at the MDA: continue only with the visual reference, otherwise go around.'),
-        S('FCU/AP1', false, 'AP — OFF', '', { who: 'PF' }),
+        S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD
       ])
     }
