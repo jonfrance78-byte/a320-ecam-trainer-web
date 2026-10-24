@@ -859,7 +859,7 @@
       // FCU style: labels and value inside one window
       h = 22;
       o += '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="1" class="disp"/>';
-      it.label.split('|').forEach(function (t, i, a) { o += text(it.x - w / 2 + (i + 0.5) * w / a.length, it.y - 4.4, t, 'fcu-lbl', 4.2); });
+      it.label.split('|').forEach(function (t, i, a) { if (it.fcu === 'spd' && i === (st && st.mach === false ? 1 : 0)) return; o += text(it.x - w / 2 + (i + 0.5) * w / a.length, it.y - 4.4, t, 'fcu-lbl', 4.2); });
       o += text(it.x, it.y + 7, val, 'fcu-txt', 10);
       return o + '<rect x="' + (it.x - w / 2) + '" y="' + (it.y - h / 2) + '" width="' + w + '" height="' + h + '" rx="1" class="glass"/>';
     }
@@ -1158,7 +1158,9 @@
   // window: SPD 1 kt, HDG 1 degree, V/S 100 ft/min and ALT 100 or 1000 ft, chosen
   // with the ring around the ALT knob. dir is +1 clockwise, -1 anticlockwise.
   var FCU_START = { spd: 250, hdg: 360, alt: 35000, vs: 0 }, FCU_SEQ = 0;
-  function fcuText(k, n) {
+  // Mach is kept in hundredths (78 = .78); in this cruise 1 Mach hundredth is about 2.974 kt.
+  function fcuText(k, n, mach) {
+    if (k === 'spd' && mach) return '.' + ('0' + n).slice(-2);
     if (k === 'hdg') return ('00' + n).slice(-3);
     if (k === 'vs') return n === 0 ? '00oo' : (n > 0 ? '+' : '-') + ('0' + Math.abs(n) / 100).slice(-2) + 'oo';
     return String(n);
@@ -1169,13 +1171,13 @@
     states[i] = st;
     var wi = items.findIndex(function (x) { return x.k === 'win' && x.fcu === k; }), ws = Object.assign({}, states[wi]);
     var ri = items.findIndex(function (x) { return x.k === 'ring'; }), ring = ri < 0 ? 1 : ((states[ri] || {}).cur != null ? states[ri].cur : items[ri].cur);
-    var n = ws.n != null ? ws.n : FCU_START[k];
-    if (k === 'spd') n = Math.min(399, Math.max(100, n + dir));
+    var mach = k === 'spd' && ws.mach !== false, n = ws.n != null ? ws.n : mach ? 78 : FCU_START[k];
+    if (k === 'spd') n = mach ? Math.min(99, Math.max(10, n + dir)) : Math.min(399, Math.max(100, n + dir));
     else if (k === 'hdg') n = ((n + dir + 359) % 360) + 1;
     else if (k === 'alt') { var step = ring ? 1000 : 100; n = Math.min(49000, Math.max(100, Math.round((n + dir * step) / step) * step)); }
     else n = Math.min(6000, Math.max(-6000, n + dir * 100));
     // SPD and HDG managed: the turned value is a preset; the dot stays lit until pulled.
-    ws.n = n; ws.val = fcuText(k, n) + ((k === 'spd' || k === 'hdg') && !ws.sel ? '•' : k === 'alt' && ws.man ? '•' : ''); states[wi] = ws;
+    ws.n = n; ws.val = fcuText(k, n, mach) + ((k === 'spd' || k === 'hdg') && !ws.sel ? '•' : k === 'alt' && ws.man ? '•' : ''); states[wi] = ws;
     return { spd: 'Speed ', hdg: 'Heading ', alt: 'Altitude ', vs: 'Vertical speed ' }[k] + ws.val + (k === 'alt' ? ' ft (' + (ring ? 1000 : 100) + ' ft steps)' : '') + '.';
   }
   // The 100/1000 ring around the FCU ALT knob: a pointer at 100 or 1000.
@@ -1201,9 +1203,9 @@
     states[i] = Object.assign({}, states[i], { down: true, out: pull });
     // how and when the knob was last pushed or pulled: the PFD reads it for the FMA
     var wi = items.findIndex(function (x) { return x.k === 'win' && x.fcu === k; }), ws = Object.assign({}, states[wi]);
-    var n = ws.n != null ? ws.n : FCU_START[k];
+    var mach = k === 'spd' && ws.mach !== false, n = ws.n != null ? ws.n : mach ? 78 : FCU_START[k];
     if (k === 'spd' || k === 'hdg') {
-      ws.sel = pull; ws.n = n; ws.val = pull ? fcuText(k, n) : '---•';
+      ws.sel = pull; ws.n = n; ws.val = pull ? fcuText(k, n, mach) : '---•';
     } else if (k === 'alt') {
       ws.man = !pull; ws.n = n; ws.val = fcuText(k, n) + (pull ? '' : '•');
     } else {
@@ -1213,7 +1215,19 @@
     states[wi] = ws;
     var m = FCU_MSG[k];
     if (!pull) return m[0];
+    if (k === 'spd' && mach) return 'Pulled: selected Mach ' + ws.val + ' (blue target on the PFD).';
     return m[1] + (k === 'vs' ? (ws.n > 0 ? '+' : '') + ws.n : ws.val) + { spd: ' kt (blue target on the PFD).', hdg: ' degrees (HDG mode).', alt: ' ft, ignoring the flight plan constraints.', vs: ' ft/min (V/S mode).' }[k];
+  }
+  // SPD/MACH pushbutton (owner's request, 0.7.17): swaps the SPD window between
+  // IAS (kt) and Mach, converting the value shown (250 kt = .84, .78 = 232 kt here).
+  function fcuMach(items, states) {
+    var wi = items.findIndex(function (x) { return x.k === 'win' && x.fcu === 'spd'; }), ws = Object.assign({}, states[wi]);
+    var mach = ws.mach !== false, n = ws.n != null ? ws.n : mach ? 78 : FCU_START.spd;
+    n = mach ? Math.min(399, Math.max(100, Math.round(n * 2.974))) : Math.min(99, Math.max(10, Math.round(n / 2.974)));
+    ws.mach = !mach; ws.n = n;
+    if (ws.val && ws.val !== '---•') ws.val = fcuText('spd', n, !mach) + (ws.sel ? '' : '•');
+    states[wi] = ws;
+    return (mach ? 'IAS: the target is now in knots' : 'Mach: the target is now a Mach number') + (ws.sel ? ', ' + fcuText('spd', n, !mach) + '.' : '. The speed is managed, so the window keeps its dashes; the label shows ' + (mach ? 'SPD' : 'MACH') + '.');
   }
   function pressItems(items, i, states, dir) {
     var it = items[i], st = states[i] || {};
@@ -1228,6 +1242,7 @@
       return 'Nothing happens: the squib is not armed. Push the fire pushbutton first.';
     }
     states[i] = press(it, st);
+    if (it.fcuMach) return fcuMach(items, states);
     // Code keypad (ATC squawk): digits type into the panel's code display; after
     // four digits that is the new code. CLR always removes the right-hand digit
     // shown (owner's request), whether typing or not; the next digits refill it.

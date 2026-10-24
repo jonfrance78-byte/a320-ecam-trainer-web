@@ -538,7 +538,7 @@
     // speed target: managed magenta at the current speed, selected blue (its value above or below the tape when off it)
     if (f.spdSel && f.spd != null) {
       var ys = cy - (f.spd - spd) * 1.6;
-      if (ys < 42) o += t(35, 37, String(f.spd), 'c', 8, 'middle'); else if (ys > 150) o += t(35, 158, String(f.spd), 'c', 8, 'middle');
+      if (ys < 42) o += t(35, 37, f.spdTxt || String(f.spd), 'c', 8, 'middle'); else if (ys > 150) o += t(35, 158, f.spdTxt || String(f.spd), 'c', 8, 'middle');
       else o += '<path d="M48 ' + ys + ' l6 -4 v8 z" class="c"/>';
     } else o += '<path d="M48 ' + cy + ' l6 -4 v8 z" class="m"/>';
     o += t(28, 166, '.798', 'g', 9, 'middle');

@@ -72,7 +72,7 @@
       { k: 'win', inl: true, x: 189, y: 14, w: 52, label: 'ALT|LVL/CH', val: '35000', fcu: 'alt', info: 'FCU selected altitude: the clearance altitude the aircraft climbs or descends to and levels off at. The window always shows a value.' },
       { k: 'win', inl: true, x: 237, y: 14, w: 42, label: 'V/S|FPA', val: '-----', fcu: 'vs', info: 'Selected vertical speed (in 100 ft/min) or flight path angle. Dashes when V/S or FPA is not engaged.' },
       ln([[114, 29], [114, 84]]), ln([[164, 29], [164, 84]]),
-      rnd(19, 38, 'SPD MACH', 'Changes the speed target between airspeed and Mach.', { s: 9, noname: true }),
+      rnd(19, 38, 'SPD MACH', 'Changes the speed target between airspeed (IAS, knots) and Mach. The SPD window converts the value it shows, for example .78 to 232 kt at this cruise level, and its label changes between SPD and MACH.', { s: 9, noname: true, fcuMach: true }),
       raw(t(19, 50, 'SPD', 3.2) + t(19, 54, 'MACH', 3.2)),
       knob(45, 52, 'SPD knob', '', '', 'Speed knob. Turn to set a speed. Pull: selected speed (the value shows in the window). Push: managed speed from the FMGS. Here: drag round the knob or tap its left or right side to turn it; tap its centre to push it, or use the buttons below to push or pull.', { r: 11, light: true, noname: true, fcu: 'spd' }),
       knob(89, 52, 'HDG knob', '', '', 'Heading or track knob. Turn to set a heading. Pull: selected HDG or TRK mode. Push: NAV mode (managed lateral guidance along the flight plan). Here: drag round the knob or tap its left or right side to turn it; tap its centre to push it, or use the buttons below to push or pull.', { r: 11, light: true, noname: true, fcu: 'hdg' }),

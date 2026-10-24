@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.16';
+  var VERSION = '0.7.17';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -306,14 +306,14 @@
   function fcuPfd(s) {
     var P = PN.P.FCU.items, st = PSTATE.FCU || {}, w = {};
     P.forEach(function (it, i) { if (it.k === 'win' && it.fcu) w[it.fcu] = st[i] || {}; });
-    var alt = w.alt.n != null ? w.alt.n : 35000, vsN = w.vs.n || 0, f = { spdSel: !!w.spd.sel, spd: w.spd.n, hdgSel: !!w.hdg.sel, hdg: w.hdg.n, fcuAlt: alt, vs: 0, arm: '' };
+    var alt = w.alt.n != null ? w.alt.n : 35000, vsN = w.vs.n || 0, mach = w.spd.mach !== false, f = { spdSel: !!w.spd.sel, spd: w.spd.n == null ? null : mach ? Math.round(w.spd.n * 2.974) : w.spd.n, spdTxt: w.spd.val, mach: mach, hdgSel: !!w.hdg.sel, hdg: w.hdg.n, fcuAlt: alt, vs: 0, arm: '' };
     // The last of the ALT and V/S knobs to be pushed or pulled sets the vertical mode.
     var last = (w.vs.seq || 0) > (w.alt.seq || 0) ? 'vs' : w.alt.seq ? 'alt' : '';
     if (last === 'vs') { f.vert = 'V/S'; f.vs = w.vs.how === 'push' ? 0 : vsN; if (f.vs) f.vert += ' ' + (f.vs > 0 ? '+' : '') + f.vs; }
     else if (last === 'alt' && alt !== s.alt) { var up = alt > s.alt; f.vert = (w.alt.how === 'pull' ? 'OP ' : '') + (up ? 'CLB' : 'DES'); f.vs = up ? 1800 : -1500; }
     else f.vert = 'ALT CRZ';
     if (f.vert !== 'ALT CRZ' && alt !== s.alt) f.arm = 'ALT';
-    f.thr = /CLB/.test(f.vert) ? 'THR CLB' : /DES/.test(f.vert) ? 'THR IDLE' : f.spdSel ? 'SPEED' : 'MACH';
+    f.thr = /CLB/.test(f.vert) ? 'THR CLB' : /DES/.test(f.vert) ? 'THR IDLE' : f.spdSel && !mach ? 'SPEED' : 'MACH';
     f.lat = f.hdgSel ? 'HDG' : 'NAV';
     return f;
   }
