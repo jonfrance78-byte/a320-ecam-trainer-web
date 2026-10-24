@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.48';
+  var VERSION = '0.7.49';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -88,6 +88,9 @@
   };
 
   var drawerOpen = false, searchOpen = false, searchTerm = '';
+  // Guided drills (owner's request, 0.7.49): the trainer opens the panel for each step in turn.
+  var GUIDED = true, guideT = null;
+  try { GUIDED = localStorage.getItem('ecam-guided') !== '0'; } catch (e) { GUIDED = true; }
   var PV = null; // expanded panel: { id, states, selected }
 
   /* ----------------------------------------------------------------- home */
@@ -395,8 +398,34 @@
       (fm ? '<div class="fm-wrap">' + FMGC.guideHtml() : '') + (ecp ? '<div class="ecp-wrap"><div class="pv-sdtop" aria-label="System display">' + sdSvg() + '</div>' : '') +
       '<svg viewBox="-4 ' + (ecp ? 0 : -4) + ' ' + (p.w + 8) + ' ' + (p.h + (ecp ? 4 : 8)) + '" class="pv-svg' + (/^MCDU[12]$/.test(PV.id) ? ' pv-mcdu' : '') + (PV.id === 'ATC' ? ' pv-atc' : '') + (/^(FCU|EFIS[LR])$/.test(PV.id) ? ' pv-fcu' : '') + '" style="--ar: ' + ((p.h + (ecp ? 4 : 8)) / (p.w + 8)).toFixed(4) + '" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' + (fm || ecp ? '</div>' : '') +
-      (FMGC && /^MCDU[12]$/.test(PV.id) ? FMGC.simHtml() : '') + miniEwd();
+      (FMGC && /^MCDU[12]$/.test(PV.id) ? FMGC.simHtml() : '') + (guidedOn() ? '' : miniEwd());
     document.getElementById('pv-info').innerHTML = infoHtml(p);
+    // Guided: the E/WD, the SD and the ECAM control panel on the right, working.
+    var ec = document.getElementById('pv-ecam');
+    if (ec) ec.innerHTML = '<div class="pv-screen">' + DISP.renderEWD(liveState(), ewdView()) + '</div><div class="pv-screen">' + sdSvg() + '</div>' + (PV.id === 'ECP' ? '' : ecpHtml());
+  }
+  function guidedOn() { return GUIDED && DECK_MODE === 'abnormal' && !!(DR && DR.s) && DR.phase !== 'done'; }
+  // The panel the current step is worked on: MASTER on the glareshield, an action's panel,
+  // a task's panel. CLR and SD page steps need no move: the ECAM control panel is on the right.
+  function guidePanel() {
+    var f = DR.f, t = null;
+    if (DR.phase === 'run') {
+      var st = f.steps[DR.i];
+      if (st && st.k === 'master') return 'GSL';
+      if (DR.f.pre && DR.f.pre.length && !DR.preClr) return null;
+      if (st && st.k === 'act') return st.ctls[0][0];
+      if (st && st.k === 'task') t = st.want;
+    } else if (DR.phase === 'seq') t = f.seq[DR.si].task && !DR.stTask ? f.seq[DR.si].task.want : null;
+    return t ? t.panel || (t.ctl ? t.ctl[0] : null) : null;
+  }
+  // After each change, open the next step's panel (a short pause first, so the result shows).
+  function guideSync() {
+    if (!guidedOn() || DR.phase === 'quiz' || MODAL.kind) return;
+    var want = guidePanel();
+    if (!want || PV && PV.id === want) return;
+    clearTimeout(guideT);
+    guideT = setTimeout(function () { if (guidedOn() && !MODAL.kind && guidePanel() === want && (!PV || PV.id !== want)) openPanel(want); }, PV ? 900 : 250);
+    if (!PV) openPanel('ECP');
   }
   function creditHtml() {
     var c = PHOTO.credit;
@@ -406,7 +435,7 @@
   function renderPanelView() {
     var el = document.getElementById('pv'), dr = document.getElementById('drill');
     if (dr.parentNode !== el.parentNode) el.after(dr); // back from a drill panel layout before the card is redrawn
-    if (!PV) { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('pv-open', 'pv-disp-open', 'pv-drill-open'); return; }
+    if (!PV) { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('pv-open', 'pv-disp-open', 'pv-drill-open', 'pv-guide-open'); return; }
     var p = getP(PV.id) || { desc: '' }, dims = PV.photo || (PV.disp ? { w: 1, h: 1 } : p);
     var gate = PV.photo && PV.items.some(function (it) { return it.photoLit; });
     // An expanded display (PFD, ND, E/WD, SD; owner's request): no title bar, only a small
@@ -414,13 +443,14 @@
     document.body.classList.toggle('pv-disp-open', !!PV.disp);
     // A panel expanded during a drill (owner's request): a small title bar; below the panel,
     // the information left, the mini E/WD in the middle and the drill bar right.
-    var drill = !PV.disp && !!(DR && DR.s);
-    document.body.classList.toggle('pv-drill-open', drill);
-    el.innerHTML = '<div class="pv-card' + (PV.disp ? ' pv-disp' : drill ? ' pv-drill' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
+    var drill = !PV.disp && !!(DR && DR.s), guide = drill && guidedOn();
+    document.body.classList.toggle('pv-drill-open', drill && !guide);
+    document.body.classList.toggle('pv-guide-open', guide);
+    el.innerHTML = '<div class="pv-card' + (PV.disp ? ' pv-disp' : guide ? ' pv-guide' : drill ? ' pv-drill' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       (PV.disp ? '<button class="icon-btn sm pv-back" data-act="closePanel" aria-label="Back to flight deck">' + ICON.back + '</button>' :
       '<header class="pv-bar"><button class="icon-btn" data-act="closePanel" aria-label="Back to flight deck">' + ICON.back + '</button>' +
       '<h2 class="appbar-title">' + esc(panelName(PV.id)) + '</h2><span class="icon-btn-spacer"></span></header>') +
-      '<div class="pv-stage" id="pv-stage"></div>' +
+      '<div class="pv-stage" id="pv-stage"></div>' + (guide ? '<div class="pv-ecam" id="pv-ecam"></div>' : '') +
       (PHOTO && PHOTO.panels[PV.id] && PN.P[PV.id] && !DR ? '<div class="seg pv-switch" role="radiogroup" aria-label="View">' +
         '<button role="radio" aria-checked="' + !PV.photo + '" class="seg-btn' + (PV.photo ? '' : ' on') + '" data-act="pvmode" data-mode="draw">Drawing</button>' +
         '<button role="radio" aria-checked="' + !!PV.photo + '" class="seg-btn' + (PV.photo ? ' on' : '') + '" data-act="pvmode" data-mode="photo">Photo (A319)</button></div>' : '') +
@@ -938,6 +968,7 @@
       '<p class="drill-task">' + esc(taskText()) + '</p>' +
       (DR.flash ? '<p class="drill-flash">' + esc(DR.flash) + '</p>' : '');
     el.hidden = false; document.body.classList.add('drill-on');
+    guideSync();
   }
 
   // Briefing, chooser, questions and debrief share one modal.
@@ -1082,9 +1113,14 @@
     if (!drawerOpen) { el.hidden = true; return; }
     el.innerHTML = '<nav class="drawer-card" aria-label="Menu">' +
       '<div class="drawer-top"><span class="drawer-brand">A320 ECAM Trainer</span><button class="icon-btn" data-act="closeDrawer" aria-label="Close menu">' + ICON.close + '</button></div>' +
+      // Abnormal procedures (owner's request, 0.7.49): Guided / Non-guided at the top, then the failures.
+      (DECK_MODE === 'abnormal' ? '<div class="seg drawer-guide" role="radiogroup" aria-label="Drill mode">' +
+        '<button role="radio" aria-checked="' + GUIDED + '" class="seg-btn' + (GUIDED ? ' on' : '') + '" data-act="guided" data-g="1">Guided</button>' +
+        '<button role="radio" aria-checked="' + !GUIDED + '" class="seg-btn' + (GUIDED ? '' : ' on') + '" data-act="guided" data-g="0">Non-guided</button></div>' +
+        '<p class="drawer-note">' + (GUIDED ? 'Guided: each panel opens in turn as you work the failure.' : 'Non-guided: find each panel on the flight deck yourself.') + '</p>' :
       '<button class="drawer-link" data-act="home">Start page</button>' +
       '<button class="drawer-link" data-act="choose" data-v="normal">Flight deck overview</button>' +
-      '<button class="drawer-link" data-act="choose" data-v="quiz">ECAM drill quiz</button>' +
+      '<button class="drawer-link" data-act="choose" data-v="quiz">ECAM drill quiz</button>') +
       failureMenu() + '<h3 class="drawer-h">Panels</h3>' +
       GROUPS.map(function (g) { return '<h3 class="drawer-h">' + esc(g[0]) + '</h3>' + panelLinks(g[1]); }).join('') +
       '<h3 class="drawer-h">Photo credits</h3><p class="drawer-note">Overhead panels: ' + creditHtml() + ' The straightened crops are shared under the same licence.</p>' +
@@ -1143,7 +1179,7 @@
   document.addEventListener('click', function (e) {
     var ctlEl = e.target.closest('.ctl');
     if (ctlEl && PV && TURN && TURN.moved) { TURN = null; return; }
-    if (ctlEl && PV && PV.disp && ctlEl.closest('.pv-ecp')) { pressEcp(+ctlEl.getAttribute('data-ctl')); return; }
+    if (ctlEl && PV && (PV.disp || guidedOn()) && ctlEl.closest('.pv-ecp')) { pressEcp(+ctlEl.getAttribute('data-ctl')); return; }
     if (ctlEl && PV && ctlEl.classList.contains('turn')) {
       var r = ctlEl.getBoundingClientRect();
       // The centre of the knob pushes it, a second tap pulls it; either side turns it.
@@ -1191,6 +1227,7 @@
       case 'beginDrill': begin(); break;
       case 'cancelDrill': stopDrill(); break;
       case 'closeModal': hideModal(); break;
+      case 'guided': GUIDED = el.getAttribute('data-g') === '1'; try { localStorage.setItem('ecam-guided', GUIDED ? '1' : '0'); } catch (err) { /* not saved */ } renderDrawer(); if (PV) renderPanelView(); renderDrill(); break;
       case 'abrkInfo': showAbrkTip(); break;
       case 'abrkTipClose': hideAbrkTip(); break;
       case 'answer': answer(+el.getAttribute('data-k')); break;

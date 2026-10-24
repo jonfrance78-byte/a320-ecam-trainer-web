@@ -747,3 +747,21 @@ body:not(:has(.appbar.slim)) .drill-task { color: var(--ink); }
 .drill .icon-btn { color: #1b1f24; background: transparent; border-color: transparent; }
 .drill .icon-btn svg { stroke: #1b1f24; }
 .drill .icon-btn:hover { background: #eef1f4; }
+
+/* Guided drills (owner's request, 0.7.49): instructions and panel information on the left,
+   the step's panel in the middle, the E/WD, SD and ECAM control panel on the right. */
+.drawer-guide { display: flex; margin: 4px 0 6px; } .drawer-guide .seg-btn { flex: 1; }
+.pv-ecam { display: grid; gap: 10px; align-content: start; padding: 12px 16px; }
+.pv-ecam .pv-screen { width: 100%; max-width: min(100%, 33vh); margin: 0 auto; }
+.pv-ecam .pv-ecp { max-width: 100%; margin: 0 auto; }
+@media (min-width: 1000px) {
+  .pv-guide { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr) minmax(280px, 380px); grid-template-rows: auto auto 1fr; gap: 0 18px; align-items: start;
+    background: radial-gradient(ellipse at 50% 30%, #233149, var(--night) 75%); }
+  .pv-guide > .pv-bar { grid-column: 1 / -1; }
+  .pv-guide > .drill { position: static; grid-column: 1; grid-row: 2; transform: none; width: auto; margin: 14px 0 0 16px; }
+  .pv-guide > .pv-body { grid-column: 1; grid-row: 3; max-width: none; padding: 12px 0 18px 16px; }
+  .pv-guide > .pv-stage { grid-column: 2; grid-row: 2 / span 2; background: none; padding: 18px 0; }
+  .pv-guide > .pv-ecam { grid-column: 3; grid-row: 2 / span 2; padding: 14px 16px 18px 0; }
+  .pv-guide .pv-svg { max-height: 72vh; }
+  body.drill-on .pv-guide { padding-bottom: 24px; }
+}
