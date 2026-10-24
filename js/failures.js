@@ -277,7 +277,9 @@
     ['NAV', [E('ADIRS SYSTEM OVERVIEW', 'w'), E('ADR FAULTS', 'a'), E('IR FAULTS', 'a'), E('UNRELIABLE SPEED [MEM]', 'a'), E('RA FAULTS', 'a')]],
     ['SMOKE', [E('SMOKE/FUMES/AVNCS SMOKE', 'r'), E('CARGO SMOKE', 'r')]],
     ['SURV', [E('GPWS [MEM]', 'r'), E('TCAS [MEM]', 'r'), E('PREDICTIVE WINDSHEAR', 'a'), E('REACTIVE WINDSHEAR [MEM]', 'r')]],
-    ['WHEEL', [E('WHEEL TIRE DAMAGE SUSPECTED', 'a')]]
+    // Owner's request (0.7.39): the gear and brakes failures with WHEEL page indications go here;
+    // drills to come from the owner's ECAM pages.
+    ['WHEEL', [E('WHEEL TIRE DAMAGE SUSPECTED', 'a'), E('L/G LGCIU 1(2) FAULT', 'a'), E('L/G GEAR UPLOCK FAULT', 'a'), E('BRAKES BSCU CH 1(2) FAULT', 'a'), E('BRAKES RELEASED', 'a')]]
   ];
 
   // General ECAM handling questions for the Questions Bank.
