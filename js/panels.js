@@ -76,7 +76,8 @@
     ]
   };
 
-  // Laid out from the owner's HYD panel photo (owner's request, 0.7.29): one row of
+  // Laid out from the owner's HYD panel photo (owner's request, 0.7.29; buttons smaller in
+  // 0.7.31 so they sit inside the panel): one row of
   // pushbuttons with one-line names under green brackets, the flow lines with their arrows,
   // the PTU on the green-yellow line and the RAT feeding the blue line.
   function arrow(x, y, d) { return { k: 'raw', svg: '<path d="M' + x + ' ' + y + ' l' + (-3 * d) + ' -1.8 v3.6 z" class="pn-flow-fill"/>' }; }
@@ -86,22 +87,22 @@
     desc: 'Green, blue and yellow hydraulic systems: engine pumps, electric pumps, PTU and RAT.',
     items: [
       vt(8, 30, 'HYD'), vt(292, 30, 'HYD'),
-      ln([[62, 10], [62, 31]]), ln([[50, 32.4], [50, 31], [74, 31], [74, 32.4]]),
-      ln([[150, 10], [150, 29.5]]), ln([[138, 30.9], [138, 29.5], [162, 29.5], [162, 30.9]]),
-      ln([[238, 10], [238, 31]]), ln([[226, 32.4], [226, 31], [250, 31], [250, 32.4]]),
-      ln([[238, 17], [268, 17], [268, 24]]), ln([[257, 25.4], [257, 24], [279, 24], [279, 25.4]]),
+      ln([[62, 10], [62, 29.6]]), ln([[50, 31], [50, 29.6], [74, 29.6], [74, 31]]),
+      ln([[150, 10], [150, 28.1]]), ln([[138, 29.5], [138, 28.1], [162, 28.1], [162, 29.5]]),
+      ln([[238, 10], [238, 29.6]]), ln([[226, 31], [226, 29.6], [250, 29.6], [250, 31]]),
+      ln([[238, 17], [268, 17], [268, 23.6]]), ln([[257, 25], [257, 23.6], [279, 23.6], [279, 25]]),
       ln([[62, 12], [146, 12]]), { k: 'path', d: 'M146 12 Q150 6 154 12' }, ln([[154, 12], [238, 12]]),
       ln([[190, 12], [190, 15.4]]), ln([[202, 12], [202, 15.4]]),
       ln([[118, 15], [121, 15], [121, 19], [118, 19]]), ln([[121, 17], [149, 17]]),
       arrow(85, 12, -1), arrow(149, 17, 1), arrow(180, 12, -1), arrow(214, 12, 1), arrow(245, 17, -1),
       box(62, 7, 'GREEN'), box(150, 7, 'BLUE'), box(238, 7, 'YELLOW'), box(196, 19, 'PTU'),
-      hname(62, 36.1, 'ENG 1 PUMP'), hname(150, 34.6, 'ELEC PUMP'), hname(238, 36.1, 'ENG 2 PUMP'), hname(268, 29.1, 'ELEC PUMP'),
-      pb(62, 47, 'ENG 1\nPUMP', 'FAULT', 'OFF', 'Green engine-driven pump. FAULT (amber): low pump pressure, or green reservoir overheat, low level or low air pressure (not shown with the engine stopped). OFF (white): pump depressurised.', { s: 15, noname: true }),
-      ogpb(106, 40, 'RAT MAN ON', '', '', 'Guarded. Deploys the RAT manually to pressurise the blue system. The RAT also deploys automatically when AC BUS 1 and 2 are lost above 100 kt. It can only be stowed on the ground.', { s: 15 }),
-      pb(150, 45.5, 'ELEC\nPUMP', 'FAULT', 'OFF', 'Blue electric pump. In AUTO it runs in flight, and on the ground once one engine is running. FAULT: low pressure, reservoir overheat, low level or low air pressure. OFF: pump off.', { s: 15, auto: true, noname: true }),
-      pb(196, 30, 'PTU', 'FAULT', 'OFF', 'Power Transfer Unit between green and yellow. In AUTO it runs automatically when the pressure difference between them exceeds 500 psi. It transfers power, not fluid. FAULT: green or yellow reservoir overheat, low air pressure or low level. OFF: PTU inhibited.', { s: 14, auto: true, noname: true }),
-      pb(238, 47, 'ENG 2\nPUMP', 'FAULT', 'OFF', 'Yellow engine-driven pump. FAULT: low pump pressure, or yellow reservoir overheat, low level or low air pressure. OFF: pump depressurised.', { s: 15, noname: true }),
-      pb(268, 40, 'ELEC\nPUMP', 'FAULT', 'ON', 'Yellow electric pump, normally off. ON (blue): pump running. It also runs automatically when a cargo door is operated on the ground. FAULT: low pressure, reservoir overheat, low level or low air pressure.', { s: 15, noname: true })
+      hname(62, 34.6, 'ENG 1 PUMP'), hname(150, 33.1, 'ELEC PUMP'), hname(238, 34.6, 'ENG 2 PUMP'), hname(268, 28.6, 'ELEC PUMP'),
+      pb(62, 44, 'ENG 1\nPUMP', 'FAULT', 'OFF', 'Green engine-driven pump. FAULT (amber): low pump pressure, or green reservoir overheat, low level or low air pressure (not shown with the engine stopped). OFF (white): pump depressurised.', { s: 12, noname: true }),
+      ogpb(106, 38, 'RAT MAN ON', '', '', 'Guarded. Deploys the RAT manually to pressurise the blue system. The RAT also deploys automatically when AC BUS 1 and 2 are lost above 100 kt. It can only be stowed on the ground.', { s: 12 }),
+      pb(150, 42.5, 'ELEC\nPUMP', 'FAULT', 'OFF', 'Blue electric pump. In AUTO it runs in flight, and on the ground once one engine is running. FAULT: low pressure, reservoir overheat, low level or low air pressure. OFF: pump off.', { s: 12, auto: true, noname: true }),
+      pb(196, 29, 'PTU', 'FAULT', 'OFF', 'Power Transfer Unit between green and yellow. In AUTO it runs automatically when the pressure difference between them exceeds 500 psi. It transfers power, not fluid. FAULT: green or yellow reservoir overheat, low air pressure or low level. OFF: PTU inhibited.', { s: 12, auto: true, noname: true }),
+      pb(238, 44, 'ENG 2\nPUMP', 'FAULT', 'OFF', 'Yellow engine-driven pump. FAULT: low pump pressure, or yellow reservoir overheat, low level or low air pressure. OFF: pump depressurised.', { s: 12, noname: true }),
+      pb(268, 38, 'ELEC\nPUMP', 'FAULT', 'ON', 'Yellow electric pump, normally off. ON (blue): pump running. It also runs automatically when a cargo door is operated on the ground. FAULT: low pressure, reservoir overheat, low level or low air pressure.', { s: 12, noname: true })
     ]
   };
 
