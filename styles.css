@@ -812,3 +812,21 @@ body:not(:has(.appbar.slim)) .drill-task { color: var(--ink); }
   .pv-guide .pv-svg { max-height: calc(100vh - 290px); }
   .pv-guide .ecp-wrap { width: min(100%, calc((100vh - 290px) / 1.36)); }
 }
+
+/* Guided (owner's request, 0.7.54): panels as large as possible, text smaller; on the ECAM
+   control panel step the SD and the panel sit side by side. */
+.pv-guide .pv-hint { display: none; }
+.pv-guide > .drill .drill-task { font-size: 13px; }
+.pv-guide > .drill .drill-flash { font-size: 11.5px; }
+.pv-guide .pv-desc, .pv-guide .pv-info p { font-size: 13px; line-height: 1.35; margin: 2px 0; }
+.pv-guide .pv-info { padding-top: 6px; }
+@media (min-width: 1000px) {
+  .pv-guide > .pv-body { padding: 8px 12px; max-height: 150px; }
+  .pv-guide > .drill { padding: 6px 10px 8px; }
+  .pv-guide > .pv-stage { padding-top: 8px; }
+  .pv-guide .pv-svg { max-height: calc(100vh - 210px); }
+  .pv-guide .ecp-wrap { display: flex; align-items: flex-end; gap: 12px; width: 100%; max-width: none; }
+  .pv-guide .pv-sdtop { flex: 0 0 min(46%, calc(100vh - 220px)); margin: 0; }
+  .pv-guide .pv-sdtop svg { border-bottom: 4px solid #15191d; border-radius: 4px; }
+  .pv-guide .ecp-wrap .pv-svg { flex: 1 1 0; min-width: 0; width: auto; }
+}
