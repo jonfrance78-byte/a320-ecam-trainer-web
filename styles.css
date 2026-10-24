@@ -406,6 +406,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .trim-stripe { fill: #fff; opacity: .7; }
 .ask-base { fill: #c9ccc8; stroke: #2c5560; stroke-width: .6; } .ask-nut { fill: #e2e4e0; stroke: #9aa0a0; stroke-width: .3; } .ask-stem { fill: #2a2f33; }
 .ask-knob { fill: #8e9396; stroke: #5d6366; stroke-width: .3; }
+.gauge-green-thin { fill: none; stroke: #2fbf5a; stroke-width: .35; }
+.gauge-needle-f { fill: #f4f4f0; } .gauge-hub { fill: #4a4c4e; } .gauge-cyan { fill: #4fd3ea; }
 .eng-base { fill: url(#g-boss); } .eng-well { fill: #1d2228; }
 .eng-cap { fill: #3f5560; stroke: #c9d3d8; stroke-width: .5; } .eng-cap-t { fill: #f2f2ee; font-weight: 700; }
 .grav-boss { fill: url(#g-boss); stroke: #0b0d0f; }

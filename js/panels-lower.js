@@ -268,36 +268,38 @@
 
   // Brake triple indicator as in photos/lower: octagonal plate, round dial,
   // ACCU PRESS scale on top (0-4) and the two BRAKES scales below (3-0-3).
+  // Brake triple indicator, from the owner's FCOM picture (0.7.47): octagonal bezel, black dial;
+  // ACCU PRESS needle from a hub at the top over a 0-4 arc (green band near 3); the two BRAKES
+  // needles from hubs at the bottom corners, pointing in to 0 and rising to 3; BRAKES PSIx1000.
   // b: { accu, l, r } in PSI x 1000 (PN.LIVE.brk, set by the app); accumulator charged and no
   // brake pressure when not given.
   function brakeArt(x, y, b) {
     b = b || { accu: 3, l: 0, r: 0 };
-    var o = '', R = 12.6, arc = function (cx, cy, r, a0, a1, cls) {
+    var o = '', R = 13, arc = function (cx, cy, r, a0, a1, cls) {
       var p0 = polar(cx, cy, r, a0), p1 = polar(cx, cy, r, a1);
       return '<path d="M' + p0[0] + ' ' + p0[1] + ' A' + r + ' ' + r + ' 0 0 ' + (a1 > a0 ? 1 : 0) + ' ' + p1[0] + ' ' + p1[1] + '" class="' + cls + '"/>';
-    };
-    o += '<path d="M' + (x - 8) + ' ' + (y - 15) + ' h16 l7 7 v16 l-7 7 h-16 l-7 -7 v-16 z" class="gauge-plate"/>';
+    }, needle = function (hx, hy, len, a) {
+      var tip = polar(hx, hy, len, a), b1 = polar(hx, hy, 1.1, a - 90), b2 = polar(hx, hy, 1.1, a + 90);
+      return '<path d="M' + b1.join(' ') + ' L' + tip.join(' ') + ' L' + b2.join(' ') + ' Z" class="gauge-needle-f"/>';
+    }, hub = function (hx, hy) { return '<circle cx="' + hx + '" cy="' + hy + '" r="2.4" class="gauge-hub"/>'; };
+    o += '<path d="M' + (x - 7) + ' ' + (y - 16) + ' h14 l9 9 v14 l-9 9 h-14 l-9 -9 v-14 z" class="gauge-plate"/>';
     o += '<circle cx="' + x + '" cy="' + y + '" r="' + R + '" class="gauge-face"/>';
-    // ACCU PRESS: arc about a centre below the dial, 0 at the left, 4 at the right
-    var ax = x, ay = y + 6, ar = 11;
-    o += arc(ax, ay, ar, -38, 38, 'gauge-arc') + arc(ax, ay, ar, 14, 22, 'gauge-green');
-    for (var k = 0; k <= 4; k++) { var a = -38 + k * 19, p1 = polar(ax, ay, ar, a), p2 = polar(ax, ay, ar - 1.4, a); o += line(p1[0], p1[1], p2[0], p2[1], 'gauge-tick'); }
-    var l0 = polar(ax, ay, ar + 1.8, -40), l4 = polar(ax, ay, ar + 1.8, 40);
-    o += t(l0[0], l0[1] + 0.8, '0', 1.9, 'gauge-num') + t(l4[0], l4[1] + 0.8, '4', 1.9, 'gauge-num');
-    o += t(x - 6, y - 7, 'ACCU', 1.9, 'gauge-num') + t(x + 6, y - 7, 'PRESS', 1.9, 'gauge-num');
-    var an = polar(ax, ay, ar - 0.6, -38 + Math.max(0, Math.min(4, b.accu)) * 19);
-    o += line(ax, ay - 7.5, an[0], an[1], 'gauge-needle');
-    // BRAKES: left 3 .. 0 and right 0 .. 3, zero at the bottom centre
-    [[-1, x - 4.6], [1, x + 4.6]].forEach(function (q) {
-      var s2 = q[0], cx = q[1], cy = y + 3, r = 6;
-      o += arc(cx, cy, r, s2 < 0 ? -80 : 80, s2 < 0 ? -160 : 160, 'gauge-arc');
-      o += arc(cx, cy, r, s2 < 0 ? -130 : 130, s2 < 0 ? -160 : 160, 'gauge-green');
-      var e3 = polar(cx, cy, r + 1.6, s2 < 0 ? -78 : 78);
-      o += t(e3[0], e3[1] + 0.8, '3', 1.9, 'gauge-num');
-      var v = Math.max(0, Math.min(3, s2 < 0 ? b.l : b.r)), n = polar(cx, cy, r - 0.5, s2 * (158 - v / 3 * 80));
-      o += line(cx, cy, n[0], n[1], 'gauge-needle');
+    // ACCU PRESS: 0 lower left, 4 lower right of the top hub
+    var ax = x, ay = y - 7.6, ar = 5.6, aa = function (v) { return 232 - v * 26; };
+    o += arc(ax, ay, ar, aa(0), aa(4), 'gauge-arc') + arc(ax, ay, ar + 0.2, aa(3.1), aa(2.8), 'gauge-green');
+    var l0 = [ax - 3.5, ay + 1.3], l4 = [ax + 3.5, ay + 1.3];
+    o += t(l0[0], l0[1] + 0.8, '0', 2, 'gauge-num') + t(l4[0], l4[1] + 0.8, '4', 2, 'gauge-num');
+    o += t(x - 7.2, y - 7.6, 'ACCU', 2, 'gauge-num') + t(x + 7.2, y - 7.6, 'PRESS', 2, 'gauge-num');
+    o += hub(ax, ay) + needle(ax, ay, ar - 0.2, aa(Math.max(0, Math.min(4, b.accu))));
+    // BRAKES: hubs at the lower corners, 0 pointing in (horizontal), 3 straight up
+    [[-1, b.l], [1, b.r]].forEach(function (q) {
+      var d = q[0], hx = x + d * 8.2, hy = y + 4.6, rr = 6.8, ba = function (v) { return d < 0 ? 90 - v * 30 : 270 + v * 30; };
+      o += arc(hx, hy, rr, ba(0), ba(3), 'gauge-arc') + arc(hx, hy, rr - 0.5, ba(0), ba(1), 'gauge-green-thin');
+      var l3 = [hx + d * 1.9, hy - rr - 0.9], l1 = polar(hx, hy, rr + 1.6, ba(1) + d * 4);
+      o += t(l3[0], l3[1] + 0.8, '3', 2, 'gauge-num') + t(l1[0], l1[1] + 0.8, '1', 2, 'gauge-num');
+      o += hub(hx, hy) + needle(hx, hy, rr - 0.6, ba(Math.max(0, Math.min(3, q[1]))));
     });
-    o += t(x, y + 9.4, '0', 1.9, 'gauge-num') + t(x, y + 11.4, 'BRAKES', 1.7, 'gauge-num') + t(x, y + 13, 'PSI x 1000', 1.2, 'gauge-num');
+    o += t(x, y + 5.5, '0', 2, 'gauge-num') + t(x, y + 8.9, 'BRAKES', 1.9, 'gauge-num') + t(x, y + 10.9, 'PSIx1000', 1.6, 'gauge-cyan');
     return o;
   }
   function redArrow(on) {
