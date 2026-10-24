@@ -489,6 +489,9 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .ecam .fy { fill: #f3d400; } .ecam .sy { stroke: #f3d400; } .ecam .fk { fill: #000; } .ecam .fr { fill: #e8352b; }
 .sdkey { fill: transparent; cursor: pointer; }
 .sdkey:hover { fill: rgba(51, 214, 242, .18); }
+.fcukey { fill: transparent; cursor: pointer; }
+.fcukey.turn { touch-action: none; }
+.hot:has(.fcukey:hover) .hot-ring { fill: rgba(51, 214, 242, 0); stroke: rgba(51, 214, 242, 0); }
 .ecp-glow { fill: rgba(150, 225, 255, .3); }
 .pv-screen { max-width: min(620px, 100%, 62vh); margin: 0 auto; }
 .pv-screen svg { display: block; width: 100%; height: auto; border: 6px solid #15191d; border-radius: 6px; }

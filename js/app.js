@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.17';
+  var VERSION = '0.7.18';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -316,6 +316,13 @@
     f.thr = /CLB/.test(f.vert) ? 'THR CLB' : /DES/.test(f.vert) ? 'THR IDLE' : f.spdSel && !mach ? 'SPEED' : 'MACH';
     f.lat = f.hdgSel ? 'HDG' : 'NAV';
     return f;
+  }
+  // A press on the FCU drawn on the flight deck (the panel is not expanded).
+  function deckFcu(i, dir) {
+    PN.pressItems(PN.P.FCU.items, i, PSTATE.FCU || (PSTATE.FCU = {}), dir);
+    var st = PSTATE.FCU[i];
+    refreshHome();
+    if (st && st.down) setTimeout(function () { st.down = false; if (!PV) refreshHome(); }, 180);
   }
   function dispSvg(id) {
     var s = liveState();
@@ -854,17 +861,18 @@
   // left side (anticlockwise) or right side (clockwise).
   var TURN = null;
   document.addEventListener('pointerdown', function (e) {
-    var c = e.target.closest && e.target.closest('.ctl.turn');
-    if (!c || !PV) { TURN = null; return; }
+    var c = e.target.closest && e.target.closest(PV ? '.ctl.turn' : '.fcukey.turn');
+    if (!c) { TURN = null; return; }
     var b = c.getBoundingClientRect(), cx = b.left + b.width / 2, cy = b.top + b.height / 2;
-    TURN = { i: +c.getAttribute('data-ctl'), cx: cx, cy: cy, a: Math.atan2(e.clientY - cy, e.clientX - cx), moved: false };
+    TURN = { i: +c.getAttribute(PV ? 'data-ctl' : 'data-fcu'), deck: !PV, cx: cx, cy: cy, a: Math.atan2(e.clientY - cy, e.clientX - cx), moved: false };
   });
   document.addEventListener('pointermove', function (e) {
-    if (!TURN || !PV || !(e.buttons & 1) && e.pointerType === 'mouse') return;
+    if (!TURN || !(e.buttons & 1) && e.pointerType === 'mouse') return;
     var a = Math.atan2(e.clientY - TURN.cy, e.clientX - TURN.cx), d = a - TURN.a;
     if (d > Math.PI) d -= 2 * Math.PI; else if (d < -Math.PI) d += 2 * Math.PI;
     if (Math.abs(d) < 0.35) return;
-    TURN.a = a; TURN.moved = true; pressCtl(TURN.i, d > 0 ? 1 : -1);
+    TURN.a = a; TURN.moved = true;
+    if (TURN.deck) deckFcu(TURN.i, d > 0 ? 1 : -1); else if (PV) pressCtl(TURN.i, d > 0 ? 1 : -1);
   });
   document.addEventListener('click', function (e) {
     var ctlEl = e.target.closest('.ctl');
@@ -876,6 +884,13 @@
       TURN = null; pressCtl(+ctlEl.getAttribute('data-ctl'), Math.hypot(dx, dy) < r.width * 0.18 ? 'push' : dx < 0 ? -1 : 1); return;
     }
     if (ctlEl && PV) { pressCtl(+ctlEl.getAttribute('data-ctl')); return; }
+    // FCU knobs and buttons on the deck: the centre of a knob pushes it, either side turns it.
+    var fk = !PV && e.target.closest('.fcukey');
+    if (fk) {
+      if (TURN && TURN.moved) { TURN = null; return; }
+      var fr = fk.getBoundingClientRect(), fdx = e.clientX - (fr.left + fr.width / 2), fdy = e.clientY - (fr.top + fr.height / 2);
+      TURN = null; deckFcu(+fk.getAttribute('data-fcu'), fk.classList.contains('turn') ? (Math.hypot(fdx, fdy) < fr.width * 0.18 ? 'push' : fdx < 0 ? -1 : 1) : undefined); return;
+    }
     var sdKey = e.target.closest('.sdkey');
     if (sdKey && !PV) {
       var key = sdKey.getAttribute('data-sd'), hot = sdKey.closest('.hot');

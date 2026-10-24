@@ -32,6 +32,13 @@
     add('<rect width="' + p.w + '" height="' + p.h + '" rx="3" class="hot-ring"/>');
     // Keys that work on the deck itself (drawn above the highlight, so clicks reach them):
     // the ECAM page keys change the SD page; MASTER WARN/CAUT and CLR serve the failure drills.
+    // FCU (owner's request, 0.7.18): its knobs and buttons work on the deck too; a tap
+    // on the windows still expands the panel.
+    if (id === 'FCU') p.items.forEach(function (it, i) {
+      var b = it.k === 'knob' ? [it.x - it.r - 2, it.y - it.r - 2, it.r * 2 + 4, it.r * 2 + 4] : it.k === 'ring' ? [it.x - 15, it.y - it.r - 11, 30, 9] :
+        it.k === 'pb' ? [it.x - (it.w || it.s) / 2 - 2, it.y - it.s / 2 - 2, (it.w || it.s) + 4, it.s + 4] : null;
+      if (b) add('<rect x="' + b[0] + '" y="' + b[1] + '" width="' + b[2] + '" height="' + b[3] + '" rx="2" class="fcukey' + (it.fcu ? ' turn' : '') + '" data-fcu="' + i + '"><title>' + PN.ctlName(it) + '</title></rect>');
+    });
     p.items.forEach(function (it) {
       if (!it.sdPage && !it.sdAll && !it.deckKey) return;
       var key = it.deckKey || (it.sdAll ? 'ALL' : it.sdPage), w = it.w || it.s;
