@@ -117,18 +117,65 @@
   P.LATL = { title: '', name: 'Captain lighting panel', w: 120, h: 114, sys: null, desc: 'Captain\'s lateral main panel: AUTO LAND light, PFD and ND brightness, PFD/ND transfer, loudspeaker and console lighting.', items: lateral('L') };
   P.LATR = { title: '', name: 'F/O lighting panel', w: 120, h: 114, sys: null, desc: 'F/O\'s lateral main panel: AUTO LAND light, PFD and ND brightness, PFD/ND transfer, loudspeaker and console lighting.', items: lateral('R') };
 
+  // ISIS screen drawn from the owner's ISIS reference picture (owner's request, 0.7.28):
+  // speed tape with Mach, attitude with pitch ladder and bank scale, altitude tape with the
+  // yellow altitude box, baro setting and heading scale. Cruise values: 232 kt, M.78,
+  // 35000 ft, 1013, heading 360, pitch 2.5 degrees up.
   function isisArt(x, y, w, h) {
-    var cx = x + w / 2, cy = y + h * 0.5, o = '';
-    o += rect(x, y, w, h, 'scr-bezel', 2) + rect(x + 6, y + 7, w - 12, h - 13, 'dk-screen', 1);
-    o += '<clipPath id="isisclip"><rect x="' + (x + 6) + '" y="' + (y + 7) + '" width="' + (w - 12) + '" height="' + (h - 13) + '"/></clipPath><g clip-path="url(#isisclip)">';
-    o += rect(x + 6, y + 7, w - 12, cy - y - 7, 'dk-sky') + rect(x + 6, cy, w - 12, h, 'dk-ground-isis');
-    o += line(x + 6, cy, x + w - 6, cy, 'dk-horizon');
-    [-6, 6].forEach(function (d) { o += line(cx - 4, cy + d, cx + 4, cy + d, 'dk-ladder'); });
+    var sx = x + 6.5, sy = y + 7.2, sw = w - 9, sh = h - 16.4, o = ''; // clear of the bezel keys
+    var tw = sw * 0.17, a0 = sx + tw + 0.5, a1 = sx + sw - tw - 0.5, cx = (a0 + a1) / 2, cy = sy + sh * 0.4, ab = sy + sh * 0.74, deg = sh * 0.013;
+    o += rect(x, y, w, h, 'scr-bezel', 2) + rect(sx, sy, sw, sh + 0.6, 'dk-screen', 1);
+    // attitude: sky and ground, pitch ladder, bank scale, aircraft symbol
+    o += '<clipPath id="isisclip"><path d="M' + a0 + ' ' + (sy + 2.6) + ' Q' + cx + ' ' + (sy - 0.6) + ' ' + a1 + ' ' + (sy + 2.6) + ' V' + ab + ' H' + a0 + ' Z"/></clipPath><g clip-path="url(#isisclip)">';
+    var hz = cy + 2.5 * deg;
+    o += rect(a0, sy, a1 - a0, hz - sy, 'is-sky') + rect(a0, hz, a1 - a0, ab - hz, 'is-gnd') + line(a0, hz, a1, hz, 'is-ln');
+    [-20, -15, -10, -5, 5, 10, 15, 20].forEach(function (p) {
+      var yy = hz - p * deg, half = p % 10 ? 1.4 : 2.8;
+      o += line(cx - half, yy, cx + half, yy, 'is-ln');
+      if (!(p % 10)) o += t(cx - half - 0.4, yy + 0.7, String(Math.abs(p)), 1.9, 'is-w', 'end');
+    });
+    [-2.5, 2.5, -7.5, 7.5].forEach(function (p) { var yy = hz - p * deg; o += line(cx - 0.7, yy, cx + 0.7, yy, 'is-ln'); });
     o += '</g>';
-    o += rect(x + 7, y + 9, 6, h - 17, 'dk-tape') + rect(x + w - 13, y + 9, 6, h - 17, 'dk-tape');
-    o += t(x + 10, cy + 1, '240', 2.2, 'dk-tapetxt') + t(x + w - 10, cy + 1, '370', 2.2, 'dk-tapetxt');
-    o += rect(cx - 8, cy - 0.8, 6, 1.6, 'dk-aplane') + rect(cx + 2, cy - 0.8, 6, 1.6, 'dk-aplane');
-    o += t(cx, y + 11, '12950 M', 2.4, 'dk-ndtxtg') + t(cx, y + h - 7.5, '1013/29.92', 2.2, 'dk-ndtxt');
+    var r = (a1 - a0) * 0.44;
+    [-45, -30, -20, -10, 10, 20, 30, 45].forEach(function (b) {
+      var q0 = polar(cx, cy, r, b), q1 = polar(cx, cy, r + (Math.abs(b) === 30 ? 1.5 : 0.9), b);
+      o += line(q0[0], q0[1], q1[0], q1[1], 'is-ln');
+    });
+    var e0 = polar(cx, cy, r, -30), e1 = polar(cx, cy, r, 30);
+    o += '<path d="M' + e0[0] + ' ' + e0[1] + ' A' + r + ' ' + r + ' 0 0 1 ' + e1[0] + ' ' + e1[1] + '" class="is-ln" fill="none"/>';
+    o += '<path d="M' + cx + ' ' + (cy - r - 0.1) + ' l-1 -1.6 h2 z" class="is-ylw"/>' + '<path d="M' + cx + ' ' + (cy - r + 0.3) + ' l-0.9 1.5 h1.8 z" class="is-ptr"/>';
+    o += '<path d="M' + (cx - 6.2) + ' ' + (cy - 0.4) + ' h4 v1.8 h-0.8 v-1 h-3.2 z M' + (cx + 6.2) + ' ' + (cy - 0.4) + ' h-4 v1.8 h0.8 v-1 h3.2 z" class="is-plane"/>' + rect(cx - 0.45, cy - 0.45, 0.9, 0.9, 'is-plane');
+    // speed tape (232 kt), speed index, Mach
+    var kt = sh * 0.0075;
+    for (var v = 190; v <= 280; v += 10) {
+      var vy = cy - (v - 232) * kt;
+      if (vy < sy + 1 || vy > ab) continue;
+      o += line(sx + tw - 1, vy, sx + tw, vy, 'is-ln');
+      if (!(v % 20)) o += t(sx + tw - 1.4, vy + 0.7, String(v), 2, 'is-w', 'end');
+    }
+    o += '<path d="M' + (sx + 0.2) + ' ' + (cy - 1) + ' l1.8 1 l-1.8 1 z" class="is-ylw"/>' + line(sx + tw - 1.6, cy, a0 + 1.2, cy, 'is-yl');
+    o += t(sx + tw / 2, ab + 2.4, '.78', 2, 'is-g');
+    // altitude tape (labels in hundreds of feet), yellow altitude box at 35000
+    var ft = sh * 0.00036;
+    for (var a = 33500; a <= 36500; a += 100) {
+      var ay = cy - (a - 35000) * ft;
+      if (ay < sy + 1 || ay > ab) continue;
+      o += line(sx + sw - tw, ay, sx + sw - tw + (a % 500 ? 0.6 : 1.1), ay, 'is-ln');
+      if (!(a % 500) && Math.abs(ay - cy) > 2.5) o += t(sx + sw - tw + 1.5, ay + 0.7, String(a / 100), 1.9, 'is-w', 'start');
+    }
+    var bx = a1 - 3;
+    o += '<path d="M' + bx + ' ' + cy + ' l1.2 -1.7 H' + (sx + sw - 2.6) + ' v-1 h2.6 v5.4 h-2.6 v-1 H' + (bx + 1.2) + ' z" class="is-box"/>';
+    o += t(sx + sw - 2.8, cy + 0.95, '350', 2.6, 'is-g', 'end') + t(sx + sw - 1.3, cy + 0.8, '00', 1.6, 'is-g') + t(sx + sw - 1.3, cy - 1.3, '20', 1.6, 'is-gd');
+    o += t(sx + sw - tw / 2, ab + 2.4, '1013', 1.9, 'is-g');
+    // heading scale (360) under the attitude, yellow lubber line
+    var hy = ab + 0.9, dh = (a1 - a0) / 50;
+    o += line(a0 + 1, hy, a1 - 1, hy, 'is-ln');
+    for (var hd = -20; hd <= 20; hd += 5) {
+      var hx = cx + hd * dh;
+      o += line(hx, hy, hx, hy + (hd % 10 ? 0.6 : 1), 'is-ln');
+      if (!(hd % 10)) o += t(hx, hy + 2.6, String(((360 + hd) % 360) / 10), 1.8, 'is-w');
+    }
+    o += '<path d="M' + cx + ' ' + (hy - 0.2) + ' l-0.8 -1.2 h1.6 z" class="is-ylw"/>';
     return o;
   }
   var LIMITS = [['LIMIT', 'SPD (IAS)'], ['VLE', '280KT/M.67'], ['VLO EXT', '250KT'], ['RET', '220KT'], ['VFE 1', '230KT'], ['1+F', '215KT'], ['2', '200KT'], ['3', '185KT'], ['FULL', '177KT']];

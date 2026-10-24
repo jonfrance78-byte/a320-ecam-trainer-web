@@ -166,14 +166,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .dk-footrest-rib { stroke: #5d676f; stroke-width: 1; }
 .dk-bezel { fill: url(#g-bezel); }
 .dk-screen { fill: #020304; }
-.dk-sky { fill: #2a86d4; }
 .dk-ground { fill: #94572b; }
-.dk-horizon { stroke: #fff; stroke-width: 1.1; }
-.dk-ladder { stroke: #fff; stroke-width: .8; }
 .dk-ladtxt { fill: #fff; }
-.dk-aplane { fill: #111; stroke: #f3d400; stroke-width: 1; }
-.dk-tape { fill: #3a454f; }
-.dk-tapetxt { fill: #fff; font-family: var(--font-mono); }
 .dk-tick { stroke: #fff; stroke-width: .8; }
 .dk-yline { stroke: #f3d400; stroke-width: 1.2; }
 .dk-yellow { fill: #f3d400; }
@@ -184,8 +178,6 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .dk-fmaw { fill: #fff; font-family: var(--font-mono); }
 .dk-arc { fill: none; stroke: #fff; stroke-width: 1; }
 .dk-arc-dash { stroke-dasharray: 3 3; opacity: .6; }
-.dk-ndtxt, .dk-ndtxtw { fill: #fff; font-family: var(--font-mono); }
-.dk-ndtxtg { fill: var(--ecam-g); font-family: var(--font-mono); }
 .dk-route { fill: none; stroke: var(--ecam-g); stroke-width: 1.1; }
 .dk-wpt { fill: none; stroke: #fff; stroke-width: .9; }
 .dk-acft { fill: none; stroke: #f3d400; stroke-width: 1.4; }
@@ -342,7 +334,12 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .placard-txt { fill: #f3eee6; font-family: var(--font-mono); }
 .placard-rule { stroke: #f3eee6; stroke-width: .35; }
 .scr-bezel { fill: url(#g-bezel); }
-.dk-ground-isis { fill: #d4573b; }
+/* ISIS screen (0.7.28) */
+.is-sky { fill: #1f7fd9; } .is-gnd { fill: #8a4a2c; }
+.is-ln { stroke: #fff; stroke-width: .25; } .is-yl { stroke: #f3d400; stroke-width: .35; }
+.is-ylw { fill: #f3d400; } .is-ptr { fill: #fff; stroke: #000; stroke-width: .15; }
+.is-plane { fill: #000; stroke: #f3d400; stroke-width: .25; } .is-box { fill: #000; stroke: #f3d400; stroke-width: .25; }
+.is-w { fill: #fff; font-family: var(--font-mono); } .is-g { fill: #3fe08a; font-family: var(--font-mono); } .is-gd { fill: #3fe08a; opacity: .45; font-family: var(--font-mono); }
 .dk-scrline { stroke: #e9eef2; stroke-width: .5; opacity: .8; }
 .lcd { fill: #0d1838; stroke: #2a3550; stroke-width: .5; }
 .lcd-txt { fill: #8fb3ff; font-family: var(--font-mono); }
