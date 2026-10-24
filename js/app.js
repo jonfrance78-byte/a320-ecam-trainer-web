@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.50';
+  var VERSION = '0.7.51';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -402,7 +402,7 @@
     document.getElementById('pv-info').innerHTML = infoHtml(p);
     // Guided: the E/WD, the SD and the ECAM control panel on the right, working.
     var ec = document.getElementById('pv-ecam');
-    if (ec) ec.innerHTML = '<div class="pv-screen">' + DISP.renderEWD(liveState(), ewdView()) + '</div><div class="pv-screen">' + sdSvg() + '</div>' + (PV.id === 'ECP' ? '' : ecpHtml());
+    if (ec) ec.innerHTML = '<div class="pv-screen">' + DISP.renderEWD(liveState(), ewdView()) + '</div>' + (PV.id === 'ECP' ? '' : '<div class="pv-screen">' + sdSvg() + '</div>' + ecpHtml()); // the ECP panel has its own SD
   }
   function guidedOn() { return GUIDED && DECK_MODE === 'abnormal' && !!(DR && DR.s) && DR.phase !== 'done'; }
   // The panel the current step is worked on: MASTER on the glareshield, an action's panel,
@@ -423,8 +423,9 @@
     if (!guidedOn() || DR.phase === 'quiz' || MODAL.kind) return;
     var want = guidePanel();
     if (!want || PV && PV.id === want) return;
-    clearTimeout(guideT);
-    guideT = setTimeout(function () { if (guidedOn() && !MODAL.kind && guidePanel() === want && (!PV || PV.id !== want)) openPanel(want); }, PV ? 900 : 250);
+    if (guideT && guideT.want === want) return; // already on its way: redraws must not restart the pause
+    clearTimeout(guideT && guideT.id);
+    guideT = { want: want, id: setTimeout(function () { guideT = null; if (guidedOn() && !MODAL.kind && guidePanel() === want && (!PV || PV.id !== want)) openPanel(want); }, PV ? 900 : 250) };
     if (!PV) openPanel('ECP');
   }
   function creditHtml() {
