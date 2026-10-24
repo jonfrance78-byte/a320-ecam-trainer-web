@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
-/* Layout: glass-cockpit panel. Home = three section "displays"; section = one question card at a time (drill) or full list. Single dark look by choice. */
+/* Layout: glass-cockpit panel. Home = three section "displays"; section = one question card at a time (drill) or full list. Paper look from 0.7.12 (owner's request); see the paper theme block. */
 :root{
   color-scheme:dark;
   --bg:#080b10; --panel:#10161e; --panel-2:#161e28; --rule:#243040; --rule-2:#33435a;
@@ -203,6 +203,34 @@ a.reveal{display:inline-block;text-decoration:none}
 .tbl thead th{font:600 11px/1.3 var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--bg)}
 .tbl tbody tr:last-child td{border-bottom:0}
 @media (prefers-reduced-motion:reduce){.replay .ac{transition:none}}
+
+/* Paper theme (0.7.12, owner's request from a news-app screenshot): light grey page, white
+   cards, black serif headlines, grey text, almost no colour, no red. The drawn instruments
+   (svg.inst: PFD, EGT gauges, brake indicator, runway from above) keep their real look; the
+   diagrams were drawn for a dark page, so their colours are mapped here. */
+:root{color-scheme:light;--bg:#f1f0ed;--panel:#ffffff;--panel-2:#faf9f7;--rule:#e1dfdb;--rule-2:#cfccc6;--fg:#121212;--muted:#5f5f5f;
+  --cyan:#121212;--green:#1f7a3d;--amber:#121212;--red:#121212;--magenta:#121212;
+  --f-display:Georgia,"Times New Roman",serif}
+h1,h2{text-transform:none;letter-spacing:0}
+.sec,.sec.proc,.sec.abn,.sec.tech{--acc:var(--fg);border-left-width:1px}
+.fig{background:#fff}
+.reveal{color:#fff}
+.fig .hs:focus circle{stroke:var(--fg)}
+.replay .rp-ask{background:#faf9f7;border-color:var(--rule-2)}
+.fig svg:not(.inst) circle[fill="#f2f4f5"]{stroke:#8a8a8a;stroke-width:1}
+.fig svg:not(.inst) [fill="#e8edf3"]{fill:#121212} .fig svg:not(.inst) [stroke="#e8edf3"]{stroke:#121212}
+.fig svg:not(.inst) [fill="#8c9aab"]{fill:#5f5f5f} .fig svg:not(.inst) [stroke="#8c9aab"]{stroke:#5f5f5f}
+.fig svg:not(.inst) [fill="#33435a"]{fill:#cfccc6} .fig svg:not(.inst) [stroke="#33435a"]{stroke:#cfccc6}
+.fig svg:not(.inst) [fill="#05080c"]{fill:#ffffff} .fig svg:not(.inst) [stroke="#05080c"]{stroke:#ffffff}
+.fig svg:not(.inst) [fill="#10161e"]{fill:#faf9f7} .fig svg:not(.inst) [stroke="#10161e"]{stroke:#faf9f7}
+.fig svg:not(.inst) [fill="#161e28"]{fill:#efeeeb} .fig svg:not(.inst) [stroke="#161e28"]{stroke:#efeeeb}
+.fig svg:not(.inst) [fill="#0b1219"]{fill:#faf9f7} .fig svg:not(.inst) [stroke="#0b1219"]{stroke:#faf9f7}
+.fig svg:not(.inst) [fill="#3fc8f0"]{fill:#1f4e79} .fig svg:not(.inst) [stroke="#3fc8f0"]{stroke:#1f4e79}
+.fig svg:not(.inst) [fill="#3ee08a"]{fill:#1f7a3d} .fig svg:not(.inst) [stroke="#3ee08a"]{stroke:#1f7a3d}
+.fig svg:not(.inst) [fill="#ffb326"]{fill:#8a5a00} .fig svg:not(.inst) [stroke="#ffb326"]{stroke:#8a5a00}
+.fig svg:not(.inst) [fill="#ff5a52"]{fill:#121212} .fig svg:not(.inst) [stroke="#ff5a52"]{stroke:#121212}
+.fig svg:not(.inst) [fill="#e36bdc"]{fill:#121212} .fig svg:not(.inst) [stroke="#e36bdc"]{stroke:#121212}
+.fig svg:not(.inst) [fill="#2a323b"]{fill:#dcd9d4} .fig svg:not(.inst) [stroke="#2a323b"]{stroke:#dcd9d4}
 </style>
 
 </head><body>
@@ -2331,7 +2359,7 @@ const DRAW = (()=>{
     const spd = o.spd, tape = v=>{ if(v==null) return ""; let t=""; for(let s=Math.ceil((v-30)/10)*10; s<=v+30; s+=10){ const y=cy-(s-v)*1.9; t+=`<line x1="40" y1="${y}" x2="46" y2="${y}" stroke="#fff"/>`+(s%20===0?`<text x="36" y="${y+3}" fill="#fff" font-size="9" text-anchor="end">${s}</text>`:""); } return t; };
     const bug = (o.vapp!=null && spd!=null) ? `<path d="M46 ${cy-(o.vapp-spd)*1.9-4} l7 4 l-7 4 Z" fill="${o.vappC||"#e36bdc"}"/>` : "";
     const fma = (o.fma||[]).map((t,i)=>`<text x="${22+i*44}" y="13" fill="${(t||"").startsWith("*")?"#3fc8f0":"#3ee08a"}" font-size="8.6" text-anchor="middle">${esc((t||"").replace(/^\*/,""))}</text>`).join("");
-    return `<svg viewBox="0 0 224 214" role="img" aria-label="PFD: pitch ${p} degrees${spd!=null?", speed "+spd+" knots":""}">
+    return `<svg class="inst" viewBox="0 0 224 214" role="img" aria-label="PFD: pitch ${p} degrees${spd!=null?", speed "+spd+" knots":""}">
     ${defs}<rect width="224" height="214" fill="#05080c"/>
     <rect x="0" y="0" width="224" height="20" fill="#05080c" stroke="#33435a" stroke-width=".6"/>${[44,88,132,176].map(x=>`<line x1="${x}" y1="2" x2="${x}" y2="18" stroke="#33435a"/>`).join("")}${fma}
     <clipPath id="dw-att"><rect x="62" y="40" width="100" height="140" rx="10"/></clipPath>
@@ -2489,7 +2517,7 @@ FIGS.iceridge_view = fig(`<svg viewBox="0 0 640 220" role="img" aria-label="Lowe
   <path d="M40 110 C40 60 140 40 300 40 L620 40 L620 180 L300 180 C140 180 40 160 40 110 Z" fill="url(#dw-fus)" stroke="#5a6878"/>
   ${T(60,30,"VIEW FROM BELOW · NOSE LEFT",{c:C.mut,s:11})}
   ${[[230,70],[230,150],[262,110]].map(p=>`<rect x="${p[0]}" y="${p[1]-3}" width="22" height="6" rx="3" fill="#3a454f"/>`).join("")}
-  ${T(270,64,"pitot probes",{c:C.bg,s:11})}
+  ${T(270,64,"pitot probes",{c:"#1b2430",s:11})}
   ${[150,168,186].map(x=>`<path d="M${x} 60 C${x+6} 85 ${x-4} 120 ${x+5} 160" fill="none" stroke="#bfe6ff" stroke-width="5" stroke-linecap="round" opacity=".95"/>`).join("")}
   ${T(120,198,"ice ridges",{c:C.cy,s:12,w:600})}
   ${[70,110,150].map(y=>`<path d="M60 ${y} C120 ${y} 140 ${y} 196 ${y+(y-110)*.1} C220 ${y+8} 240 ${y-10} 290 ${y+6} C340 ${y+18} 380 ${y-10} 440 ${y}" fill="none" stroke="${C.a}" stroke-width="1.6" stroke-dasharray="5 4"/>`).join("")}
@@ -2595,7 +2623,7 @@ SCENES.egt = (st)=>{
     const tip=p(ang,R-6), col = state==="red"?C.r:state==="off"?C.mut:C.g;
     return `${arc(a0,red0,"#e8edf3",3)}${arc(red0,a0+span,C.r,6)}<line x1="${cx}" y1="95" x2="${tip[0]}" y2="${tip[1]}" stroke="${col}" stroke-width="4" stroke-linecap="round"/>
      <circle cx="${cx}" cy="95" r="5" fill="${col}"/>${T(cx,128,lbl,{a:"middle",c:C.mut,s:12})}${T(cx,150,state==="red"?"OVER LIMIT":state==="off"?"MASTER OFF":state==="idle"?"IDLE":"normal",{a:"middle",c:col,s:13,w:600})}`; };
-  return `<svg viewBox="0 0 640 200" role="img" aria-label="EGT gauges: engine 1 ${st.e1}, engine 2 ${st.e2}">
+  return `<svg class="inst" viewBox="0 0 640 200" role="img" aria-label="EGT gauges: engine 1 ${st.e1}, engine 2 ${st.e2}">
     <rect width="640" height="200" fill="${C.bg}"/>${T(320,20,"EGT",{a:"middle",c:C.mut,s:12})}
     ${g(200,"ENG 1",st.v1,st.e1)}${g(440,"ENG 2",st.v2,st.e2)}
     ${T(320,186,st.lv||"",{a:"middle",c:C.cy,s:12})}</svg>`; };
@@ -2644,7 +2672,7 @@ const UT_PATH = (()=>{ // [x, y, heading°] samples: straight, divergence, right
 SCENES.uturn = (st)=>{
   const k=Math.round(st.f*(UT_PATH.length-1)), p=UT_PATH[k];
   const trail=UT_PATH.slice(0,k+1).map(q=>q.join(",").split(",").slice(0,2).join(",")).join(" ");
-  return `<svg viewBox="0 0 640 260" role="img" aria-label="Runway seen from above: ${esc(st.note)}">${DRAW.defs}
+  return `<svg class="inst" viewBox="0 0 640 260" role="img" aria-label="Runway seen from above: ${esc(st.note)}">${DRAW.defs}
    <rect x="0" y="40" width="640" height="180" fill="#1b232d"/><line x1="0" y1="40" x2="640" y2="40" stroke="#e8edf3" stroke-width="2"/><line x1="0" y1="220" x2="640" y2="220" stroke="#e8edf3" stroke-width="2"/>
    ${[0,1,2,3,4,5,6,7].map(i=>`<rect x="${i*84}" y="128" width="44" height="4" fill="#e8edf3" opacity=".6"/>`).join("")}
    ${[0,1,2,3,4,5].map(i=>`<rect x="600" y="${52+i*28}" width="30" height="12" fill="#e8edf3" opacity=".55"/>`).join("")}${T(596,238,"painted marks: slippery",{c:C.a,s:10,a:"end"})}
@@ -2678,7 +2706,7 @@ SCENES.triple = (st)=>{
     const ticks=[0,1,2,3].map(n=>{const q=p(a0+n/max*span,R-10);return T(q[0],q[1]+4,n,{a:"middle",c:C.fg,s:11});}).join("");
     const tip=p(ang,R-4);
     return `${arc(a0,a0+span,"#e8edf3",2)}${band?arc(a0+band[0]/max*span,a0+band[1]/max*span,C.g,6):""}${ticks}<line x1="${cx}" y1="${cy}" x2="${tip[0]}" y2="${tip[1]}" stroke="#f2f4f5" stroke-width="3" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="4" fill="#f2f4f5"/>${T(cx,cy+R+18,lbl,{a:"middle",c:C.mut,s:11})}`; };
-  return `<svg viewBox="0 0 640 230" role="img" aria-label="Brake triple indicator: accumulator and left and right brake pressures">
+  return `<svg class="inst" viewBox="0 0 640 230" role="img" aria-label="Brake triple indicator: accumulator and left and right brake pressures">
    <rect x="160" y="10" width="320" height="210" rx="16" fill="#0b0f14" stroke="${C.rule}" stroke-width="2"/>
    ${gauge(320,70,46,"ACCU PRESS",st.acc,4,[2.6,3.6])}
    ${gauge(240,165,46,"BRAKES L",st.l,3,st.band?[2.0,2.7]:null)}${gauge(400,165,46,"BRAKES R",st.r,3,st.band?[2.0,2.7]:null)}

@@ -184,3 +184,18 @@ a { color: var(--accent); }
 .np-tab:not(.on):hover { border-color: var(--edge-hi); color: var(--ink); }
 .np-tw { border-color: var(--edge); }
 @media (prefers-reduced-motion: reduce) { .np-flow::after, .np-acard, .np-acard-p span { transition: none; } .np-acard:hover { transform: none; } }
+
+/* paper theme (0.7.12): see the end of styles.css */
+html:root { --ok: #1f7a3d; --bad: #121212; --rule: #e1dfdb; --ecam-b: #121212; }
+.fma { --ecam-b: #44b4ff; }
+.np-flow, .np-li { background: #fff; }
+.np-flow:hover { background: #faf9f7; }
+.np-li { border-color: var(--edge); }
+.np-dots { border-bottom-color: #bdbab4; }
+.np-box { border-color: #8a8a8a; }
+.np-side-d, .np-t thead th, .np-stats { background: #fff; }
+.np-steps .done button { color: var(--ink-2); }
+.np-st-i { color: #8a8a8a; }
+.np-pill.ok { background: rgba(31, 122, 61, .08); }
+.np-warn { border-color: var(--edge-hi); background: #fff; }
+.np-flows { box-shadow: none; }
