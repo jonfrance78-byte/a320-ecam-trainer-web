@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.40';
+  var VERSION = '0.7.41';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -590,6 +590,7 @@
   }
   // The lever has moved: start the sequence. Without green the gear stays where it is.
   function gearMoved() {
+    leverClick();
     // The SD shows the WHEEL page while it is on its automatic page.
     if (!DR && !sdPage) { sdPage = 'WHEEL'; PN.LIVE.sdPage = sdPage; }
     GEAR.t0 = Date.now(); clearTimeout(GEAR.ctlT); GEAR.ctlT = setTimeout(gearLights, 30100);
@@ -636,6 +637,22 @@
       o.frequency.value = f; o.type = 'sine'; o.connect(g); g.connect(audio.destination);
       g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
       o.start(t); o.stop(t + d + 0.05);
+    } catch (e) { /* no audio */ }
+  }
+  // Gear lever click (owner's request, 0.7.41): a short mechanical clack, two noise bursts
+  // (pull out, then the detent), made in the browser; the mute setting applies.
+  function leverClick() {
+    if (muted) return;
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      [[0, 0.5], [0.09, 0.8]].forEach(function (c) {
+        var n = Math.floor(audio.sampleRate * 0.035), buf = audio.createBuffer(1, n, audio.sampleRate), d = buf.getChannelData(0);
+        for (var i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4);
+        var src = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain();
+        f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = 0.9; g.gain.value = c[1];
+        src.buffer = buf; src.connect(f); f.connect(g); g.connect(audio.destination);
+        src.start(audio.currentTime + c[0]);
+      });
     } catch (e) { /* no audio */ }
   }
   // AUTO FLT AP OFF (owner's request, 0.7.21): the owner's recording, looped until MASTER WARN.
