@@ -1157,7 +1157,9 @@
   // FCU knobs (owner's request, 0.7.14): turning a knob changes the number in its
   // window: SPD 1 kt, HDG 1 degree, V/S 100 ft/min and ALT 100 or 1000 ft, chosen
   // with the ring around the ALT knob. dir is +1 clockwise, -1 anticlockwise.
-  var FCU_START = { spd: 250, hdg: 360, alt: 35000, vs: 0 }, FCU_SEQ = 0;
+  var FCU_START = { spd: 250, hdg: 360, alt: 35000, vs: 0, baro: 1013 }, FCU_SEQ = 0;
+  // EFIS baro (owner's request, 0.7.20): kept in hPa; the ring shows it in hPa or inHg (0.01 inHg per click).
+  function baroText(n, hpa) { return hpa ? String(Math.round(n)) : (n * 0.02953).toFixed(2); }
   // Mach is kept in hundredths (78 = .78); in this cruise 1 Mach hundredth is about 2.974 kt.
   function fcuText(k, n, mach) {
     if (k === 'spd' && mach) return '.' + ('0' + n).slice(-2);
@@ -1171,6 +1173,12 @@
     states[i] = st;
     var wi = items.findIndex(function (x) { return x.k === 'win' && x.fcu === k; }), ws = Object.assign({}, states[wi]);
     var ri = items.findIndex(function (x) { return x.k === 'ring'; }), ring = ri < 0 ? 1 : ((states[ri] || {}).cur != null ? states[ri].cur : items[ri].cur);
+    if (k === 'baro') {
+      var hpa = ri < 0 || ((states[ri] || {}).cur != null ? states[ri].cur : items[ri].cur) === 1;
+      ws.n = Math.min(1080, Math.max(940, (ws.n != null ? ws.n : 1013) + dir * (hpa ? 1 : 0.3386)));
+      ws.val = ws.std ? 'Std' : baroText(ws.n, hpa); states[wi] = ws;
+      return ws.std ? 'Preset QNH ' + baroText(ws.n, hpa) + ': push the knob to use it (the window shows Std until then).' : 'QNH ' + ws.val + (hpa ? ' hPa.' : ' inHg.');
+    }
     var mach = k === 'spd' && ws.mach !== false, n = ws.n != null ? ws.n : mach ? 78 : FCU_START[k];
     if (k === 'spd') n = mach ? Math.min(99, Math.max(10, n + dir)) : Math.min(399, Math.max(100, n + dir));
     else if (k === 'hdg') n = ((n + dir + 359) % 360) + 1;
@@ -1200,11 +1208,16 @@
   };
   function pushFcu(items, i, states, how) {
     // A tap on the knob's centre alternates (owner's request, 0.7.19): push, then pull, then push...
-    if (how === 'tap') how = (states[i] || {}).last === 'push' ? 'pull' : 'push';
+    if (how === 'tap') how = items[i].fcu === 'baro' ? (efisWin(items, states).std ? 'push' : 'pull') : (states[i] || {}).last === 'push' ? 'pull' : 'push';
     var it = items[i], k = it.fcu, pull = how === 'pull';
     states[i] = Object.assign({}, states[i], { down: true, out: pull, last: how });
     // how and when the knob was last pushed or pulled: the PFD reads it for the FMA
     var wi = items.findIndex(function (x) { return x.k === 'win' && x.fcu === k; }), ws = Object.assign({}, states[wi]);
+    if (k === 'baro') {
+      var ri2 = items.findIndex(function (x) { return x.k === 'ring'; }), hp = ((states[ri2] || {}).cur != null ? states[ri2].cur : items[ri2].cur) === 1;
+      ws.std = pull; ws.n = ws.n != null ? ws.n : 1013; ws.val = pull ? 'Std' : baroText(ws.n, hp); states[wi] = ws;
+      return pull ? 'Pulled: STD, the standard setting (1013 hPa, 29.92 inHg) for flight levels. STD shows on the PFD.' : 'Pushed: QNH ' + ws.val + '. The PFD altitude is now height above sea level; QNH shows under the altitude scale.';
+    }
     var mach = k === 'spd' && ws.mach !== false, n = ws.n != null ? ws.n : mach ? 78 : FCU_START[k];
     if (k === 'spd' || k === 'hdg') {
       ws.sel = pull; ws.n = n; ws.val = pull ? fcuText(k, n, mach) : '---•';
@@ -1231,6 +1244,7 @@
     states[wi] = ws;
     return (mach ? 'IAS: the target is now in knots' : 'Mach: the target is now a Mach number') + (ws.sel ? ', ' + fcuText('spd', n, !mach) + '.' : '. The speed is managed, so the window keeps its dashes; the label shows ' + (mach ? 'SPD' : 'MACH') + '.');
   }
+  function efisWin(items, states) { return states[items.findIndex(function (x) { return x.k === 'win' && x.fcu === 'baro'; })] || {}; }
   function pressItems(items, i, states, dir) {
     var it = items[i], st = states[i] || {};
     if (it.fcu) return typeof dir === 'string' ? pushFcu(items, i, states, dir) : turnFcu(items, i, states, dir || 1);
@@ -1245,6 +1259,12 @@
     }
     states[i] = press(it, st);
     if (it.fcuMach) return fcuMach(items, states);
+    if (it.k === 'ring' && it.baro) {
+      var bw = items.findIndex(function (x) { return x.k === 'win' && x.fcu === 'baro'; }), bs = Object.assign({}, states[bw]), hp2 = states[i].cur === 1;
+      if (!bs.std) bs.val = baroText(bs.n != null ? bs.n : 1013, hp2);
+      states[bw] = bs;
+      return 'Baro units: ' + (hp2 ? 'hPa' : 'inHg') + '.';
+    }
     // Code keypad (ATC squawk): digits type into the panel's code display; after
     // four digits that is the new code. CLR always removes the right-hand digit
     // shown (owner's request), whether typing or not; the next digits refill it.

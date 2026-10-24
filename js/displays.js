@@ -504,7 +504,7 @@
     for (var i = 1; i < 5; i++) o += ln(i * 40, 2, i * 40, 22, 'sw', 0.8);
     [f.thr, f.vert, f.lat].forEach(function (m, k) { o += t(20 + k * 40, 10, m, 'g', m.length > 7 ? 6 : 7, 'middle'); });
     if (f.arm) o += t(60, 19, f.arm, 'c', 6.5, 'middle');
-    o += t(180, 9, 'AP1', 'w', 6.5, 'middle') + t(180, 16, '1FD2', 'w', 6.5, 'middle') + t(180, 23, 'A/THR', 'w', 6.5, 'middle');
+    o += t(180, 9, 'AP1', 'w', 6.5, 'middle') + t(180, 16, f.fd === false ? '-FD2' : '1FD2', 'w', 6.5, 'middle') + t(180, 23, 'A/THR', 'w', 6.5, 'middle');
     // attitude
     o += '<clipPath id="pfd-att"><path d="M64 60 Q66 46 100 44 Q134 46 136 60 L136 132 Q134 148 100 150 Q66 148 64 132 Z"/></clipPath><g clip-path="url(#pfd-att)">';
     var hz = cy + 5;
@@ -522,6 +522,13 @@
       o += ln(p0[0], p0[1], p1[0], p1[1], 'sw', 1);
     });
     o += '<path d="M' + cx + ' 47 l-4 -7 h8 z" class="sy" fill="none" stroke-width="1.2"/><path d="M' + cx + ' 49 l-4 6 h8 z" class="sy" fill="none" stroke-width="1.2"/>';
+    // flight director bars (FD pushbutton on the EFIS panel), green, on the target
+    if (f.fd !== false) o += ln(cx - 30, cy + 3, cx + 30, cy + 3, 'sg', 1.8) + ln(cx - 3, cy - 30, cx - 3, cy + 30, 'sg', 1.8);
+    // ILS deviation scales (LS pushbutton): no ILS tuned in cruise, so no diamonds
+    if (f.ls) {
+      [-24, -12, 12, 24].forEach(function (d) { o += circ(cx + d, 146, 1.6, 'sw', 0.9) + circ(141, cy + d, 1.6, 'sw', 0.9); });
+      o += ln(cx, 142, cx, 150, 'sy', 1.2) + ln(137, cy, 145, cy, 'sy', 1.2);
+    }
     // aircraft symbol
     o += '<path d="M66 ' + (cy - 3) + ' h22 v10 h-6 v-5 h-16 z M134 ' + (cy - 3) + ' h-22 v10 h6 v-5 h16 z" class="fk sy" stroke-width="1.4"/>' + rc(cx - 2.5, cy - 2.5, 5, 5, 'sy', 1.2);
     // speed tape
@@ -567,6 +574,9 @@
     o += '<rect x="60" y="168" width="80" height="14" class="tape"/>';
     [['34', 68], ['35', 84], ['0', 100], ['1', 116], ['2', 132]].forEach(function (q) { o += t(q[1], 180, q[0], 'w', 7, 'middle') + ln(q[1] + 8, 168, q[1] + 8, 171, 'sw', 1); });
     o += ln(100, 160, 100, 172, 'sy', 1.6);
+    // baro reference under the altitude scale: STD boxed, or QNH and its value
+    if (f.baro === 'Std') o += rc(152, 180, 24, 11, 'sy', 1) + t(164, 188.5, 'STD', 'c', 8, 'middle');
+    else if (f.baro) o += t(150, 189, 'QNH', 'w', 6.5, 'start') + t(196, 189, f.baro, 'c', 7.5, 'end');
     // selected heading: blue triangle on the tape (current heading 360, 1.6 units per degree), or its value at the side
     if (f.hdgSel && f.hdg != null) {
       var dh = ((f.hdg + 540) % 360) - 180;
@@ -576,33 +586,92 @@
     return svg200(o, 'pfd');
   }
 
-  function renderND(s) {
-    var o = '', cx = 104, cy = 176, R = 124;
+  // ND from the Captain's EFIS panel (owner's request, 0.7.20): e = { mode: LS | VOR | NAV |
+  // ARC | PLAN, range (NM), cstr, opt: WPT | VOR.D | NDB | ARPT | null, n1, n2: ADF | OFF | VOR }.
+  // Heading and track 360, so north is up in every mode. Positions are NM east and north of
+  // the aircraft, invented for training. ARC: the arc is the full range; ROSE and PLAN: the
+  // outer circle is half the range.
+  var ROUTE = [['MAMOL', 3, 22, 'FL350'], ['TIRSO', -8, 58], ['KUKOR', 6, 105, 'FL350'], ['ARGUS', 22, 190], ['BERUS', 15, 300]];
+  var OPTS = {
+    WPT: [['ODINA', -14, 30], ['PELIX', 18, 46], ['SURAK', -24, 92], ['VAMEN', 30, 140]],
+    'VOR.D': [['POL', -20, 12], ['TRN', 26, 70], ['ALB', -40, 150]],
+    NDB: [['GO', 12, 8], ['KR', -30, 60], ['LZ', 34, 120]],
+    ARPT: [['LSZH', -18, 40], ['LIMC', 24, 96], ['LFLL', -46, 180]]
+  };
+  function renderND(s, e) {
+    e = e || { mode: 'ARC', range: 40, cstr: false, opt: null, n1: 'VOR', n2: 'VOR' };
+    var mode = e.mode, rose = mode === 'LS' || mode === 'VOR' || mode === 'NAV', plan = mode === 'PLAN';
+    var cx = mode === 'ARC' ? 104 : 100, cy = mode === 'ARC' ? 176 : 102, R = mode === 'ARC' ? 124 : 70;
+    var ppn = mode === 'ARC' ? R / e.range : R / (e.range / 2), o = '';
+    var P = function (q) { return [cx + q[1] * ppn, cy - q[2] * ppn]; }, rng = function (f) { var v = e.range * f; return v % 1 ? v.toFixed(1) : String(v); };
     o += t(6, 12, 'GS', 'w', 7) + t(19, 12, '480', 'g', 9) + t(42, 12, 'TAS', 'w', 7) + t(58, 12, '458', 'g', 9);
     o += t(6, 24, '163/23', 'g', 8) + '<path d="M10 40 L10 30 M7 33 L10 29 L13 33" class="sg" fill="none" stroke-width="1"/>';
-    o += '<clipPath id="nd-clip"><rect x="0" y="0" width="200" height="200"/></clipPath><g clip-path="url(#nd-clip)">';
-    o += arc(cx, cy, R, 150, 30, 'sw', 1.4);
-    for (var d = -60; d <= 60; d += 5) {
-      var a = 90 - d, p0 = pt(cx, cy, R, a), p1 = pt(cx, cy, R + (d % 10 ? 3 : 6), a);
-      o += ln(p0[0], p0[1], p1[0], p1[1], 'sw', 1);
-      if (d % 10 === 0 && Math.abs(d) <= 40) {
-        var hdg = (360 + d / 10 * 10) % 360 / 10, lp = pt(cx, cy, R + 13, a);
-        o += t(lp[0], lp[1] + 3, String(hdg), 'w', d === 0 ? 10 : 7.5, 'middle');
+    o += '<clipPath id="nd-clip"><rect x="0" y="30" width="200" height="150"/></clipPath><g clip-path="url(#nd-clip)">';
+    if (mode === 'ARC') {
+      o += arc(cx, cy, R, 150, 30, 'sw', 1.4);
+      for (var d = -60; d <= 60; d += 5) {
+        var a = 90 - d, p0 = pt(cx, cy, R, a), p1 = pt(cx, cy, R + (d % 10 ? 3 : 6), a);
+        o += ln(p0[0], p0[1], p1[0], p1[1], 'sw', 1);
+        if (d % 10 === 0 && Math.abs(d) <= 40) { var lp = pt(cx, cy, R + 13, a); o += t(lp[0], lp[1] + 3, String((360 + d) % 360 / 10), 'w', d === 0 ? 10 : 7.5, 'middle'); }
       }
+      [0.25, 0.5, 0.75].forEach(function (f) {
+        var rr = R * f, q1 = pt(cx, cy, rr, 158), q2 = pt(cx, cy, rr, 22);
+        o += '<path d="M' + pts([pt(cx, cy, rr, 160)]) + ' A' + rr + ' ' + rr + ' 0 0 1 ' + pts([pt(cx, cy, rr, 20)]) + '" class="sw" fill="none" stroke-width="1" stroke-dasharray="4 3"/>';
+        o += t(q1[0] + 6, q1[1] - 2, rng(f), 'c', 7) + t(q2[0] - 6, q2[1] - 2, rng(f), 'c', 7, 'end');
+      });
+    } else {
+      if (!plan) for (var b = 0; b < 360; b += 5) {
+        var ab = 90 - b, b0 = pt(cx, cy, R, ab), b1 = pt(cx, cy, R + (b % 10 ? 3 : 5), ab);
+        o += ln(b0[0], b0[1], b1[0], b1[1], 'sw', 1);
+        if (b % 30 === 0) { var bl = pt(cx, cy, R + 11, ab); o += t(bl[0], bl[1] + 3, String(b / 10), 'w', b === 0 ? 9 : 7, 'middle'); }
+      }
+      o += circ(cx, cy, R, 'sw', plan ? 1 : 1.4) + '<circle cx="' + cx + '" cy="' + cy + '" r="' + R / 2 + '" class="sw" fill="none" stroke-width="1" stroke-dasharray="4 3"/>';
+      var rl = pt(cx, cy, R / 2, 135); o += t(rl[0] - 3, rl[1] - 2, rng(0.25), 'c', 7, 'end');
+      if (plan) { o += t(cx, cy - R - 4, 'N', 'w', 8, 'middle') + t(cx + R + 4, cy + 3, 'E', 'w', 7) + t(cx - R - 9, cy + 3, 'W', 'w', 7) + t(cx, cy + R + 10, 'S', 'w', 7, 'middle'); var rl2 = pt(cx, cy, R, 135); o += t(rl2[0] - 3, rl2[1] - 2, rng(0.5), 'c', 7, 'end'); }
     }
-    o += '<path d="' + 'M' + pts([pt(cx, cy, R * 0.66, 160)]) + ' A' + R * 0.66 + ' ' + R * 0.66 + ' 0 0 1 ' + pts([pt(cx, cy, R * 0.66, 20)]) + '" class="sw" fill="none" stroke-width="1.1" stroke-dasharray="4 3"/>';
-    o += '<path d="' + 'M' + pts([pt(cx, cy, R * 0.4, 165)]) + ' A' + R * 0.4 + ' ' + R * 0.4 + ' 0 0 1 ' + pts([pt(cx, cy, R * 0.4, 15)]) + '" class="sw" fill="none" stroke-width="1.1" stroke-dasharray="4 3"/>';
-    var q1 = pt(cx, cy, R * 0.66, 158), q2 = pt(cx, cy, R * 0.66, 22), q3 = pt(cx, cy, R * 0.4, 160), q4 = pt(cx, cy, R * 0.4, 20);
-    o += t(q1[0] + 8, q1[1] - 2, '7.5', 'c', 7) + t(q2[0] - 8, q2[1] - 2, '7.5', 'c', 7, 'end') + t(q3[0] + 6, q3[1] - 2, '5', 'c', 7) + t(q4[0] - 6, q4[1] - 2, '5', 'c', 7, 'end');
-    // VOR 1 bearing pointer (white), track line (green), lubber line (yellow)
-    var v0 = pt(cx, cy, R + 2, 118), v1 = pt(cx, cy, R - 22, 118);
-    o += ln(v0[0], v0[1], v1[0], v1[1], 'sw', 1.2) + '<path d="M' + v0[0] + ' ' + v0[1] + ' m-4 -1 l4 10 l4 -10" class="sw" fill="none" stroke-width="1"/>';
-    o += ln(cx, cy - 4, cx + 6, cy - R + 4, 'sg', 1.4) + ln(cx, cy - R - 6, cx, cy - R + 6, 'sy', 2);
+    if (mode === 'LS' || mode === 'VOR') {
+      // course pointer and deviation bar: magenta for the ILS, cyan for the VOR; no signal in cruise
+      var cc = mode === 'LS' ? 'sm' : 'sc', ct = mode === 'LS' ? 'm' : 'c';
+      o += ln(cx, cy - R + 2, cx, cy - 22, cc, 2.2) + '<path d="M' + cx + ' ' + (cy - R + 2) + ' l-4 7 h8 z" class="' + ct + '"/>' + ln(cx, cy + 22, cx, cy + R - 2, cc, 2.2);
+      [-28, -14, 14, 28].forEach(function (d) { o += circ(cx + d, cy, 2, 'sw', 1); });
+    } else {
+      // flight plan: green, the TO waypoint white; constraints (CSTR) magenta; EFIS options magenta
+      var path = [[cx, cy]].concat(ROUTE.map(P));
+      o += '<polyline points="' + pts(path) + '" class="sg" fill="none" stroke-width="1.4"/>';
+      ROUTE.forEach(function (w, k) {
+        var q = P(w), c = k === 0 ? 'sw' : 'sg';
+        o += '<path d="M' + q[0] + ' ' + (q[1] - 3.5) + ' l3.5 3.5 l-3.5 3.5 l-3.5 -3.5 z" class="' + c + '" fill="none" stroke-width="1.2"/>' + t(q[0] + 6, q[1] + 3, w[0], k === 0 ? 'w' : 'g', 7);
+        if (e.cstr && w[3]) o += circ(q[0], q[1], 6, 'sm', 1) + t(q[0] + 6, q[1] + 11, w[3], 'm', 6.5);
+      });
+      (OPTS[e.opt] || []).forEach(function (w) {
+        var q = P(w), sym = e.opt === 'WPT' ? '<path d="M' + q[0] + ' ' + (q[1] - 3) + ' l3 3 l-3 3 l-3 -3 z" class="sm" fill="none" stroke-width="1"/>'
+          : e.opt === 'VOR.D' ? circ(q[0], q[1], 3, 'sm', 1) + ln(q[0] - 5, q[1], q[0] + 5, q[1], 'sm', 1) + ln(q[0], q[1] - 5, q[0], q[1] + 5, 'sm', 1)
+          : e.opt === 'NDB' ? '<path d="M' + q[0] + ' ' + (q[1] - 4) + ' l4 6.5 h-8 z" class="sm" fill="none" stroke-width="1"/>'
+          : ln(q[0] - 4, q[1] - 4, q[0] + 4, q[1] + 4, 'sm', 1.2) + ln(q[0] - 4, q[1] + 4, q[0] + 4, q[1] - 4, 'sm', 1.2) + ln(q[0], q[1] - 5, q[0], q[1] + 5, 'sm', 1.2);
+        o += sym + t(q[0] + 6, q[1] + 3, w[0], 'm', 6.5);
+      });
+    }
+    // bearing pointers: VOR white, ADF green; 1 single, 2 double
+    [[e.n1, 1, 330, 20], [e.n2, 2, 60, 300]].forEach(function (n) {
+      if (!n[0] || n[0] === 'OFF' || plan) return;
+      var brg = n[0] === 'VOR' ? n[2] : n[3], c = n[0] === 'VOR' ? 'sw' : 'sg', rr = mode === 'ARC' ? R : R - 4, h = pt(cx, cy, rr, 90 - brg), tl = pt(cx, cy, rr, 270 - brg), m = pt(cx, cy, rr - 18, 90 - brg);
+      o += n[1] === 1 ? ln(tl[0], tl[1], h[0], h[1], c, 1.2) : ln(tl[0] - 1.5, tl[1], h[0] - 1.5, h[1], c, 1) + ln(tl[0] + 1.5, tl[1], h[0] + 1.5, h[1], c, 1);
+      var ux = (h[0] - m[0]) / 18, uy = (h[1] - m[1]) / 18;
+      o += ln(h[0], h[1], h[0] - ux * 6 - uy * 3.5, h[1] - uy * 6 + ux * 3.5, c, 1) + ln(h[0], h[1], h[0] - ux * 6 + uy * 3.5, h[1] - uy * 6 - ux * 3.5, c, 1);
+    });
     o += '</g>';
-    o += '<path d="M' + (cx - 10) + ' ' + (cy - 4) + ' h20 M' + cx + ' ' + (cy - 14) + ' v18 M' + (cx - 4) + ' ' + (cy + 2) + ' h8" class="sy" fill="none" stroke-width="2.2"/>';
-    o += t(184, 160, 'WX+T+H', 'g', 6, 'end');
-    o += '<path d="M10 186 L10 176 M7 179 L10 175 L13 179" class="sw" fill="none" stroke-width="1"/>' + t(16, 180, 'VOR1', 'w', 7.5) + t(16, 188, 'POL', 'w', 7.5) + t(8, 197, '15.3', 'g', 7.5) + t(28, 197, 'NM', 'c', 6);
-    o += '<path d="M190 186 L190 176 M187 179 L190 175 L193 179 M194 186 L194 176" class="sw" fill="none" stroke-width="1"/>' + t(184, 180, 'VOR2', 'w', 7.5, 'end') + t(184, 188, 'POL', 'w', 7.5, 'end') + t(176, 197, '15.3', 'g', 7.5, 'end') + t(190, 197, 'NM', 'c', 6, 'end');
+    if (mode !== 'ARC' && !plan) o += ln(cx, cy - R - 5, cx, cy - R + 5, 'sy', 2);
+    else if (mode === 'ARC') o += ln(cx, cy - R - 6, cx, cy - R + 6, 'sy', 2);
+    // aircraft symbol (yellow); in PLAN a small one on the route
+    o += plan ? '<path d="M' + (cx - 4) + ' ' + cy + ' h8 M' + cx + ' ' + (cy - 5) + ' v9" class="sy" fill="none" stroke-width="1.6"/>'
+      : '<path d="M' + (cx - 10) + ' ' + (cy - 4) + ' h20 M' + cx + ' ' + (cy - 14) + ' v18 M' + (cx - 4) + ' ' + (cy + 2) + ' h8" class="sy" fill="none" stroke-width="2.2"/>';
+    if (mode === 'LS') o += t(196, 12, 'ILS1 109.50', 'm', 7.5, 'end') + t(196, 22, 'CRS 360°', 'm', 7.5, 'end');
+    else if (mode === 'VOR') o += t(196, 12, 'VOR1 115.10', 'w', 7.5, 'end') + t(196, 22, 'CRS 360°', 'c', 7.5, 'end');
+    else o += t(196, 12, 'MAMOL', 'w', 7.5, 'end') + t(196, 22, '008° ' + 22 + 'NM', 'g', 7.5, 'end');
+    o += t(184, 160, mode === 'PLAN' ? '' : 'WX+T+H', 'g', 6, 'end');
+    // bottom: the needle sources (left 1, right 2), or nothing when OFF
+    if (e.n1 && e.n1 !== 'OFF') { var v1 = e.n1 === 'VOR', c1 = v1 ? 'w' : 'g'; o += '<path d="M10 186 L10 176 M7 179 L10 175 L13 179" class="' + (v1 ? 'sw' : 'sg') + '" fill="none" stroke-width="1"/>' + t(16, 180, e.n1 + '1', c1, 7.5) + t(16, 188, v1 ? 'POL' : 'GO', c1, 7.5) + (v1 ? t(8, 197, '15.3', 'g', 7.5) + t(28, 197, 'NM', 'c', 6) : ''); }
+    if (e.n2 && e.n2 !== 'OFF') { var v2 = e.n2 === 'VOR', c2 = v2 ? 'w' : 'g'; o += '<path d="M190 186 L190 176 M187 179 L190 175 L193 179 M194 186 L194 176" class="' + (v2 ? 'sw' : 'sg') + '" fill="none" stroke-width="1"/>' + t(184, 180, e.n2 + '2', c2, 7.5, 'end') + t(184, 188, v2 ? 'TRN' : 'KR', c2, 7.5, 'end') + (v2 ? t(176, 197, '71.0', 'g', 7.5, 'end') + t(190, 197, 'NM', 'c', 6, 'end') : ''); }
     o += rc(56, 186, 92, 9, 'sw', 1) + t(102, 193.5, 'GPS PRIMARY', 'w', 7, 'middle');
     return svg200(o, 'nd');
   }

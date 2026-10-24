@@ -197,7 +197,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .ecam .g { fill: var(--ecam-g); } .ecam .a { fill: var(--ecam-a); } .ecam .r { fill: var(--ecam-r); }
 .ecam .c { fill: var(--ecam-c); } .ecam .w { fill: var(--ecam-w); } .ecam .m { fill: var(--ecam-m); } .ecam .d { fill: #5d6770; }
 .ecam .sg { stroke: var(--ecam-g); } .ecam .sa { stroke: var(--ecam-a); } .ecam .sr { stroke: var(--ecam-r); }
-.ecam .sc { stroke: var(--ecam-c); } .ecam .sw { stroke: var(--ecam-w); } .ecam .sd { stroke: #4b5560; }
+.ecam .sm { stroke: var(--ecam-m); } .ecam .sc { stroke: var(--ecam-c); } .ecam .sw { stroke: var(--ecam-w); } .ecam .sd { stroke: #4b5560; }
 .ecam .fg { fill: var(--ecam-g); } .ecam .fa { fill: var(--ecam-a); } .ecam .fw { fill: var(--ecam-w); }
 
 /* hotspots */

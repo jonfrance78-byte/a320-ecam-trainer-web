@@ -44,9 +44,10 @@
     var items = [];
     btn.forEach(function (b, i) { items.push(cap(X(74 + i * 21), 17, b[0], b[2] ? b[1] : b[1] + ' It can be on together with one of WPT, VOR.D, NDB or ARPT.', { group: b[2], lit: L && i === 0 })); });
     items.push(
-      { k: 'win', inl: true, x: X(40), y: 24, w: 38, label: 'QNH', val: '1013', info: 'Barometric reference for the ' + (L ? 'Captain\'s' : 'F/O\'s') + ' PFD, in hPa or inHg. Shows Std when the knob is pulled.' },
+      { k: 'win', inl: true, x: X(40), y: 24, w: 38, label: 'QNH', val: '1013', fcu: 'baro', info: 'Barometric reference for the ' + (L ? 'Captain\'s' : 'F/O\'s') + ' PFD, in hPa or inHg. Shows Std when the knob is pulled.' },
       raw(t(X(40) - 11, 47, 'in Hg', 3.4) + t(X(40) + 11, 47, 'hPa', 3.4) + '<path d="M' + (X(40) - 8) + ' 49.5 Q' + X(40) + ' 46 ' + (X(40) + 8) + ' 49.5" class="pn-arc"/>'),
-      knob(X(40), 61, 'BARO', '', '', 'Baro reference knob. Turn to set QNH. Pull: standard setting (STD, 1013 hPa / 29.92 inHg). Push: back to QNH. The outer ring changes the units between inHg and hPa.', { r: 9, noname: true }),
+      { k: 'ring', baro: true, x: X(40), y: 61, r: 9, cur: 1, name: 'BARO in Hg / hPa', info: 'Outer ring of the baro knob: shows the QNH in inches of mercury or hectopascals. Tap the in Hg / hPa labels to switch.' },
+      knob(X(40), 61, 'BARO', '', '', 'Baro reference knob. Turn to set QNH. Pull: standard setting (STD, 1013 hPa / 29.92 inHg). Push: back to QNH. The outer ring changes the units between inHg and hPa. Here: drag round the knob or tap its left or right side to turn it; tap its centre to pull for STD, and again to push for QNH.', { r: 9, noname: true, fcu: 'baro' }),
       raw(t(L ? 82 : 60, 31, 'ROSE', 3.4)),
       sel(X(96), 49, 'ND MODE', ['LS', 'VOR', 'NAV', 'ARC', 'PLAN'], 3, 'ND mode: ROSE LS, ROSE VOR or ROSE NAV (compass rose, aircraft in the centre), ARC (forward 90° sector), or PLAN (flight plan, north up, centred on the selected waypoint).', { r: 8, light: true, noname: true }),
       sel(X(148), 49, 'ND RANGE', ['10', '20', '40', '80', '160', '320'], 2, 'ND range in nautical miles.', { r: 8, light: true, noname: true }),

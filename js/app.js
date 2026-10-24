@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.19';
+  var VERSION = '0.7.20';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -179,7 +179,7 @@
     if (VIEW === 'start') return renderStart();
     if (VIEW === 'quiz') return renderQuiz();
     var s = liveState();
-    var ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: DISP.renderPFD(s, fcuPfd(s)), nd: DISP.renderND(s) };
+    var ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: DISP.renderPFD(s, fcuPfd(s)), nd: DISP.renderND(s, efisNd()) };
     document.getElementById('view').innerHTML =
       '<section class="home">' +
       '<p class="home-hint">' + (DECK_MODE === 'normal' ? 'Tap any panel to explore it. Normal procedure flows are in the <a href="' + NORMAL_APP + '">Normal Procedures</a>. ' : 'Tap any panel to expand it. Failures are in the menu. ') + '<span class="ver-pill">Version ' + VERSION + '</span> <button class="linkbtn" data-act="winReset">Reset window sizes</button></p>' +
@@ -300,6 +300,18 @@
       return '<button class="sd-btn' + (sdPage === k ? ' on' : '') + '" data-act="sdpage" data-sd="' + k + '" aria-pressed="' + (sdPage === k) + '">' + esc(k) + '</button>';
     }).join('') + '</div>';
   }
+  // What the Captain's PFD and ND show from the left EFIS panel (owner's request, 0.7.20).
+  function efisNd() {
+    var P = PN.P.EFISL.items, st = PSTATE.EFISL || {}, e = {};
+    P.forEach(function (it, i) {
+      var c = st[i] || {}, cur = c.cur != null ? c.cur : it.cur;
+      if (it.k === 'pb') e[it.name] = PN.litBits(c.lit, it).lo;
+      else if (it.k === 'sel' || it.k === 'tog') e[it.name] = it.pos[cur];
+      else if (it.k === 'win') e.baro = c.val || it.val;
+    });
+    return { fd: e.FD, ls: e.LS, baro: e.baro, mode: e['ND MODE'], range: +e['ND RANGE'], cstr: e.CSTR,
+      opt: ['WPT', 'VOR.D', 'NDB', 'ARPT'].filter(function (k) { return e[k]; })[0] || null, n1: e['ADF/VOR 1'], n2: e['ADF/VOR 2'] };
+  }
   // What the PFD shows from the FCU (owner's request, 0.7.16): the aircraft cruises
   // level at s.alt with managed speed (Mach) and NAV; the FCU knobs change the
   // targets and, once pushed or pulled, the FMA modes.
@@ -315,18 +327,19 @@
     if (f.vert !== 'ALT CRZ' && alt !== s.alt) f.arm = 'ALT';
     f.thr = /CLB/.test(f.vert) ? 'THR CLB' : /DES/.test(f.vert) ? 'THR IDLE' : f.spdSel && !mach ? 'SPEED' : 'MACH';
     f.lat = f.hdgSel ? 'HDG' : 'NAV';
+    var e = efisNd(); f.fd = e.fd; f.ls = e.ls; f.baro = e.baro;
     return f;
   }
-  // A press on the FCU drawn on the flight deck (the panel is not expanded).
-  function deckFcu(i, dir) {
-    PN.pressItems(PN.P.FCU.items, i, PSTATE.FCU || (PSTATE.FCU = {}), dir);
-    var st = PSTATE.FCU[i];
+  // A press on the FCU or an EFIS panel drawn on the flight deck (the panel is not expanded).
+  function deckFcu(pid, i, dir) {
+    PN.pressItems(PN.P[pid].items, i, PSTATE[pid] || (PSTATE[pid] = {}), dir);
+    var st = PSTATE[pid][i];
     refreshHome();
     if (st && st.down) setTimeout(function () { st.down = false; if (!PV) refreshHome(); }, 180);
   }
   function dispSvg(id) {
     var s = liveState();
-    return id === 'PFD' ? DISP.renderPFD(s, fcuPfd(s)) : id === 'ND' ? DISP.renderND(s) : id === 'EWD' ? DISP.renderEWD(s, ewdView()) : sdSvg();
+    return id === 'PFD' ? DISP.renderPFD(s, fcuPfd(s)) : id === 'ND' ? DISP.renderND(s, efisNd()) : id === 'EWD' ? DISP.renderEWD(s, ewdView()) : sdSvg();
   }
   function renderStage() {
     var p = getP(PV.id);
@@ -339,7 +352,7 @@
     // ECP: the SD sits on top of the panel, the same width, with no gap (no top margin in the viewBox).
     document.getElementById('pv-stage').innerHTML = PV.photo ? renderPhotoStage(PV.photo) :
       (fm ? '<div class="fm-wrap">' + FMGC.guideHtml() : '') + (ecp ? '<div class="ecp-wrap"><div class="pv-sdtop" aria-label="System display">' + sdSvg() + '</div>' : '') +
-      '<svg viewBox="-4 ' + (ecp ? 0 : -4) + ' ' + (p.w + 8) + ' ' + (p.h + (ecp ? 4 : 8)) + '" class="pv-svg' + (/^MCDU[12]$/.test(PV.id) ? ' pv-mcdu' : '') + (PV.id === 'ATC' ? ' pv-atc' : '') + (PV.id === 'FCU' ? ' pv-fcu' : '') + '" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
+      '<svg viewBox="-4 ' + (ecp ? 0 : -4) + ' ' + (p.w + 8) + ' ' + (p.h + (ecp ? 4 : 8)) + '" class="pv-svg' + (/^MCDU[12]$/.test(PV.id) ? ' pv-mcdu' : '') + (PV.id === 'ATC' ? ' pv-atc' : '') + (/^(FCU|EFIS[LR])$/.test(PV.id) ? ' pv-fcu' : '') + '" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' + (fm || ecp ? '</div>' : '') +
       (FMGC && /^MCDU[12]$/.test(PV.id) ? FMGC.simHtml() : '') + miniEwd();
     document.getElementById('pv-info').innerHTML = infoHtml(p);
@@ -864,7 +877,7 @@
     var c = e.target.closest && e.target.closest(PV ? '.ctl.turn' : '.fcukey.turn');
     if (!c) { TURN = null; return; }
     var b = c.getBoundingClientRect(), cx = b.left + b.width / 2, cy = b.top + b.height / 2;
-    TURN = { i: +c.getAttribute(PV ? 'data-ctl' : 'data-fcu'), deck: !PV, cx: cx, cy: cy, a: Math.atan2(e.clientY - cy, e.clientX - cx), moved: false };
+    TURN = { i: +c.getAttribute(PV ? 'data-ctl' : 'data-fcu'), pid: c.getAttribute('data-pid'), deck: !PV, cx: cx, cy: cy, a: Math.atan2(e.clientY - cy, e.clientX - cx), moved: false };
   });
   document.addEventListener('pointermove', function (e) {
     if (!TURN || !(e.buttons & 1) && e.pointerType === 'mouse') return;
@@ -872,7 +885,7 @@
     if (d > Math.PI) d -= 2 * Math.PI; else if (d < -Math.PI) d += 2 * Math.PI;
     if (Math.abs(d) < 0.35) return;
     TURN.a = a; TURN.moved = true;
-    if (TURN.deck) deckFcu(TURN.i, d > 0 ? 1 : -1); else if (PV) pressCtl(TURN.i, d > 0 ? 1 : -1);
+    if (TURN.deck) deckFcu(TURN.pid, TURN.i, d > 0 ? 1 : -1); else if (PV) pressCtl(TURN.i, d > 0 ? 1 : -1);
   });
   document.addEventListener('click', function (e) {
     var ctlEl = e.target.closest('.ctl');
@@ -889,7 +902,7 @@
     if (fk) {
       if (TURN && TURN.moved) { TURN = null; return; }
       var fr = fk.getBoundingClientRect(), fdx = e.clientX - (fr.left + fr.width / 2), fdy = e.clientY - (fr.top + fr.height / 2);
-      TURN = null; deckFcu(+fk.getAttribute('data-fcu'), fk.classList.contains('turn') ? (Math.hypot(fdx, fdy) < fr.width * 0.18 ? 'tap' : fdx < 0 ? -1 : 1) : undefined); return;
+      TURN = null; deckFcu(fk.getAttribute('data-pid'), +fk.getAttribute('data-fcu'), fk.classList.contains('turn') ? (Math.hypot(fdx, fdy) < fr.width * 0.18 ? 'tap' : fdx < 0 ? -1 : 1) : undefined); return;
     }
     var sdKey = e.target.closest('.sdkey');
     if (sdKey && !PV) {
