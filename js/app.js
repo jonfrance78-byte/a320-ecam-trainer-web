@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.26';
+  var VERSION = '0.7.27';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -295,11 +295,6 @@
       (note ? '<p class="small">' + esc(note) + '</p>' : '') +
       (it.guard ? '<p class="small">' + (st.guardOpen ? 'Guard lifted. Tap again to work the pushbutton.' : 'Tap again to lift the guard.') + '</p>' : '');
   }
-  function sdButtons() {
-    return '<div class="sd-pages" role="group" aria-label="System display page">' + SD_ORDER.concat(['STS']).map(function (k) {
-      return '<button class="sd-btn' + (sdPage === k ? ' on' : '') + '" data-act="sdpage" data-sd="' + k + '" aria-pressed="' + (sdPage === k) + '">' + esc(k) + '</button>';
-    }).join('') + '</div>';
-  }
   // What the Captain's PFD and ND show from the left EFIS panel (owner's request, 0.7.20).
   function efisNd() {
     var P = PN.P.EFISL.items, st = PSTATE.EFISL || {}, e = {};
@@ -333,6 +328,23 @@
     return f;
   }
   // A press on the FCU or an EFIS panel drawn on the flight deck (the panel is not expanded).
+  // The ECAM control panel under an expanded E/WD or SD (owner's request, 0.7.27), so CLR,
+  // STS, RCL and the page keys work without leaving the display.
+  function ecpHtml() {
+    var p = PN.P.ECP;
+    return '<svg viewBox="-4 -4 ' + (p.w + 8) + ' ' + (p.h + 8) + '" class="pv-svg pv-ecp" role="group" aria-label="ECAM control panel">' +
+      PN.defs() + PN.render('ECP', { interactive: true, states: PSTATE.ECP || (PSTATE.ECP = {}) }) + '</svg>';
+  }
+  function pressEcp(i) {
+    var it = PN.P.ECP.items[i], st = PSTATE.ECP || (PSTATE.ECP = {});
+    drillPress('ECP', i);
+    PN.pressItems(PN.P.ECP.items, i, st);
+    if (it.clrKey && (DR && DR.s || APOFF)) pressClr();
+    if (it.sdPage || it.sdAll) setSd(it.sdAll ? 'ALL' : it.sdPage);
+    drillCheck();
+    if (PV) renderStage();
+    if (st[i] && st[i].down) setTimeout(function () { st[i].down = false; if (PV && PV.disp) renderStage(); }, 180);
+  }
   function deckFcu(pid, i, dir) {
     var apBefore = apLit().length;
     PN.pressItems(PN.P[pid].items, i, PSTATE[pid] || (PSTATE[pid] = {}), dir);
@@ -371,7 +383,7 @@
   function renderStage() {
     var p = getP(PV.id);
     if (PV.disp) {
-      document.getElementById('pv-stage').innerHTML = '<div class="pv-screen">' + dispSvg(PV.id) + '</div>' + (PV.id === 'SD' ? sdButtons() : '');
+      document.getElementById('pv-stage').innerHTML = '<div class="pv-screen">' + dispSvg(PV.id) + '</div>' + (PV.id === 'EWD' || PV.id === 'SD' ? ecpHtml() : '');
       document.getElementById('pv-info').innerHTML = infoHtml(p);
       return;
     }
@@ -379,7 +391,7 @@
     // ECP: the SD sits on top of the panel, the same width, with no gap (no top margin in the viewBox).
     document.getElementById('pv-stage').innerHTML = PV.photo ? renderPhotoStage(PV.photo) :
       (fm ? '<div class="fm-wrap">' + FMGC.guideHtml() : '') + (ecp ? '<div class="ecp-wrap"><div class="pv-sdtop" aria-label="System display">' + sdSvg() + '</div>' : '') +
-      '<svg viewBox="-4 ' + (ecp ? 0 : -4) + ' ' + (p.w + 8) + ' ' + (p.h + (ecp ? 4 : 8)) + '" class="pv-svg' + (/^MCDU[12]$/.test(PV.id) ? ' pv-mcdu' : '') + (PV.id === 'ATC' ? ' pv-atc' : '') + (/^(FCU|EFIS[LR])$/.test(PV.id) ? ' pv-fcu' : '') + '" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
+      '<svg viewBox="-4 ' + (ecp ? 0 : -4) + ' ' + (p.w + 8) + ' ' + (p.h + (ecp ? 4 : 8)) + '" class="pv-svg' + (/^MCDU[12]$/.test(PV.id) ? ' pv-mcdu' : '') + (PV.id === 'ATC' ? ' pv-atc' : '') + (/^(FCU|EFIS[LR])$/.test(PV.id) ? ' pv-fcu' : '') + '" style="--ar: ' + ((p.h + (ecp ? 4 : 8)) / (p.w + 8)).toFixed(4) + '" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' + (fm || ecp ? '</div>' : '') +
       (FMGC && /^MCDU[12]$/.test(PV.id) ? FMGC.simHtml() : '') + miniEwd();
     document.getElementById('pv-info').innerHTML = infoHtml(p);
@@ -1029,6 +1041,7 @@
   document.addEventListener('click', function (e) {
     var ctlEl = e.target.closest('.ctl');
     if (ctlEl && PV && TURN && TURN.moved) { TURN = null; return; }
+    if (ctlEl && PV && PV.disp && ctlEl.closest('.pv-ecp')) { pressEcp(+ctlEl.getAttribute('data-ctl')); return; }
     if (ctlEl && PV && ctlEl.classList.contains('turn')) {
       var r = ctlEl.getBoundingClientRect();
       // The centre of the knob pushes it, a second tap pulls it; either side turns it.
@@ -1071,7 +1084,6 @@
       case 'closeSearch': searchOpen = false; renderSearch(); break;
       case 'open': openPanel(el.getAttribute('data-id'), null); break;
       case 'closePanel': closePanel(); break;
-      case 'sdpage': setSd(el.getAttribute('data-sd')); break;
       case 'entry': startEntry(FAIL.CATEGORIES[+el.getAttribute('data-c')][1][+el.getAttribute('data-e')]); break;
       case 'brief': brief(el.getAttribute('data-id')); break;
       case 'beginDrill': begin(); break;
