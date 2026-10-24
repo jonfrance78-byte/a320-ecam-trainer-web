@@ -806,6 +806,20 @@
     o += text(x, cy - 0.6, 'ENG', 'eng-cap-t', 3.2) + text(x, cy + 3.5, it.engCap, 'eng-cap-t', 3.4);
     return o;
   }
+  // A/SKID & N/W STRG switch (owner's FCOM picture, 0.7.46): a grey tapered knob on a short
+  // stem through a hex nut on a round base; up at ON, down at OFF; OFF underlined.
+  function drawKnobTog(it, cur) {
+    var x = it.x, y = it.y, d = cur === 0 ? -1 : 1, o = '', hex = [];
+    o += text(x + 6, y - 5.4, 'ON', 'pn-pos' + (cur === 0 ? ' cur' : ''), 3.2, 'start');
+    o += text(x + 5.6, y + 7.2, 'OFF', 'pn-pos' + (cur === 1 ? ' cur' : ''), 3.2, 'start') + '<line x1="' + (x - 6) + '" y1="' + (y + 8.4) + '" x2="' + (x + 12) + '" y2="' + (y + 8.4) + '" class="pn-arc"/>';
+    o += '<circle cx="' + (x + 0.6) + '" cy="' + (y + 1) + '" r="5.2" class="shadow"/><circle cx="' + x + '" cy="' + y + '" r="5" class="ask-base"/>';
+    for (var hd = 0; hd < 360; hd += 60) hex.push(polar(x, y, 3.6, hd).join(','));
+    o += '<polygon points="' + hex.join(' ') + '" class="ask-nut"/><circle cx="' + x + '" cy="' + y + '" r="1.3" class="tog-hole"/>';
+    var ky = y + d * 8.6;
+    o += '<rect x="' + (x - 0.6) + '" y="' + Math.min(y, y + d * 3) + '" width="1.2" height="3" class="ask-stem"/>';
+    o += '<path d="M' + (x - 1.3) + ' ' + (y + d * 2.6) + ' L' + (x - 2.6) + ' ' + ky + ' Q' + x + ' ' + (ky + d * 2.4) + ' ' + (x + 2.6) + ' ' + ky + ' L' + (x + 1.3) + ' ' + (y + d * 2.6) + ' Z" class="ask-knob"/>';
+    return o;
+  }
   function drawTog(it, st) {
     var x = it.x, y = it.y, n = it.pos.length, cur = st.cur != null ? st.cur : it.cur, o = '';
     if (it.vee) {
@@ -818,6 +832,7 @@
       return o;
     }
     if (it.engCap) return drawEngMaster(it, cur);
+    if (it.knobTog) return drawKnobTog(it, cur);
     var span = it.round ? 11 : 13, top = y - span / 2;
     it.pos.forEach(function (p, i) {
       var py = n === 1 ? y : top + i * span / (n - 1);

@@ -241,7 +241,7 @@
       pb(71, 18, 'BRK FAN', 'HOT:a', 'ON', 'Brake fans. ON: the fans run if the left main gear is down and locked; the BRK FAN memo shows on the E/WD. Off: the fans stop. HOT (amber): the brakes are too hot, with an ECAM caution.', { s: 11, noname: true }),
       ln([[61, 27], [82, 27]]),
       raw(t(71, 33, 'A/SKID &', 3.4) + t(71, 37, 'N/W STRG', 3.4)),
-      tog(68, 49, 'A/SKID & N/W STRG', ['ON', 'OFF'], 0, 'ON: anti-skid and nose wheel steering available. OFF: no anti-skid and no nose wheel steering; braking moves to the alternate (yellow) system and the brake pressure has to be watched on the triple indicator.', { noname: true })
+      tog(66, 47, 'A/SKID & N/W STRG', ['ON', 'OFF'], 0, 'ON: anti-skid and nose wheel steering available. OFF: no anti-skid and no nose wheel steering; braking moves to the alternate (yellow) system and the brake pressure has to be watched on the triple indicator.', { noname: true, knobTog: true, hit: [20, 22] })
     ]
   };
 
