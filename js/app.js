@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.22';
+  var VERSION = '0.7.24';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -327,13 +327,16 @@
     if (f.vert !== 'ALT CRZ' && alt !== s.alt) f.arm = 'ALT';
     f.thr = /CLB/.test(f.vert) ? 'THR CLB' : /DES/.test(f.vert) ? 'THR IDLE' : f.spdSel && !mach ? 'SPEED' : 'MACH';
     f.lat = f.hdgSel ? 'HDG' : 'NAV';
+    f.ap = apLit();
     var e = efisNd(); f.fd = e.fd; f.ls = e.ls; f.baro = e.baro;
     f.brk = autoBrk();
     return f;
   }
   // A press on the FCU or an EFIS panel drawn on the flight deck (the panel is not expanded).
   function deckFcu(pid, i, dir) {
+    var apBefore = apLit().length;
     PN.pressItems(PN.P[pid].items, i, PSTATE[pid] || (PSTATE[pid] = {}), dir);
+    if (pid === 'FCU' && apLit().length < apBefore) apOff();
     var st = PSTATE[pid][i];
     if (pid === 'LGLEVER') gearMoved();
     refreshHome();
@@ -410,9 +413,15 @@
     var it = PV.items[i];
     if (!it) return;
     if (!PV.photo) drillPress(PV.id, i);
+    var apBefore = apLit().length;
     if (it.master && !PV.photo) PV.note = pressMaster(it.master) || 'Lights only with a warning or caution.';
     else if (it.clrKey && DR && DR.s) { PN.pressItems(PV.items, i, PV.states); pressClr(); PV.note = DR && DR.flash; }
+    else if (it.clrKey && APOFF && !PV.photo) { PN.pressItems(PV.items, i, PV.states); pressClr(); PV.note = 'AUTO FLT AP OFF cleared from the E/WD.'; }
     else PV.note = PN.pressItems(PV.items, i, PV.states, dir);
+    if (!PV.photo && !DR && (PV.id === 'FCU' && apLit().length < apBefore || it.name === 'Takeover pushbutton' && apBefore)) {
+      if (it.name === 'Takeover pushbutton') ['AP1', 'AP2'].forEach(function (n) { PSTATE.FCU[apIdx(n)] = {}; });
+      apOff(); PV.note = 'Autopilot disconnected: AUTO FLT AP OFF (red) on the E/WD, MASTER WARN and the AP OFF aural. MASTER WARN silences it; CLR removes the message.';
+    }
     if (PV.id === 'LGLEVER' && !PV.photo && it.k === 'slide') PV.note = gearMoved();
     if (it.sdPage || it.sdAll) PV.note = setSd(it.sdAll ? 'ALL' : it.sdPage);
     if (FMGC && /^MCDU[12]$/.test(PV.id) && it.k === 'pb' && it.name) FMGC.key(PV.id, it.name.replace(/\n/g, ' '));
@@ -441,6 +450,19 @@
   // the trainee works it on the real panels. See js/failures.js.
   var FAIL = window.ECAM_FAILURES;
   var PSTATE = {};   // control states of the drawn panels, kept between visits
+  // AUTO FLT AP OFF outside the drills (owner's request, 0.7.23): disconnecting the
+  // autopilot with AP1/AP2 on the FCU or a sidestick takeover pushbutton shows the red
+  // warning on the E/WD, lights MASTER WARN and loops the owner's AP OFF sound.
+  // MASTER WARN only silences it; the message stays until CLR. In cruise AP1 is engaged.
+  var APOFF = false, AP_OFF_LINE = { parts: [{ s: 'AUTO FLT', u: true, c: 'r' }, { s: ' AP OFF', c: 'r' }] };
+  function apIdx(n) { return PN.P.FCU.items.findIndex(function (x) { return x.name === n; }); }
+  function apLit() {
+    var st = PSTATE.FCU || {};
+    return ['AP1', 'AP2'].filter(function (n) { var i = apIdx(n); return PN.litBits((st[i] || {}).lit, PN.P.FCU.items[i]).lo; });
+  }
+  function seedAp() { (PSTATE.FCU || (PSTATE.FCU = {}))[apIdx('AP1')] = { lit: 'lo' }; }
+  function apOff() { if (DR) return; APOFF = true; PN.LIVE.clr = true; masters('W', true); chime(3, true); }
+  seedAp();
   var DR = null;     // the running drill
   var BEST = {};
   try { BEST = JSON.parse(localStorage.getItem('ecam-best') || '{}'); } catch (e) { BEST = {}; }
@@ -566,7 +588,7 @@
     return dots >= 2 ? base + new Array(dots + 1).join('.') + val : base + ' ' + val;
   }
   function ewdView() {
-    if (!DR || !DR.s) return { lines: [], memo: [] };
+    if (!DR || !DR.s) return { lines: APOFF ? [AP_OFF_LINE] : [], memo: [] };
     var f = DR.f, out = [], cls = f.level === 3 ? 'r' : 'a';
     if (f.level >= 2 && (DR.phase === 'run' || DR.phase === 'clr1' || DR.phase === 'quiz')) {
       var w = f.sysWord, rest = f.title.indexOf(w) === 0 ? f.title.slice(w.length) : ' ' + f.title;
@@ -616,7 +638,8 @@
   }
   function begin() {
     var f = DR.f;
-    PSTATE = {}; gearReset();
+    PSTATE = {}; gearReset(); APOFF = false;
+    if (JSON.stringify(f.pre || []).indexOf('AP OFF') < 0) seedAp();
     if (PV) closePanel();
     DR.s = cruiseState(); DR.i = 0; DR.done = {}; DR.mist = []; DR.right = 0; DR.asked = 0; DR.flash = null; DR.t0 = Date.now();
     if (f.setup) f.setup(DR.s);
@@ -639,7 +662,12 @@
     renderDrill(); refreshHome();
     if (PV && !PV.disp) renderStage();
   }
+  // Alerts above the failure (AUTO FLT AP OFF) are cleared with CLR before any of its
+  // actions count (owner's request: the top alert is cleared first, in every drill).
+  function preOpen() { return !!(DR.f.pre && DR.f.pre.length && !DR.preClr); }
+  function preName() { return DR.f.pre.map(function (l) { return l.text || l.parts.map(function (p) { return p.s; }).join(''); }).join(', '); }
   function stepMet(st) {
+    if ((st.k === 'act' || st.k === 'task') && preOpen()) return false;
     if (st.k === 'master') return !masterLit();
     if (st.k === 'act') return st.ctls.every(function (c) { return st.press ? !!ctlState(c).down : bits(c).lo === st.sel; });
     if (st.k === 'task') {
@@ -662,7 +690,7 @@
     while (st && (st.k === 'master' || st.k === 'act' || st.k === 'task') && stepMet(st)) {
       DR.done[DR.i] = true;
       if (st.k === 'act') { acted = true; if (st.fx) st.fx(DR.s); if (st.clears) st.ctls.forEach(function (c) { setFault(c, false); }); DR.flash = st.item + ' ' + st.val + ': ' + (st.why || 'done.'); }
-      if (st.k === 'master') { DR.masterDone = true; DR.flash = 'Warning acknowledged: light out, chime silenced. Now read the ECAM procedure on the E/WD.' + (DR.f.pre && !DR.preClr ? ' AUTO FLT AP OFF stays until you press CLR.' : ''); }
+      if (st.k === 'master') { DR.masterDone = true; DR.flash = 'Warning acknowledged: light out, chime silenced. ' + (preOpen() ? 'Now press CLR to clear ' + preName() + ', the first alert on the E/WD.' : 'Now read the ECAM procedure on the E/WD.'); }
       if (st.k === 'task') DR.flash = st.info || null;
       DR.i++; moved = true;
       st = DR.f.steps[DR.i];
@@ -694,10 +722,10 @@
   // A press on a procedure control before its turn is a sequence error.
   function drillPress(panel, i) {
     if (!DR || DR.phase !== 'run') return;
-    var f = DR.f, cur = f.steps[DR.i];
+    var f = DR.f, cur = f.steps[DR.i], pre = preOpen();
     f.steps.forEach(function (st, k) {
-      if (st.k !== 'act' || DR.done[k] || k === DR.i || !st.ctls.some(function (c) { return c[0] === panel && ctlIndex(c) === i; })) return;
-      var msg = st.item + ' before ' + (cur.k === 'act' ? cur.item + ' ' + cur.val : cur.k === 'master' ? 'acknowledging the warning' : 'the step before it');
+      if (st.k !== 'act' || DR.done[k] || k === DR.i && !pre || !st.ctls.some(function (c) { return c[0] === panel && ctlIndex(c) === i; })) return;
+      var msg = st.item + ' before ' + (cur.k === 'master' ? 'acknowledging the warning' : pre ? 'clearing ' + preName() : cur.k === 'act' ? cur.item + ' ' + cur.val : 'the step before it');
       if (DR.mist.indexOf(msg) < 0) DR.mist.push(msg);
       DR.flash = 'Out of sequence: ' + msg + '. Follow the ECAM order.';
     });
@@ -709,11 +737,13 @@
     return lit ? 'Light out' + (type === 'W' ? ' and the chime silenced.' : '.') : null;
   }
   function pressClr() {
+    if (!DR && APOFF) { APOFF = false; PN.LIVE.clr = false; refreshHome(); return true; }
     if (!DR || !DR.s) return null;
     var f = DR.f;
-    if (DR.phase === 'run' && f.pre && f.pre.length && !DR.preClr) {
+    if (DR.phase === 'run' && preOpen()) {
+      DR.flash = preName() + ' cleared. Now the ' + f.title + ' procedure.';
       DR.preClr = true; PN.LIVE.clr = false;
-      DR.flash = f.pre.map(function (l) { return l.text || l.parts.map(function (p) { return p.s; }).join(''); }).join(', ') + ' cleared.';
+      drillCheck();
     } else if (DR.phase === 'run') {
       var msg = 'CLR pressed before the actions were complete';
       if (DR.mist.indexOf(msg) < 0) DR.mist.push(msg);
@@ -773,7 +803,7 @@
   // Back to a normal aircraft.
   function stopDrill(quiet) {
     stopChime();
-    DR = null; PSTATE = {}; gearReset(); PN.LIVE.clr = false; sdPage = null; PN.LIVE.sdPage = null;
+    DR = null; PSTATE = {}; gearReset(); seedAp(); PN.LIVE.clr = false; sdPage = null; PN.LIVE.sdPage = null;
     if (!quiet) { hideModal(); if (PV) closePanel(); renderDrill(); refreshHome(); }
   }
 
@@ -790,6 +820,7 @@
     if (DR.phase === 'done') return 'Drill complete.';
     if (!st) return '';
     if (st.k === 'master') return 'Press the flashing MASTER ' + (f.level === 3 ? 'WARN' : 'CAUT') + ' on the glareshield to ' + (f.level === 3 ? 'silence the chime' : 'acknowledge the caution') + '.';
+    if (preOpen()) return 'Press CLR on the ECAM control panel (pedestal) to clear ' + preName() + ' first: it is the top alert on the E/WD, and the procedure below starts once it is cleared.';
     if (st.k === 'act') return 'ECAM action: ' + st.item + ' ' + st.val + '. ' + (st.hint || 'Overhead ' + panelName(st.ctls[0][0]) + ' panel.');
     if (st.k === 'task') return st.text;
     return '';
@@ -797,8 +828,8 @@
   function renderDrill() {
     var el = document.getElementById('drill');
     if (!DR || !DR.s) { el.hidden = true; document.body.classList.remove('drill-on'); return; }
-    var f = DR.f, acts = f.steps.filter(function (s) { return s.k === 'act' || s.k === 'task' || s.k === 'master'; }).length;
-    var done = f.steps.filter(function (s, i) { return DR.done[i] && (s.k === 'act' || s.k === 'task' || s.k === 'master'); }).length;
+    var f = DR.f, acts = f.steps.filter(function (s) { return s.k === 'act' || s.k === 'task' || s.k === 'master'; }).length + (f.pre ? 1 : 0);
+    var done = f.steps.filter(function (s, i) { return DR.done[i] && (s.k === 'act' || s.k === 'task' || s.k === 'master'); }).length + (f.pre && DR.preClr ? 1 : 0);
     el.innerHTML = '<div class="drill-top"><span class="dot dot-' + ['w', 'w', 'a', 'r'][f.level] + '"></span><b class="drill-title">' + esc(f.title) + '</b>' +
       '<span class="drill-prog">' + done + '/' + acts + '</span>' +
       '<button class="icon-btn sm" data-act="mute" aria-label="' + (muted ? 'Unmute' : 'Mute') + ' aural alerts">' + (muted ? '🔇' : '🔊') + '</button>' +
