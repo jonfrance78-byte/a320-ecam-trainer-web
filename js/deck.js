@@ -36,8 +36,9 @@
     // on the windows still expands the panel.
     // and the EFIS panels (0.7.20) the same way.
     // The gear lever (owner's request, 0.7.21) moves on the deck; a tap elsewhere on its panel expands it.
-    if (id === 'FCU' || id === 'EFISL' || id === 'EFISR' || id === 'LGLEVER') p.items.forEach(function (it, i) {
-      if (id === 'LGLEVER' && it.k !== 'slide') return;
+    // The autobrake LO/MED/MAX pushbuttons (0.7.22) the same way.
+    if (id === 'FCU' || id === 'EFISL' || id === 'EFISR' || id === 'LGLEVER' || id === 'AUTOBRK') p.items.forEach(function (it, i) {
+      if (id === 'LGLEVER' && it.k !== 'slide' || id === 'AUTOBRK' && it.group !== 'abrk') return;
       var r = it.r || 8, b = it.k === 'knob' || it.k === 'sel' ? [it.x - r - 2, it.y - r - 2, r * 2 + 4, r * 2 + 4] : it.k === 'ring' ? [it.x - 15, it.y - it.r - 11, 30, 9] :
         it.k === 'pb' ? [it.x - (it.w || it.s) / 2 - 2, it.y - it.s / 2 - 2, (it.w || it.s) + 4, it.s + 4] : it.k === 'tog' ? [it.x - 7, it.y - 7, 14, 16] :
         it.k === 'slide' ? [it.x - it.hw / 2 - 5, it.y0 - 12, it.hw + 10, it.y1 - it.y0 + 24] : null;

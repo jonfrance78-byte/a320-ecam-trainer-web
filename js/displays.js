@@ -514,6 +514,8 @@
     for (var i = 1; i < 5; i++) o += ln(i * 40, 2, i * 40, 22, 'sw', 0.8);
     [f.thr, f.vert, f.lat].forEach(function (m, k) { o += t(20 + k * 40, 10, m, 'g', m.length > 7 ? 6 : 7, 'middle'); });
     if (f.arm) o += t(60, 19, f.arm, 'c', 6.5, 'middle');
+    // Armed autobrake: column 4, third line, blue
+    if (f.brk) o += t(140, 23, 'BRK ' + f.brk, 'c', 6.5, 'middle');
     o += t(180, 9, 'AP1', 'w', 6.5, 'middle') + t(180, 16, f.fd === false ? '-FD2' : '1FD2', 'w', 6.5, 'middle') + t(180, 23, 'A/THR', 'w', 6.5, 'middle');
     // attitude
     o += '<clipPath id="pfd-att"><path d="M64 60 Q66 46 100 44 Q134 46 136 60 L136 132 Q134 148 100 150 Q66 148 64 132 Z"/></clipPath><g clip-path="url(#pfd-att)">';

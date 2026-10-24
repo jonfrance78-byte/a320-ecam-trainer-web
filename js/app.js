@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.21';
+  var VERSION = '0.7.22';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -328,6 +328,7 @@
     f.thr = /CLB/.test(f.vert) ? 'THR CLB' : /DES/.test(f.vert) ? 'THR IDLE' : f.spdSel && !mach ? 'SPEED' : 'MACH';
     f.lat = f.hdgSel ? 'HDG' : 'NAV';
     var e = efisNd(); f.fd = e.fd; f.ls = e.ls; f.baro = e.baro;
+    f.brk = autoBrk();
     return f;
   }
   // A press on the FCU or an EFIS panel drawn on the flight deck (the panel is not expanded).
@@ -421,11 +422,17 @@
   var DR = null;     // the running drill
   var BEST = {};
   try { BEST = JSON.parse(localStorage.getItem('ecam-best') || '{}'); } catch (e) { BEST = {}; }
-  function liveState() { var s = DR && DR.s ? DR.s : cruiseState(); s.gear = gearView(s); return s; }
+  function liveState() { var s = DR && DR.s ? DR.s : cruiseState(); s.gear = gearView(s); s.autoBrk = autoBrk(); return s; }
+  // Armed autobrake mode (LO, MED or MAX: its blue ON is lit), or null.
+  function autoBrk() {
+    var st = PSTATE.AUTOBRK || {}, mode = null;
+    PN.P.AUTOBRK.items.forEach(function (it, i) { if (it.group === 'abrk' && PN.litBits((st[i] || {}).lit, it).lo) mode = it.name; });
+    return mode;
+  }
   function refreshHome() { var y = window.scrollY; renderHome(); window.scrollTo(0, y); }
 
   /* ------------------------------------------------------- landing gear */
-  // Normal extension and retraction (owner's request, 0.7.21), on the green system.
+  // Normal extension and retraction (owner's request, 0.7.22), on the green system.
   // Each leg (left main, nose, right main) opens its doors, moves, locks, then closes
   // its doors. The LDG GEAR indicator and the SD WHEEL page follow it.
   var DOOR_T = 3, LEG_T = [8, 7, 8.4]; // seconds: doors open or close, each leg travels
