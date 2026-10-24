@@ -85,6 +85,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .pn-name { fill: #f1ece4; font-weight: 700; letter-spacing: .02em; }
 .pn-label { fill: #f3eee6; font-weight: 700; letter-spacing: .06em; }
 .pn-flow { fill: none; stroke: #74f06a; stroke-width: 1.15; stroke-linejoin: round; }
+.pn-flow-fill { fill: #74f06a; }
 .pn-tick { stroke: #f1ece4; stroke-width: .6; }
 .pn-pos { fill: #ece6dc; font-weight: 700; }
 .pn-pos.cur { fill: #fff; }
