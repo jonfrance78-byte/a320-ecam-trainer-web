@@ -396,29 +396,39 @@
     ])
   };
 
+  // RMP, laid out from the owner's FCOM diagram (DSC-23-10-20, owner's request, 0.7.48; the look
+  // follows the owner's aircraft photo: triangle lights, green transfer arrow), and
+  // working: radios, transfer, tuning knobs and back-up NAV (see RADIOS in js/panels.js).
   function rmp(n) {
-    var items = [
-      raw(t(26, 5.4, 'ACTIVE', 3.4) + t(76, 5.4, 'STBY/CRS', 3.4) + line(8, 44.6, 34, 44.6) + t(46, 45.6, 'STBY NAV', 3) + line(58, 44.6, 74, 44.6)),
-      disp(26, 13, 34, '118.775', 'ACTIVE', 'Frequency in use on the selected radio.', { amber: true, lbl: ' ' }),
-      disp(76, 13, 34, '124.850', 'STBY/CRS', 'Standby frequency, set with the knob. With STBY NAV in use, it shows the course.', { amber: true, lbl: ' ' }),
-      key(51, 13, '⇄', 'Transfer: swaps the active and standby frequencies.', { s: 7, w: 10 }),
-      cap(15, 26, 'VHF1', 'Selects VHF 1 for tuning on this RMP (green light on).', { s: 7, w: 11, group: 'rmp', lit: n === 1 }),
-      cap(28, 26, 'VHF2', 'Selects VHF 2 for tuning on this RMP.', { s: 7, w: 11, group: 'rmp', lit: n === 2 }),
-      cap(41, 26, 'VHF3', 'Selects VHF 3 (normally the datalink radio) for tuning.', { s: 7, w: 11, group: 'rmp' }),
-      cap(15, 36, 'HF1', 'Selects HF 1 for tuning.', { s: 7, w: 11, group: 'rmp' }),
-      ann(28, 36, 'SEL', 'SEL:w', '', 'SEL lights on both RMPs when a radio normally tuned by one RMP is selected on another.', { s: 6, w: 9, noname: true }),
-      cap(41, 36, 'HF2', 'Selects HF 2 for tuning.', { s: 7, w: 11, group: 'rmp' }),
-      cap(54, 36, 'AM', 'Selects amplitude modulation for HF.', { s: 7, w: 11 }),
-      knob(78, 32, 'Tuning knob', '', '', 'Tuning knob for the standby window: outer knob MHz, inner knob kHz.', { r: 7.5, light: true, noname: true }),
-      cap(15, 53, 'NAV', 'Back-up radio navigation (under a clear guard on the aircraft): lets the RMPs tune the VOR, ILS and ADF if both FMGCs fail. The green light shows it is selected.', { s: 7, w: 11 }),
-      cap(30, 53, 'VOR', 'With NAV selected: the standby window tunes a VOR, and shows its course.', { s: 7, w: 11, group: 'nav' }),
-      cap(43, 53, 'ILS', 'With NAV selected: the standby window tunes the ILS, and shows its course.', { s: 7, w: 11, group: 'nav' }),
-      cap(64, 53, 'ADF', 'With NAV selected: the standby window tunes the ADF.', { s: 7, w: 11, group: 'nav' }),
-      tog(80, 53, 'RMP ' + n, ['ON', 'OFF'], 0, 'Switches RMP ' + n + ' on or off. At OFF the panel goes dark: the frequency windows and the selection lights go out, and its keys do nothing.', { noname: true, power: 1, bat: true, hit: [16, 24] })
+    var items, k = function (x, y, name, info, o) { return cap(x, y, name, info, Object.assign({ s: 6, w: 8.8, cs: 2.8, dot: true, rmp: true }, o || {})); };
+    items = [
+      raw(t(24, 5.4, 'ACTIVE', 3.4) + t(76, 5.4, 'STBY/CRS', 3.4) + line(20, 43.6, 40, 43.6) + t(50, 44.6, 'STBY NAV', 2.8) + line(60, 43.6, 78, 43.6) + line(78, 43.6, 78, 45.4)),
+      disp(24, 13, 32, '', 'ACTIVE', 'Active frequency of the selected radio (the key with the green light).', { amber: true, lbl: ' ' }),
+      disp(76, 13, 32, '', 'STBY/CRS', 'Standby frequency of the selected radio, set with the knobs. The transfer key makes it active.', { amber: true, lbl: ' ' }),
+      key(50, 13, '⟷', 'Transfer key: the active frequency goes to the standby window and the standby frequency becomes active. The selected radio is tuned to it.', { s: 7, w: 10, rmp: true, rmpXfr: true, green: true }),
+      k(14, 26, 'VHF1', 'Selects VHF 1: its active and standby frequencies show in the windows; green light on the key.', { group: 'rmp', radio: 'VHF1', lit: n === 1 }),
+      k(27, 26, 'VHF2', 'Selects VHF 2.', { group: 'rmp', radio: 'VHF2', lit: n === 2 }),
+      k(40, 26, 'VHF3', 'Selects VHF 3 (normally DATA, the datalink radio).', { group: 'rmp', radio: 'VHF3' }),
+      k(53, 26, 'LOAD', 'Load function: loads a frequency sent by datalink (not modelled in this trainer).', { rmp: false }),
+      k(14, 37, 'HF1', 'Selects HF 1.', { group: 'rmp', radio: 'HF1' }),
+      part(27, 37, 8, 8, 'SEL indicator', 'SEL indicator: lights amber on both RMPs when a radio normally tuned by one RMP is selected on another.', '<circle cx="27" cy="37" r="3.6" class="rmp-sel"/>' + t(27, 36.6, 'SEL', 2.4, 'rmp-sel-t') + '<circle cx="27" cy="39" r=".7" class="rmp-sel-l"/>', { kindName: 'Indicator' }),
+      k(40, 37, 'HF2', 'Selects HF 2.', { group: 'rmp', radio: 'HF2' }),
+      k(53, 37, 'AM', 'HF amplitude modulation selection (green light on): AM instead of upper sideband.', { rmp: false }),
+      knob(80, 32, 'Frequency selector (outer)', '', '', 'Frequency selector knobs, concentric. The outer knob sets the whole numbers of the standby frequency: tap its left or right side, or drag it round.', { r: 8.5, light: true, noname: true, rmp: true, rmpTune: 'outer' }),
+      knob(80, 32, 'Frequency selector (inner)', '', '', 'The inner knob sets the decimals of the standby frequency: tap its left or right side, or drag it round.', { r: 4.6, light: true, noname: true, rmp: true, rmpTune: 'inner', hit: [12, 12] }),
+      k(13, 54, 'NAV', 'Radio navigation back-up mode key, under a transparent guard: lets the RMPs tune the navaids if both FMGCs fail (green light on). Then the navaid keys select the receiver.', { guard: 'c', navMode: true }),
+      k(26, 54, 'VOR', 'With NAV on: selects the VOR; its frequency shows (STBY/CRS sets the course on the aircraft).', { group: 'rmp', radio: 'VOR', navKey: true }),
+      k(38, 54, 'ILS', 'With NAV on: selects the ILS.', { group: 'rmp', radio: 'ILS', navKey: true }),
+      k(50, 54, 'GLS', 'With NAV on: selects the GLS channel.', { group: 'rmp', radio: 'GLS', navKey: true }),
+      k(62, 54, 'MLS', 'With NAV on: selects the MLS channel.', { group: 'rmp', radio: 'MLS', navKey: true }),
+      k(74, 54, 'ADF', 'With NAV on: selects the ADF.', { group: 'rmp', radio: 'ADF', navKey: true }),
+      tog(86, 47, 'RMP ' + n, ['ON', 'OFF'], 0, 'RMP ON/OFF control. At OFF the panel goes dark: the frequency windows and the selection lights go out, and its keys do nothing.', { noname: true, power: 1, bat: true, hit: [14, 22] })
     ];
+    items[1].valFn = rmpLive(items, 'a'); items[2].valFn = rmpLive(items, 's');
     // RMP keys sit flush in the panel, without the white frame of overhead pushbuttons.
     return items.map(function (it) { return it.k === 'pb' || it.k === 'ann' ? Object.assign({ noFrame: true }, it) : it; });
   }
+  function rmpLive(items, which) { return PN.rmpWin(items, which); }
   P.RMP1 = { title: '', name: 'RMP 1', w: 100, h: 62, tone: 'dark', sys: null, desc: 'Radio management panel 1: tunes the VHF and HF radios, and the navaids as a back-up.', items: rmp(1) };
   P.RMP2 = { title: '', name: 'RMP 2', w: 100, h: 62, tone: 'dark', sys: null, desc: 'Radio management panel 2: tunes the VHF and HF radios, and the navaids as a back-up.', items: rmp(2) };
   P.ACP1 = { title: '', name: 'ACP 1', w: 168, h: 64, tone: 'dark', sys: null, desc: 'Captain\'s audio control panel: transmitter selection, receiver volumes, interphone and PA.', items: [{ k: 'acp', x: 0, y: 0 }] };

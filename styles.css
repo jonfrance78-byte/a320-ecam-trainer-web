@@ -104,6 +104,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .pb-bar.on { fill: #3fe060; }
 .pb-rect { fill: #e9eef2; font-weight: 700; opacity: .8; }
 .pb-rect.on { fill: #fff; opacity: 1; }
+.pb-rect.green { fill: #7cff5c; opacity: 1; }
 .guard { stroke-width: .6; }
 .guard-r { fill: url(#g-guard-r); stroke: #6c0e0b; }
 .guard-c { fill: url(#g-guard-c); stroke: #d0dbe3; }
@@ -408,6 +409,8 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .ask-knob { fill: #8e9396; stroke: #5d6366; stroke-width: .3; }
 .gauge-green-thin { fill: none; stroke: #2fbf5a; stroke-width: .35; }
 .gauge-needle-f { fill: #f4f4f0; } .gauge-hub { fill: #4a4c4e; } .gauge-cyan { fill: #4fd3ea; }
+.rmp-sel { fill: #3a2414; stroke: #1a1a1a; stroke-width: .4; } .rmp-sel-t { fill: #c9884a; font-weight: 700; } .rmp-sel-l { fill: #d9b48a; }
+.rmp-dot { fill: #8a5a1e; } .rmp-dot.on { fill: #3cff6e; filter: drop-shadow(0 0 1px #3cff6e); }
 .eng-base { fill: url(#g-boss); } .eng-well { fill: #1d2228; }
 .eng-cap { fill: #3f5560; stroke: #c9d3d8; stroke-width: .5; } .eng-cap-t { fill: #f2f2ee; font-weight: 700; }
 .grav-boss { fill: url(#g-boss); stroke: #0b0d0f; }

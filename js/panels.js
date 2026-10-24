@@ -658,7 +658,9 @@
     var fs = Math.max(2.6, s * 0.23);
     if (it.bar && it.capText) {
       // Legend printed on the cap with the light bar above it (FCU, EFIS, RMP).
-      o += '<rect x="' + (x - bh + 2.4) + '" y="' + (y - h + 1.2) + '" width="' + (bw - 4.8) + '" height="1.5" rx=".7" class="pb-bar' + (lit ? ' on' : '') + '"/>';
+      // RMP keys (0.7.48): a round green light above the key in place of the bar.
+      if (it.dot) o += '<path d="M' + (x - 1.3) + ' ' + (y - h - 3.2) + ' h2.6 l-1.3 2 z" class="rmp-dot' + (lit ? ' on' : '') + '"/>';
+      else o += '<rect x="' + (x - bh + 2.4) + '" y="' + (y - h + 1.2) + '" width="' + (bw - 4.8) + '" height="1.5" rx=".7" class="pb-bar' + (lit ? ' on' : '') + '"/>';
       var cl = it.name.split('\n'), cs = it.cs || Math.min(3.4, s * 0.34);
       cl.forEach(function (t, i) { o += text(x, y + 1.6 + cs * 0.3 + (i - (cl.length - 1) / 2) * (cs + 0.4), t, 'pb-rect on', cs); });
     } else if (it.bar) {
@@ -668,7 +670,7 @@
     } else if (it.rect) {
       if ((it.sdPage || it.clrKey) && lit) o += '<rect x="' + (x - bh + 0.6) + '" y="' + (y - h + 0.6) + '" width="' + (bw - 1.2) + '" height="' + (s - 1.2) + '" rx="1" class="ecp-glow"/>';
       var rl = it.name.split('\n'), rs = Math.min(fs * 0.95, 3.4);
-      rl.forEach(function (t, i) { o += text(x, y + rs * 0.36 + (i - (rl.length - 1) / 2) * (rs + 0.5), t, 'pb-rect' + (lit ? ' on' : ''), rs); });
+      rl.forEach(function (t, i) { o += text(x, y + rs * 0.36 + (i - (rl.length - 1) / 2) * (rs + 0.5), t, 'pb-rect' + (lit ? ' on' : '') + (it.green ? ' green' : ''), it.green ? rs * 1.6 : rs); });
     } else if (it.up && it.lo) {
       if (lit === 'up') o += glowText(x, y - s * 0.12, it.up, fs);
       if (lit === 'lo') o += glowText(x, y + s * 0.3, it.lo, fs);
@@ -1075,12 +1077,12 @@
         case 'knob': g = drawKnob(it, st); break;
         case 'tog': g = drawTog(it, st); break;
         case 'lever': g = drawLever(it, st); break;
-        case 'disp': g = drawDisp(it, off, st); break;
+        case 'disp': g = drawDisp(it, off, it.valFn ? { val: it.valFn(states) } : st); break;
         case 'win': g = drawWin(it, st); break;
         case 'ring': g = drawRing(it, st); break;
       }
       if (opts && opts.interactive) {
-        o += '<g class="ctl' + (it.fcu || it.dim ? ' turn' : '') + (opts.selected === i ? ' sel' : '') + '" data-ctl="' + i + '" tabindex="0" role="button" aria-label="' + esc(ctlName(it)) + '">' + hitRect(it) + g + '</g>';
+        o += '<g class="ctl' + (it.fcu || it.dim || it.rmpTune ? ' turn' : '') + (opts.selected === i ? ' sel' : '') + '" data-ctl="' + i + '" tabindex="0" role="button" aria-label="' + esc(ctlName(it)) + '">' + hitRect(it) + g + '</g>';
       } else o += g;
     });
     return o;
@@ -1180,6 +1182,47 @@
   // Press control i of a panel, including effects on other controls (the fire
   // pushbutton arms its agents' squibs; an armed agent lights DISCH when pressed).
   // Returns a short note about what happened, or null.
+  /* RMP (owner's FCOM picture, 0.7.48): the radios are shared by both RMPs. Each keeps an
+   * active and a standby value; the selected key (radio group 'rmp') picks the radio shown;
+   * the transfer key swaps them; the outer knob steps whole units, the inner knob the decimals.
+   * Navaid keys work only with NAV (under its clear guard) selected. */
+  var RADIOS = {
+    VHF1: { a: 118.775, s: 124.850, lo: 118, hi: 136.975, f: 0.025, d: 3 }, VHF2: { a: 121.500, s: 119.100, lo: 118, hi: 136.975, f: 0.025, d: 3 },
+    VHF3: { a: 'DATA', s: 131.725, lo: 118, hi: 136.975, f: 0.025, d: 3 }, HF1: { a: 8.891, s: 5.598, lo: 2, hi: 29.999, f: 0.001, d: 3 },
+    HF2: { a: 11.279, s: 6.622, lo: 2, hi: 29.999, f: 0.001, d: 3 }, VOR: { a: 115.70, s: 117.30, lo: 108, hi: 117.95, f: 0.05, d: 2 },
+    ILS: { a: 109.50, s: 110.30, lo: 108.1, hi: 111.95, f: 0.05, d: 2 }, GLS: { a: 21234, s: 21456, lo: 20001, hi: 39999, f: 1, d: 0, big: 100 },
+    MLS: { a: 500, s: 512, lo: 500, hi: 699, f: 1, d: 0, big: 10 }, ADF: { a: 345.0, s: 412.0, lo: 190, hi: 1750, f: 0.5, d: 1, big: 10 }
+  };
+  function rmpFmt(v, r) { return typeof v === 'string' ? v : v.toFixed(r.d); }
+  function rmpSel(items, states) {
+    for (var i = 0; i < items.length; i++) if (items[i].radio && litBits((states[i] || {}).lit, items[i]).lo) return items[i].radio;
+    return null;
+  }
+  function rmpWin(items, which) { return function (states) { var r = rmpSel(items, states); return r ? rmpFmt(RADIOS[r][which], RADIOS[r]) : ''; }; }
+  function rmpPress(items, i, states, dir) {
+    var it = items[i], sel = rmpSel(items, states), r = sel && RADIOS[sel];
+    if (it.radio && it.navKey) {
+      var navI = items.findIndex(function (x) { return x.navMode; });
+      if (!litBits((states[navI] || {}).lit, items[navI]).lo) return 'Select NAV (under its guard) first: the navaid keys work only in back-up radio navigation.';
+      return undefined;
+    }
+    if (it.rmpXfr) {
+      states[i] = Object.assign({}, states[i], { down: true });
+      if (!r) return 'Select a radio first.';
+      var t = r.a; r.a = r.s; r.s = t;
+      return sel + ': active ' + rmpFmt(r.a, r) + ', standby ' + rmpFmt(r.s, r) + '.';
+    }
+    if (it.rmpTune) {
+      var st = states[i] || {}, d = typeof dir === 'number' ? dir : 1;
+      states[i] = Object.assign({}, st, { angle: ((st.angle || 0) + 20 * d + 360) % 360 });
+      if (!r) return 'Select a radio first.';
+      var step = it.rmpTune === 'outer' ? (r.big || 1) : r.f, v = Math.round((r.s + d * step) / r.f) * r.f;
+      if (v > r.hi) v = r.lo + (v - r.hi) - r.f; if (v < r.lo) v = r.hi - (r.lo - v) + r.f;
+      r.s = +v.toFixed(r.d);
+      return sel + ' standby ' + rmpFmt(r.s, r) + '.';
+    }
+    return undefined;
+  }
   function pressPanel(id, i, states) { return pressItems(P[id].items, i, states); }
   // A panel with its own power switch (RMP ON/OFF) is off when that switch is
   // at its OFF position (the item's power index).
@@ -1284,6 +1327,7 @@
   function pressItems(items, i, states, dir) {
     var it = items[i], st = states[i] || {};
     if (it.fcu) return typeof dir === 'string' ? pushFcu(items, i, states, dir) : turnFcu(items, i, states, dir || 1);
+    if (it.rmp && !(it.power == null && poweredOff(items, states))) { var rn = rmpPress(items, i, states, dir); if (rn !== undefined) return rn; }
     // PFD and ND brightness knobs (owner's request, 0.7.23): one step per tap or drag, OFF to BRT.
     if (it.dim) {
       if (typeof dir !== 'number') return 'Tap the left side of the knob to dim, the right side to brighten.';
@@ -1350,5 +1394,5 @@
   }
 
   var MK = { legend: legend, pb: pb, gpb: gpb, ann: ann, sel: sel, knob: knob, tog: tog, disp: disp, ln: ln, lb: lb, box: box, vt: vt, rnd: rnd, ogpb: ogpb, dec: dec, text: text, polar: polar, esc: esc };
-  window.ECAM_PANELS = { MK: MK, LIVE: LIVE, P: P, render: render, press: press, pressPanel: pressPanel, pressItems: pressItems, litBits: litBits, legend: legend, kindOf: kindOf, statusLegends: statusLegends, ctlName: ctlName, defs: defs, screw: screw };
+  window.ECAM_PANELS = { rmpWin: rmpWin, MK: MK, LIVE: LIVE, P: P, render: render, press: press, pressPanel: pressPanel, pressItems: pressItems, litBits: litBits, legend: legend, kindOf: kindOf, statusLegends: statusLegends, ctlName: ctlName, defs: defs, screw: screw };
 })();
