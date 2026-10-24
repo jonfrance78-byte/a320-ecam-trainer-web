@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.22';
+  var VERSION = '0.7.23';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -179,7 +179,7 @@
     if (VIEW === 'start') return renderStart();
     if (VIEW === 'quiz') return renderQuiz();
     var s = liveState();
-    var ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: DISP.renderPFD(s, fcuPfd(s)), nd: DISP.renderND(s, efisNd()) };
+    var cap = captDisplays(s), ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: cap.pfd, nd: cap.nd };
     document.getElementById('view').innerHTML =
       '<section class="home">' +
       '<p class="home-hint">' + (DECK_MODE === 'normal' ? 'Tap any panel to explore it. Normal procedure flows are in the <a href="' + NORMAL_APP + '">Normal Procedures</a>. ' : 'Tap any panel to expand it. Failures are in the menu. ') + '<span class="ver-pill">Version ' + VERSION + '</span> <button class="linkbtn" data-act="winReset">Reset window sizes</button></p>' +
@@ -341,7 +341,21 @@
   }
   function dispSvg(id) {
     var s = liveState();
-    return id === 'PFD' ? DISP.renderPFD(s, fcuPfd(s)) : id === 'ND' ? DISP.renderND(s, efisNd()) : id === 'EWD' ? DISP.renderEWD(s, ewdView()) : sdSvg();
+    return id === 'PFD' || id === 'ND' ? captDisplays(s)[id.toLowerCase()] : id === 'EWD' ? DISP.renderEWD(s, ewdView()) : sdSvg();
+  }
+  // Captain's PFD and ND, dimmed by the brightness knobs on the lateral panel (LATL).
+  // 0 is OFF, 1 full bright. With the PFD off its image moves to the ND display.
+  function dimLevel(which) {
+    var items = PN.P.LATL.items, st = PSTATE.LATL || {};
+    for (var i = 0; i < items.length; i++) if (items[i].dim === which) { var a = st[i] && st[i].angle != null ? st[i].angle : items[i].a0 || 0; return (a + 120) / 240; }
+    return 1;
+  }
+  function dimmed(svg, b) {
+    return b >= 1 ? svg : svg.replace(/<\/svg>\s*$/, '<rect width="100%" height="100%" fill="#000" opacity="' + (b <= 0 ? 1 : (0.85 * (1 - b)).toFixed(2)) + '" pointer-events="none"/></svg>');
+  }
+  function captDisplays(s) {
+    var bp = dimLevel('PFD'), bn = dimLevel('ND'), pfd = DISP.renderPFD(s, fcuPfd(s));
+    return bp <= 0 ? { pfd: dimmed(pfd, 0), nd: dimmed(pfd, bn) } : { pfd: dimmed(pfd, bp), nd: dimmed(DISP.renderND(s, efisNd()), bn) };
   }
   function renderStage() {
     var p = getP(PV.id);
@@ -432,7 +446,7 @@
   function refreshHome() { var y = window.scrollY; renderHome(); window.scrollTo(0, y); }
 
   /* ------------------------------------------------------- landing gear */
-  // Normal extension and retraction (owner's request, 0.7.22), on the green system.
+  // Normal extension and retraction (owner's request, 0.7.23), on the green system.
   // Each leg (left main, nose, right main) opens its doors, moves, locks, then closes
   // its doors. The LDG GEAR indicator and the SD WHEEL page follow it.
   var DOOR_T = 3, LEG_T = [8, 7, 8.4]; // seconds: doors open or close, each leg travels
