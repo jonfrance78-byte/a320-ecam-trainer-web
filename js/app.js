@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.23';
+  var VERSION = '0.7.24';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -454,7 +454,7 @@
   function refreshHome() { var y = window.scrollY; renderHome(); window.scrollTo(0, y); }
 
   /* ------------------------------------------------------- landing gear */
-  // Normal extension and retraction (owner's request, 0.7.23), on the green system.
+  // Normal extension and retraction (owner's request, 0.7.24), on the green system.
   // Each leg (left main, nose, right main) opens its doors, moves, locks, then closes
   // its doors. The LDG GEAR indicator and the SD WHEEL page follow it.
   var DOOR_T = 3, LEG_T = [8, 7, 8.4]; // seconds: doors open or close, each leg travels
