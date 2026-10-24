@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.24';
+  var VERSION = '0.7.25';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -391,12 +391,16 @@
   }
   function renderPanelView() {
     var el = document.getElementById('pv');
-    if (!PV) { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('pv-open'); return; }
+    if (!PV) { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('pv-open', 'pv-disp-open'); return; }
     var p = getP(PV.id) || { desc: '' }, dims = PV.photo || (PV.disp ? { w: 1, h: 1 } : p);
     var gate = PV.photo && PV.items.some(function (it) { return it.photoLit; });
-    el.innerHTML = '<div class="pv-card" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
+    // An expanded display (PFD, ND, E/WD, SD; owner's request): no title bar, only a small
+    // back arrow; the description goes left of the screen and the drill bar right of it.
+    document.body.classList.toggle('pv-disp-open', !!PV.disp);
+    el.innerHTML = '<div class="pv-card' + (PV.disp ? ' pv-disp' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
+      (PV.disp ? '<button class="icon-btn sm pv-back" data-act="closePanel" aria-label="Back to flight deck">' + ICON.back + '</button>' :
       '<header class="pv-bar"><button class="icon-btn" data-act="closePanel" aria-label="Back to flight deck">' + ICON.back + '</button>' +
-      '<h2 class="appbar-title">' + esc(panelName(PV.id)) + '</h2><span class="icon-btn-spacer"></span></header>' +
+      '<h2 class="appbar-title">' + esc(panelName(PV.id)) + '</h2><span class="icon-btn-spacer"></span></header>') +
       '<div class="pv-stage" id="pv-stage"></div>' +
       (PHOTO && PHOTO.panels[PV.id] && PN.P[PV.id] && !DR ? '<div class="seg pv-switch" role="radiogroup" aria-label="View">' +
         '<button role="radio" aria-checked="' + !PV.photo + '" class="seg-btn' + (PV.photo ? '' : ' on') + '" data-act="pvmode" data-mode="draw">Drawing</button>' +
