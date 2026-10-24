@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.39';
+  var VERSION = '0.7.40';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -494,6 +494,9 @@
     // Brake triple indicator: the yellow accumulator stays charged; brake pressure shows only
     // with the parking brake ON (yellow/accumulator), none with normal or unused alternate braking.
     var pk = parkOn() ? 2 : 0; PN.LIVE.brk = { accu: 3, l: pk, r: pk };
+    // Gear lever red arrow: flaps 3 or FULL with any gear not locked down.
+    var fl = PN.P.FLAPS.items.findIndex(function (it) { return it.k === 'slide'; }), fs = (PSTATE.FLAPS || {})[fl];
+    PN.LIVE.gearRed = (fs && fs.cur != null ? fs.cur : PN.P.FLAPS.items[fl].cur) >= 3 && s.gear.some(function (g) { return !g.dnLock; });
     return s; }
   function parkOn() {
     var items = PN.P.PARKBRK.items, st = PSTATE.PARKBRK || {};

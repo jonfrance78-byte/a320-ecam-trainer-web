@@ -300,6 +300,9 @@
     o += t(x, y + 9.4, '0', 1.9, 'gauge-num') + t(x, y + 11.4, 'BRAKES', 1.7, 'gauge-num') + t(x, y + 13, 'PSI x 1000', 1.2, 'gauge-num');
     return o;
   }
+  function redArrow(on) {
+    return '<path d="M33 45.2 l-2 -3.1 h1.25 v-9.6 h1.5 v9.6 h1.25 z" class="red-arrow' + (on ? ' on' : '') + '"/>';
+  }
   P.LGLEVER = {
     title: '', name: 'Gear lever', w: 84, h: 56, sys: 'WHEEL',
     desc: 'Landing gear lever, the F/O\'s TERR ON ND pushbutton and the brake pressure triple indicator.',
@@ -307,6 +310,10 @@
       raw(rect(8, 4, 34, 49, 'plate-in', 3) + t(33, 10, 'UP', 3.4, 'pn-pos') +
         '<path d="M33 12 l-2.6 4 h1.6 v9 h2 v-9 h1.6 z" class="pn-arrow"/>' +
         '<path d="M33 46 l-2.6 -4 h1.6 v-11 h2 v11 h1.6 z" class="pn-arrow"/>' + t(33, 50.6, 'DOWN', 3.4, 'pn-pos')),
+      // Red arrow (owner's FCOM page, 0.7.40): a lamp in the DOWN arrow, lit red when the gear is
+      // not locked down in the landing configuration (PN.LIVE.gearRed, set by the app).
+      part(33, 38.5, 4, 14, 'Red arrow', 'Lights red when the landing gear is not locked down with the aircraft in the landing configuration (flaps 3 or FULL), together with a red warning on the ECAM.', redArrow(false),
+        { kindName: 'Indicator', artFn: function () { return redArrow(PN.LIVE.gearRed); } }),
       { k: 'slide', x: 18, y0: 17, y1: 39, pos: ['UP', 'DOWN'], cur: 0, side: 'n', style: 'gear', hw: 14, name: 'Landing gear lever', noname: true, info: 'Landing gear lever. UP retracts and DOWN extends the gear with the green hydraulic system, through the LGCIUs. On the ground a safety interlock stops it being moved up.' },
       raw(t(66, 7, 'TERR ON ND', 3)),
       pb(66, 17, 'TERR ON ND', '', 'ON:w', 'Shows the EGPWS terrain picture on the F/O\'s ND instead of the weather radar (ON lit). Terrain shows automatically with a terrain caution or warning.', { s: 10, noname: true }),

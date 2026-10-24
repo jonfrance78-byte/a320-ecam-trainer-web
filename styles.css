@@ -473,6 +473,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .tog-chrome { fill: url(#g-chrome); stroke: #4b555d; stroke-width: .3; }
 .tog-chrome-tip { fill: url(#g-metal); stroke: #4b555d; stroke-width: .3; }
 .pn-arrow { fill: none; stroke: #f1ece4; stroke-width: .5; stroke-linejoin: round; }
+.red-arrow { fill: #3a1512; } .red-arrow.on { fill: #ff2a1a; filter: drop-shadow(0 0 1.2px #ff4030); }
 .gauge-plate { fill: url(#g-panel-dk); stroke: #3a4956; stroke-width: .6; }
 .gauge-arc { fill: none; stroke: #f1ece4; stroke-width: .5; }
 .gauge-green { fill: none; stroke: #3fe060; stroke-width: 1.2; }
