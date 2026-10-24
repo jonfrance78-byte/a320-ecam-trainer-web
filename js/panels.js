@@ -1157,7 +1157,7 @@
   // FCU knobs (owner's request, 0.7.14): turning a knob changes the number in its
   // window: SPD 1 kt, HDG 1 degree, V/S 100 ft/min and ALT 100 or 1000 ft, chosen
   // with the ring around the ALT knob. dir is +1 clockwise, -1 anticlockwise.
-  var FCU_START = { spd: 250, hdg: 360, alt: 37000, vs: 0 };
+  var FCU_START = { spd: 250, hdg: 360, alt: 35000, vs: 0 }, FCU_SEQ = 0;
   function fcuText(k, n) {
     if (k === 'hdg') return ('00' + n).slice(-3);
     if (k === 'vs') return n === 0 ? '00oo' : (n > 0 ? '+' : '-') + ('0' + Math.abs(n) / 100).slice(-2) + 'oo';
@@ -1199,6 +1199,7 @@
   function pushFcu(items, i, states, how) {
     var it = items[i], k = it.fcu, pull = how === 'pull';
     states[i] = Object.assign({}, states[i], { down: true, out: pull });
+    // how and when the knob was last pushed or pulled: the PFD reads it for the FMA
     var wi = items.findIndex(function (x) { return x.k === 'win' && x.fcu === k; }), ws = Object.assign({}, states[wi]);
     var n = ws.n != null ? ws.n : FCU_START[k];
     if (k === 'spd' || k === 'hdg') {
@@ -1208,6 +1209,7 @@
     } else {
       ws.n = pull ? n : 0; ws.val = fcuText(k, ws.n);
     }
+    ws.how = how; ws.seq = ++FCU_SEQ;
     states[wi] = ws;
     var m = FCU_MSG[k];
     if (!pull) return m[0];

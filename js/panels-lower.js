@@ -69,7 +69,7 @@
       { k: 'win', inl: true, x: 41, y: 14, w: 44, label: 'SPD|MACH', val: '---•', fcu: 'spd', info: 'Selected speed (kt) or Mach. Dashes and a dot: speed managed by the FMGS, and the target shows in magenta on the PFD. Pull the SPD knob for a selected speed, push it for managed speed.' },
       { k: 'win', inl: true, x: 89, y: 14, w: 46, label: 'HDG|LAT', val: '---•', fcu: 'hdg', info: 'Selected heading or track. Dashes and a dot: lateral navigation managed (NAV), following the flight plan. LAT shows when NAV is armed or engaged.' },
       { k: 'win', inl: true, x: 138, y: 14, w: 46, label: 'HDG|V/S', val: '', info: 'Shows which references the FCU uses: HDG and V/S, or TRK and FPA, set with the HDG-V/S / TRK-FPA pushbutton.' },
-      { k: 'win', inl: true, x: 189, y: 14, w: 52, label: 'ALT|LVL/CH', val: '37000', fcu: 'alt', info: 'FCU selected altitude: the clearance altitude the aircraft climbs or descends to and levels off at. The window always shows a value.' },
+      { k: 'win', inl: true, x: 189, y: 14, w: 52, label: 'ALT|LVL/CH', val: '35000', fcu: 'alt', info: 'FCU selected altitude: the clearance altitude the aircraft climbs or descends to and levels off at. The window always shows a value.' },
       { k: 'win', inl: true, x: 237, y: 14, w: 42, label: 'V/S|FPA', val: '-----', fcu: 'vs', info: 'Selected vertical speed (in 100 ft/min) or flight path angle. Dashes when V/S or FPA is not engaged.' },
       ln([[114, 29], [114, 84]]), ln([[164, 29], [164, 84]]),
       rnd(19, 38, 'SPD MACH', 'Changes the speed target between airspeed and Mach.', { s: 9, noname: true }),

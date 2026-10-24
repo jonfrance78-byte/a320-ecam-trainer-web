@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.15';
+  var VERSION = '0.7.16';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -179,7 +179,7 @@
     if (VIEW === 'start') return renderStart();
     if (VIEW === 'quiz') return renderQuiz();
     var s = liveState();
-    var ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: DISP.renderPFD(s), nd: DISP.renderND(s) };
+    var ecam = { ewd: DISP.renderEWD(s, ewdView()), sd: sdSvg(), pfd: DISP.renderPFD(s, fcuPfd(s)), nd: DISP.renderND(s) };
     document.getElementById('view').innerHTML =
       '<section class="home">' +
       '<p class="home-hint">' + (DECK_MODE === 'normal' ? 'Tap any panel to explore it. Normal procedure flows are in the <a href="' + NORMAL_APP + '">Normal Procedures</a>. ' : 'Tap any panel to expand it. Failures are in the menu. ') + '<span class="ver-pill">Version ' + VERSION + '</span> <button class="linkbtn" data-act="winReset">Reset window sizes</button></p>' +
@@ -300,9 +300,26 @@
       return '<button class="sd-btn' + (sdPage === k ? ' on' : '') + '" data-act="sdpage" data-sd="' + k + '" aria-pressed="' + (sdPage === k) + '">' + esc(k) + '</button>';
     }).join('') + '</div>';
   }
+  // What the PFD shows from the FCU (owner's request, 0.7.16): the aircraft cruises
+  // level at s.alt with managed speed (Mach) and NAV; the FCU knobs change the
+  // targets and, once pushed or pulled, the FMA modes.
+  function fcuPfd(s) {
+    var P = PN.P.FCU.items, st = PSTATE.FCU || {}, w = {};
+    P.forEach(function (it, i) { if (it.k === 'win' && it.fcu) w[it.fcu] = st[i] || {}; });
+    var alt = w.alt.n != null ? w.alt.n : 35000, vsN = w.vs.n || 0, f = { spdSel: !!w.spd.sel, spd: w.spd.n, hdgSel: !!w.hdg.sel, hdg: w.hdg.n, fcuAlt: alt, vs: 0, arm: '' };
+    // The last of the ALT and V/S knobs to be pushed or pulled sets the vertical mode.
+    var last = (w.vs.seq || 0) > (w.alt.seq || 0) ? 'vs' : w.alt.seq ? 'alt' : '';
+    if (last === 'vs') { f.vert = 'V/S'; f.vs = w.vs.how === 'push' ? 0 : vsN; if (f.vs) f.vert += ' ' + (f.vs > 0 ? '+' : '') + f.vs; }
+    else if (last === 'alt' && alt !== s.alt) { var up = alt > s.alt; f.vert = (w.alt.how === 'pull' ? 'OP ' : '') + (up ? 'CLB' : 'DES'); f.vs = up ? 1800 : -1500; }
+    else f.vert = 'ALT CRZ';
+    if (f.vert !== 'ALT CRZ' && alt !== s.alt) f.arm = 'ALT';
+    f.thr = /CLB/.test(f.vert) ? 'THR CLB' : /DES/.test(f.vert) ? 'THR IDLE' : f.spdSel ? 'SPEED' : 'MACH';
+    f.lat = f.hdgSel ? 'HDG' : 'NAV';
+    return f;
+  }
   function dispSvg(id) {
     var s = liveState();
-    return id === 'PFD' ? DISP.renderPFD(s) : id === 'ND' ? DISP.renderND(s) : id === 'EWD' ? DISP.renderEWD(s, ewdView()) : sdSvg();
+    return id === 'PFD' ? DISP.renderPFD(s, fcuPfd(s)) : id === 'ND' ? DISP.renderND(s) : id === 'EWD' ? DISP.renderEWD(s, ewdView()) : sdSvg();
   }
   function renderStage() {
     var p = getP(PV.id);
@@ -315,7 +332,7 @@
     // ECP: the SD sits on top of the panel, the same width, with no gap (no top margin in the viewBox).
     document.getElementById('pv-stage').innerHTML = PV.photo ? renderPhotoStage(PV.photo) :
       (fm ? '<div class="fm-wrap">' + FMGC.guideHtml() : '') + (ecp ? '<div class="ecp-wrap"><div class="pv-sdtop" aria-label="System display">' + sdSvg() + '</div>' : '') +
-      '<svg viewBox="-4 ' + (ecp ? 0 : -4) + ' ' + (p.w + 8) + ' ' + (p.h + (ecp ? 4 : 8)) + '" class="pv-svg' + (/^MCDU[12]$/.test(PV.id) ? ' pv-mcdu' : '') + (PV.id === 'ATC' ? ' pv-atc' : '') + '" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
+      '<svg viewBox="-4 ' + (ecp ? 0 : -4) + ' ' + (p.w + 8) + ' ' + (p.h + (ecp ? 4 : 8)) + '" class="pv-svg' + (/^MCDU[12]$/.test(PV.id) ? ' pv-mcdu' : '') + (PV.id === 'ATC' ? ' pv-atc' : '') + (PV.id === 'FCU' ? ' pv-fcu' : '') + '" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' + (fm || ecp ? '</div>' : '') +
       (FMGC && /^MCDU[12]$/.test(PV.id) ? FMGC.simHtml() : '') + miniEwd();
     document.getElementById('pv-info').innerHTML = infoHtml(p);

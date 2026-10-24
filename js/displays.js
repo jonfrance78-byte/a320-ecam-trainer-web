@@ -495,11 +495,15 @@
   }
   function pts(list) { return list.map(function (q) { return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join(' '); }
 
-  function renderPFD(s) {
-    var o = '', cy = 95, cx = 100, spd = 232, alt = 42500;
+  // f: what the FCU sets (fcuPfd in js/app.js): FMA modes and the targets, blue
+  // when selected and magenta when managed.
+  function renderPFD(s, f) {
+    f = f || { thr: 'MACH', vert: 'ALT CRZ', lat: 'NAV', fcuAlt: s.alt, vs: 0, arm: '' };
+    var o = '', cy = 95, cx = 100, spd = 232, alt = s.alt;
     // FMA
     for (var i = 1; i < 5; i++) o += ln(i * 40, 2, i * 40, 22, 'sw', 0.8);
-    o += t(20, 10, 'MACH', 'g', 7, 'middle') + t(60, 10, 'ALT CRZ', 'g', 7, 'middle') + t(100, 10, 'NAV', 'g', 7, 'middle');
+    [f.thr, f.vert, f.lat].forEach(function (m, k) { o += t(20 + k * 40, 10, m, 'g', m.length > 7 ? 6 : 7, 'middle'); });
+    if (f.arm) o += t(60, 19, f.arm, 'c', 6.5, 'middle');
     o += t(180, 9, 'AP1', 'w', 6.5, 'middle') + t(180, 16, '1FD2', 'w', 6.5, 'middle') + t(180, 23, 'A/THR', 'w', 6.5, 'middle');
     // attitude
     o += '<clipPath id="pfd-att"><path d="M64 60 Q66 46 100 44 Q134 46 136 60 L136 132 Q134 148 100 150 Q66 148 64 132 Z"/></clipPath><g clip-path="url(#pfd-att)">';
@@ -531,26 +535,44 @@
     for (var b2 = 40; b2 < 64; b2 += 4) o += '<rect x="46" y="' + b2 + '" width="3" height="2" class="fr"/>';
     o += '<rect x="46" y="130" width="3" height="20" class="fa"/>' + circ(50, 118, 2, 'sg', 1.2);
     o += ln(14, cy, 54, cy, 'sy', 1.6) + '<path d="M54 ' + cy + ' l6 -4 v8 z" class="fy"/>';
+    // speed target: managed magenta at the current speed, selected blue (its value above or below the tape when off it)
+    if (f.spdSel && f.spd != null) {
+      var ys = cy - (f.spd - spd) * 1.6;
+      if (ys < 42) o += t(35, 37, String(f.spd), 'c', 8, 'middle'); else if (ys > 150) o += t(35, 158, String(f.spd), 'c', 8, 'middle');
+      else o += '<path d="M48 ' + ys + ' l6 -4 v8 z" class="c"/>';
+    } else o += '<path d="M48 ' + cy + ' l6 -4 v8 z" class="m"/>';
     o += t(28, 166, '.798', 'g', 9, 'middle');
     // altitude tape
     o += '<rect x="152" y="40" width="24" height="112" class="tape"/>';
-    for (var a2 = 41900; a2 <= 43100; a2 += 100) {
+    for (var a2 = alt - 600; a2 <= alt + 600; a2 += 100) {
       var ya = cy - (a2 - alt) * 0.4;
       if (ya < 42 || ya > 150) continue;
       o += ln(152, ya, 158, ya, 'sw', 1);
       if (a2 % 500 === 0 && a2 !== alt) o += t(164, ya + 3, String(a2 / 100), 'w', 7.5, 'middle');
     }
     o += ln(138, cy, 152, cy, 'sy', 1.6);
-    o += '<rect x="150" y="' + (cy - 8) + '" width="32" height="16" class="screen sy" stroke-width="1.2"/>' + t(170, cy + 4, '425', 'g', 11, 'end') + t(181, cy + 3, '00', 'g', 7, 'end');
-    o += t(164, 36, '>430', 'w', 7.5, 'middle') + t(164, 160, '>420', 'w', 7.5, 'middle') + t(165, 172, '37600', 'c', 8.5, 'middle');
+    o += '<rect x="150" y="' + (cy - 8) + '" width="32" height="16" class="screen sy" stroke-width="1.2"/>' + t(170, cy + 4, String(Math.floor(alt / 100)), 'g', 11, 'end') + t(181, cy + 3, '00', 'g', 7, 'end');
+    // FCU altitude: blue, above or below the tape (on it when within 600 ft), magenta dot when managed is not shown
+    var fa = f.fcuAlt, yf = cy - (fa - alt) * 0.4;
+    if (fa > alt + 600) o += t(164, 36, String(fa), 'c', 8, 'middle'); else if (fa < alt - 600) o += t(164, 162, String(fa), 'c', 8, 'middle');
+    else if (fa !== alt) o += rc(153, yf - 4, 22, 8, 'sc', 1) + t(164, yf + 2.5, String(fa / 100), 'c', 6.5, 'middle');
     // vertical speed
     o += '<path d="M184 46 L194 52 L194 138 L184 144 Z" class="tape"/>';
     [['6', 50], ['2', 64], ['1', 78], ['1', 112], ['2', 126], ['6', 140]].forEach(function (q) { o += t(186, q[1] + 2.5, q[0], 'w', 6, 'start') + ln(190, q[1], 193, q[1], 'sw', 1); });
-    o += ln(199, cy, 191, 72, 'sg', 1.6) + rc(186, 36, 12, 9, 'sg', 0.8) + t(192, 43, '10', 'g', 6.5, 'middle');
+    // V/S needle: 1000 and 2000 ft/min at 17 and 31 units from level, 6000 at 45
+    var av = Math.abs(f.vs), dv = av <= 1000 ? av * 0.017 : av <= 2000 ? 17 + (av - 1000) * 0.014 : 31 + Math.min(av - 2000, 4000) * 0.0035, yv = cy - (f.vs >= 0 ? dv : -dv);
+    o += ln(199, cy, 191, yv, 'sg', 1.6);
+    if (av >= 200) o += rc(186, f.vs > 0 ? 36 : 145, 12, 9, 'sg', 0.8) + t(192, f.vs > 0 ? 43 : 152, String(Math.round(av / 100)), 'g', 6.5, 'middle');
     // heading tape
     o += '<rect x="60" y="168" width="80" height="14" class="tape"/>';
     [['34', 68], ['35', 84], ['0', 100], ['1', 116], ['2', 132]].forEach(function (q) { o += t(q[1], 180, q[0], 'w', 7, 'middle') + ln(q[1] + 8, 168, q[1] + 8, 171, 'sw', 1); });
     o += ln(100, 160, 100, 172, 'sy', 1.6);
+    // selected heading: blue triangle on the tape (current heading 360, 1.6 units per degree), or its value at the side
+    if (f.hdgSel && f.hdg != null) {
+      var dh = ((f.hdg + 540) % 360) - 180;
+      if (Math.abs(dh) <= 24) o += '<path d="M' + (100 + dh * 1.6) + ' 168 l-3.5 -6 h7 z" class="c"/>';
+      else o += t(dh < 0 ? 56 : 144, 180, ('00' + f.hdg).slice(-3), 'c', 7.5, dh < 0 ? 'end' : 'start');
+    }
     return svg200(o, 'pfd');
   }
 

@@ -225,7 +225,9 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 /* MCDU: taller panel, no highlight box on the keys (the key cap shows the press) */
 .pv-svg.pv-mcdu { max-height: 86vh; max-width: 640px; }
 .pv-mcdu .ctl.sel .ctl-hit, .pv-mcdu .ctl:focus-visible .ctl-hit, .pv-mcdu .ctl:hover .ctl-hit,
-.pv-atc .ctl.sel .ctl-hit, .pv-atc .ctl:focus-visible .ctl-hit, .pv-atc .ctl:hover .ctl-hit { fill: transparent; stroke: none; }
+.pv-atc .ctl.sel .ctl-hit, .pv-atc .ctl:focus-visible .ctl-hit, .pv-atc .ctl:hover .ctl-hit,
+.pv-fcu .ctl.sel .ctl-hit, .pv-fcu .ctl:focus-visible .ctl-hit, .pv-fcu .ctl:hover .ctl-hit { fill: transparent; stroke: none; }
+/* FCU (owner's request, 0.7.16): no highlight box either; the knob and its window show the change */
 /* ATC/TCAS (owner's requests, 0.7.9): no highlight box; drawn smaller so the panel and its card fit on one screen */
 .pv-svg.pv-atc { max-width: 640px; }
 .photo-hit { fill: transparent; }
