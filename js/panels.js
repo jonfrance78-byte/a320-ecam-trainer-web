@@ -1255,6 +1255,11 @@
       states[i] = Object.assign({}, st, { angle: a });
       return a <= -120 ? it.dim + ' off.' + (it.dim === 'PFD' ? ' The PFD image moves to the ND display.' : '') : it.dim + ' brightness ' + Math.round((a + 120) / 2.4) + '%.';
     }
+    // PFD/ND XFR: each press swaps the two images over.
+    if (it.xfr) {
+      states[i] = Object.assign({}, st, { swap: !st.swap, down: true });
+      return states[i].swap ? 'PFD and ND swapped: the ND shows on the outer display, the PFD on the inner one.' : 'PFD and ND back on their normal displays.';
+    }
     if (it.power == null && poweredOff(items, states) && (it.k === 'pb' || it.k === 'ann' || it.k === 'knob' || it.k === 'disp'))
       return 'Nothing happens: the panel is switched off. Switch it ON first.';
     if (it.agent && !(it.guard && !st.guardOpen)) {

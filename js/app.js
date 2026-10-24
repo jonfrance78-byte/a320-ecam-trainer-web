@@ -344,7 +344,8 @@
     return id === 'PFD' || id === 'ND' ? captDisplays(s)[id.toLowerCase()] : id === 'EWD' ? DISP.renderEWD(s, ewdView()) : sdSvg();
   }
   // Captain's PFD and ND, dimmed by the brightness knobs on the lateral panel (LATL).
-  // 0 is OFF, 1 full bright. With the PFD off its image moves to the ND display.
+  // 0 is OFF, 1 full bright. PFD/ND XFR swaps the images; with the PFD display off
+  // the PFD image moves to the ND display.
   function dimLevel(which) {
     var items = PN.P.LATL.items, st = PSTATE.LATL || {};
     for (var i = 0; i < items.length; i++) if (items[i].dim === which) { var a = st[i] && st[i].angle != null ? st[i].angle : items[i].a0 || 0; return (a + 120) / 240; }
@@ -353,9 +354,16 @@
   function dimmed(svg, b) {
     return b >= 1 ? svg : svg.replace(/<\/svg>\s*$/, '<rect width="100%" height="100%" fill="#000" opacity="' + (b <= 0 ? 1 : (0.85 * (1 - b)).toFixed(2)) + '" pointer-events="none"/></svg>');
   }
+  function xfrSwapped() {
+    var items = PN.P.LATL.items, st = PSTATE.LATL || {};
+    for (var i = 0; i < items.length; i++) if (items[i].xfr) return !!(st[i] && st[i].swap);
+    return false;
+  }
   function captDisplays(s) {
     var bp = dimLevel('PFD'), bn = dimLevel('ND'), pfd = DISP.renderPFD(s, fcuPfd(s));
-    return bp <= 0 ? { pfd: dimmed(pfd, 0), nd: dimmed(pfd, bn) } : { pfd: dimmed(pfd, bp), nd: dimmed(DISP.renderND(s, efisNd()), bn) };
+    if (bp <= 0) return { pfd: dimmed(pfd, 0), nd: dimmed(pfd, bn) };
+    var nd = DISP.renderND(s, efisNd()), sw = xfrSwapped();
+    return { pfd: dimmed(sw ? nd : pfd, bp), nd: dimmed(sw ? pfd : nd, bn) };
   }
   function renderStage() {
     var p = getP(PV.id);

@@ -101,7 +101,7 @@
       ann(95, 17, 'AUTO LAND', 'AUTO:r', 'LAND:r', 'Red AUTO LAND warning light. Flashes in an automatic landing below 200 ft radio altitude if both autopilots disengage, the localiser or glide slope deviation becomes excessive, or the LOC or G/S signal is lost (and in some other failure cases). Go around unless visual.', { s: 16, noname: true }),
       ln([[4, 35], [116, 35]]), ln([[36, 37], [36, 76]]), ln([[78, 37], [78, 76]]), ln([[4, 78], [116, 78]]), ln([[44, 80], [44, 112]]),
       knob(18, 58, 'PFD', 'OFF', 'BRT', 'PFD brightness. Tap the left side of the knob to dim, the right side to brighten, or drag it round. OFF switches the PFD off, and the PFD image then moves to the ND display automatically.', { r: 9, light: true, dim: 'PFD', a0: 80 }),
-      rnd(57, 60, 'PFD/ND\nXFR', 'Swaps the PFD and ND images between the two displays on this side.', { s: 12, jack: true }),
+      rnd(57, 60, 'PFD/ND\nXFR', 'Swaps the PFD and ND images between the two displays on this side. Press again to swap them back.', { s: 12, jack: true, xfr: true }),
       knob(99, 58, 'ND', 'OFF', 'BRT', 'ND brightness (inner knob). Tap the left side of the knob to dim, the right side to brighten, or drag it round. The outer ring sets the brightness of the weather radar or terrain image. OFF switches the ND off.', { r: 9, light: true, dim: 'ND', a0: 80 }),
       knob(21, 96, 'LOUD SPEAKER', 'OFF', 'MAX', 'Cockpit loudspeaker volume. Aural alerts and callouts sound at a fixed level whatever the setting.', { r: 7.5, light: true }),
       tog(62, 97, 'CONSOLE/FLOOR', ['BRT', 'DIM', 'OFF'], 2, 'Console and floor lighting on this side: bright, dim or off.')
