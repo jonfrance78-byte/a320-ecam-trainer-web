@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.44';
+  var VERSION = '0.7.45';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -427,7 +427,7 @@
       (PV.photo ? '<p class="pv-credit">' + creditHtml() + '</p>' : '') +
       (dims.w / dims.h > 2.2 ? '<p class="pv-rotate">Turn your phone sideways for a bigger panel.</p>' : '') +
       '<div class="pv-body"><p class="pv-desc">' + esc(p.desc) + '</p>' +
-      (PV.id === 'AUTOBRK' && !PV.photo ? '<p><button class="btn sm" data-act="abrkInfo">Autobrake: general and arming conditions</button></p>' : '') +
+      (PV.id === 'AUTOBRK' && !PV.photo ? '<p><button class="btn sm flash3" data-act="abrkInfo">Autobrake: general and arming conditions</button></p>' : '') +
       (gate ? '<p class="small">The photo was taken on the ground with the engines stopped and the APU running, so some lights are already on (for example GEN FAULT, fuel pumps OFF, APU BLEED ON).</p>' : '') +
       '<div class="pv-info" id="pv-info" aria-live="polite"></div></div></div>';
     el.hidden = false; document.body.classList.add('pv-open');

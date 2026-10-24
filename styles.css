@@ -563,6 +563,10 @@ body.drill-on .home, body.drill-on .pv-card { padding-bottom: 150px; }
 .m-title.q { font: 600 17px/1.35 var(--font-head); }
 .m-card { position: relative; }
 .abrk-tip { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 52px); left: 50%; transform: translateX(-50%); z-index: 66; width: min(560px, calc(100% - 20px)); }
+/* Flashes 3 times when its panel opens (owner's request, 0.7.45), to invite a press. */
+.btn.flash3 { animation: flash3 .5s ease-in-out 3; }
+@keyframes flash3 { 50% { background: var(--accent); color: #04121a; box-shadow: 0 0 0 4px rgba(51, 214, 242, .35); } }
+@media (prefers-reduced-motion: reduce) { .btn.flash3 { animation: none; } }
 .abrk-tip .m-card { max-height: 62vh; box-shadow: 0 12px 40px rgba(0, 0, 0, .55); }
 .m-x { position: absolute; top: 8px; right: 8px; }
 .m-card:has(.m-x) .eyebrow { padding-right: 36px; }
