@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.20';
+  var VERSION = '0.7.21';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -334,6 +334,7 @@
   function deckFcu(pid, i, dir) {
     PN.pressItems(PN.P[pid].items, i, PSTATE[pid] || (PSTATE[pid] = {}), dir);
     var st = PSTATE[pid][i];
+    if (pid === 'LGLEVER') gearMoved();
     refreshHome();
     if (st && st.down) setTimeout(function () { st.down = false; if (!PV) refreshHome(); }, 180);
   }
@@ -389,6 +390,7 @@
     if (it.master && !PV.photo) PV.note = pressMaster(it.master) || 'Lights only with a warning or caution.';
     else if (it.clrKey && DR && DR.s) { PN.pressItems(PV.items, i, PV.states); pressClr(); PV.note = DR && DR.flash; }
     else PV.note = PN.pressItems(PV.items, i, PV.states, dir);
+    if (PV.id === 'LGLEVER' && !PV.photo && it.k === 'slide') PV.note = gearMoved();
     if (it.sdPage || it.sdAll) PV.note = setSd(it.sdAll ? 'ALL' : it.sdPage);
     if (FMGC && /^MCDU[12]$/.test(PV.id) && it.k === 'pb' && it.name) FMGC.key(PV.id, it.name.replace(/\n/g, ' '));
     if (!PV) return;
@@ -419,8 +421,66 @@
   var DR = null;     // the running drill
   var BEST = {};
   try { BEST = JSON.parse(localStorage.getItem('ecam-best') || '{}'); } catch (e) { BEST = {}; }
-  function liveState() { return DR && DR.s ? DR.s : cruiseState(); }
+  function liveState() { var s = DR && DR.s ? DR.s : cruiseState(); s.gear = gearView(s); return s; }
   function refreshHome() { var y = window.scrollY; renderHome(); window.scrollTo(0, y); }
+
+  /* ------------------------------------------------------- landing gear */
+  // Normal extension and retraction (owner's request, 0.7.21), on the green system.
+  // Each leg (left main, nose, right main) opens its doors, moves, locks, then closes
+  // its doors. The LDG GEAR indicator and the SD WHEEL page follow it.
+  var DOOR_T = 3, LEG_T = [8, 7, 8.4]; // seconds: doors open or close, each leg travels
+  var GEAR = { legs: [], timer: null, sig: '' };
+  function gearReset() {
+    GEAR.legs = [0, 1, 2].map(function () { return { pos: 0, door: 0 }; });
+    if (GEAR.timer) clearInterval(GEAR.timer);
+    GEAR.timer = null; GEAR.sig = '';
+  }
+  gearReset();
+  function gearLeverIdx() { var items = PN.P.LGLEVER.items; for (var i = 0; i < items.length; i++) if (items[i].k === 'slide') return i; return -1; }
+  function gearLever() {
+    var i = gearLeverIdx(), st = PSTATE.LGLEVER && PSTATE.LGLEVER[i];
+    return st && st.cur != null ? st.cur : PN.P.LGLEVER.items[i].cur; // 0 UP, 1 DOWN
+  }
+  function greenOk(s) { return s.hyd.G.p >= 1450; }
+  // tri: 'g' down and locked, 'r' unlocked or in transit, null up and locked.
+  function gearView(s) {
+    var down = gearLever() === 1, g = greenOk(s);
+    return GEAR.legs.map(function (L) {
+      var dnLock = L.pos >= 1 && (down || !g), upLock = L.pos <= 0 && (!down || L.door < 1);
+      return { tri: dnLock ? 'g' : upLock ? null : 'r', doorOpen: L.door > 0, unlk: !(dnLock && down) && !(upLock && !down), dnLock: dnLock };
+    });
+  }
+  function gearTick(dt) {
+    var s = liveState(), target = gearLever(), busy = false;
+    if (greenOk(s)) GEAR.legs.forEach(function (L, k) {
+      if (L.pos !== target) {
+        busy = true;
+        if (L.door < 1) L.door = Math.min(1, L.door + dt / DOOR_T);
+        else L.pos = target ? Math.min(1, L.pos + dt / LEG_T[k]) : Math.max(0, L.pos - dt / LEG_T[k]);
+      } else if (L.door > 0) { busy = true; L.door = Math.max(0, L.door - dt / DOOR_T); }
+    });
+    gearLights();
+    if (!busy && GEAR.timer) { clearInterval(GEAR.timer); GEAR.timer = null; }
+  }
+  // LDG GEAR indicator: green triangle when down and locked, red UNLK when not
+  // locked in the position the lever selects. Redraws only when an indication changes.
+  function gearLights() {
+    var v = liveState().gear, sig = JSON.stringify(v);
+    if (sig === GEAR.sig) return;
+    GEAR.sig = sig;
+    ['LDG GEAR left main', 'LDG GEAR nose', 'LDG GEAR right main'].forEach(function (n, k) { setBits(['AUTOBRK', n, 1], { up: v[k].unlk, lo: v[k].dnLock }); });
+    refreshHome();
+    if (PV) renderStage();
+  }
+  // The lever has moved: start the sequence. Without green the gear stays where it is.
+  function gearMoved() {
+    // The SD shows the WHEEL page while it is on its automatic page.
+    if (!DR && !sdPage) { sdPage = 'WHEEL'; PN.LIVE.sdPage = sdPage; }
+    if (!GEAR.timer) GEAR.timer = setInterval(function () { gearTick(0.2); }, 200);
+    gearTick(0);
+    if (!greenOk(liveState())) return 'No green hydraulic pressure: the gear does not move. Use the gravity extension.';
+    return gearLever() ? 'Gear down: the doors open, the gear extends and locks down, then the doors close.' : 'Gear up: the gear unlocks, retracts and locks up, then the doors close.';
+  }
 
   function ctlIndex(c) {
     var items = PN.P[c[0]].items, n = 0;
@@ -522,7 +582,7 @@
   }
   function begin() {
     var f = DR.f;
-    PSTATE = {};
+    PSTATE = {}; gearReset();
     if (PV) closePanel();
     DR.s = cruiseState(); DR.i = 0; DR.done = {}; DR.mist = []; DR.right = 0; DR.asked = 0; DR.flash = null; DR.t0 = Date.now();
     if (f.setup) f.setup(DR.s);
@@ -675,7 +735,7 @@
   // Back to a normal aircraft.
   function stopDrill(quiet) {
     stopChime();
-    DR = null; PSTATE = {}; PN.LIVE.clr = false; sdPage = null; PN.LIVE.sdPage = null;
+    DR = null; PSTATE = {}; gearReset(); PN.LIVE.clr = false; sdPage = null; PN.LIVE.sdPage = null;
     if (!quiet) { hideModal(); if (PV) closePanel(); renderDrill(); refreshHome(); }
   }
 

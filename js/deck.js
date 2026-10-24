@@ -35,9 +35,12 @@
     // FCU (owner's request, 0.7.18): its knobs and buttons work on the deck too; a tap
     // on the windows still expands the panel.
     // and the EFIS panels (0.7.20) the same way.
-    if (id === 'FCU' || id === 'EFISL' || id === 'EFISR') p.items.forEach(function (it, i) {
+    // The gear lever (owner's request, 0.7.21) moves on the deck; a tap elsewhere on its panel expands it.
+    if (id === 'FCU' || id === 'EFISL' || id === 'EFISR' || id === 'LGLEVER') p.items.forEach(function (it, i) {
+      if (id === 'LGLEVER' && it.k !== 'slide') return;
       var r = it.r || 8, b = it.k === 'knob' || it.k === 'sel' ? [it.x - r - 2, it.y - r - 2, r * 2 + 4, r * 2 + 4] : it.k === 'ring' ? [it.x - 15, it.y - it.r - 11, 30, 9] :
-        it.k === 'pb' ? [it.x - (it.w || it.s) / 2 - 2, it.y - it.s / 2 - 2, (it.w || it.s) + 4, it.s + 4] : it.k === 'tog' ? [it.x - 7, it.y - 7, 14, 16] : null;
+        it.k === 'pb' ? [it.x - (it.w || it.s) / 2 - 2, it.y - it.s / 2 - 2, (it.w || it.s) + 4, it.s + 4] : it.k === 'tog' ? [it.x - 7, it.y - 7, 14, 16] :
+        it.k === 'slide' ? [it.x - it.hw / 2 - 5, it.y0 - 12, it.hw + 10, it.y1 - it.y0 + 24] : null;
       if (b) add('<rect x="' + b[0] + '" y="' + b[1] + '" width="' + b[2] + '" height="' + b[3] + '" rx="2" class="fcukey' + (it.fcu ? ' turn' : '') + '" data-pid="' + id + '" data-fcu="' + i + '"><title>' + PN.ctlName(it) + '</title></rect>');
     });
     p.items.forEach(function (it) {
