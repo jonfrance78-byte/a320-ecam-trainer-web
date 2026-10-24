@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.24';
+  var VERSION = '0.7.25';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -454,7 +454,7 @@
   function refreshHome() { var y = window.scrollY; renderHome(); window.scrollTo(0, y); }
 
   /* ------------------------------------------------------- landing gear */
-  // Normal extension and retraction (owner's request, 0.7.24), on the green system.
+  // Normal extension and retraction (owner's request, 0.7.25), on the green system.
   // Each leg (left main, nose, right main) opens its doors, moves, locks, then closes
   // its doors. The LDG GEAR indicator and the SD WHEEL page follow it.
   var DOOR_T = 3, LEG_T = [8, 7, 8.4]; // seconds: doors open or close, each leg travels
@@ -567,7 +567,9 @@
     var f = DR.f, out = [], cls = f.level === 3 ? 'r' : 'a';
     if (f.level >= 2 && (DR.phase === 'run' || DR.phase === 'clr1' || DR.phase === 'quiz')) {
       var w = f.sysWord, rest = f.title.indexOf(w) === 0 ? f.title.slice(w.length) : ' ' + f.title;
-      if (!DR.masterDone) (f.pre || []).forEach(function (l) { out.push(l); });
+      // MASTER WARN only silences the chime (owner's request, 0.7.25): lines above the
+      // failure (AUTO FLT AP OFF) stay until CLR.
+      if (!DR.preClr) (f.pre || []).forEach(function (l) { out.push(l); });
       // The failure being worked has its title boxed, as on the E/WD.
       out.push({ parts: [{ s: w, u: true, c: cls }, { s: rest, c: cls }], box: w.length + 1 });
       var allDone = DR.phase === 'clr1';
@@ -617,7 +619,8 @@
     if (f.setup) f.setup(DR.s);
     (f.lights || []).forEach(function (c) { setFault(c, true); });
     if (f.level >= 2) { masters(f.level === 3 ? 'W' : 'C', true); chime(f.level); }
-    sdPage = f.sd || null; PN.LIVE.sdPage = sdPage; PN.LIVE.clr = false;
+    sdPage = f.sd || null; PN.LIVE.sdPage = sdPage; PN.LIVE.clr = f.level >= 2 && !!(f.pre && f.pre.length);
+    DR.preClr = false;
     DR.phase = 'run';
     hideModal();
     advance();
@@ -656,7 +659,7 @@
     while (st && (st.k === 'master' || st.k === 'act' || st.k === 'task') && stepMet(st)) {
       DR.done[DR.i] = true;
       if (st.k === 'act') { acted = true; if (st.fx) st.fx(DR.s); if (st.clears) st.ctls.forEach(function (c) { setFault(c, false); }); DR.flash = st.item + ' ' + st.val + ': ' + (st.why || 'done.'); }
-      if (st.k === 'master') { DR.masterDone = true; DR.flash = 'Warning acknowledged. Now read the ECAM procedure on the E/WD.'; }
+      if (st.k === 'master') { DR.masterDone = true; DR.flash = 'Warning acknowledged: light out, chime silenced. Now read the ECAM procedure on the E/WD.' + (DR.f.pre && !DR.preClr ? ' AUTO FLT AP OFF stays until you press CLR.' : ''); }
       if (st.k === 'task') DR.flash = st.info || null;
       DR.i++; moved = true;
       st = DR.f.steps[DR.i];
@@ -705,7 +708,10 @@
   function pressClr() {
     if (!DR || !DR.s) return null;
     var f = DR.f;
-    if (DR.phase === 'run') {
+    if (DR.phase === 'run' && f.pre && f.pre.length && !DR.preClr) {
+      DR.preClr = true; PN.LIVE.clr = false;
+      DR.flash = f.pre.map(function (l) { return l.text || l.parts.map(function (p) { return p.s; }).join(''); }).join(', ') + ' cleared.';
+    } else if (DR.phase === 'run') {
       var msg = 'CLR pressed before the actions were complete';
       if (DR.mist.indexOf(msg) < 0) DR.mist.push(msg);
       DR.flash = 'Not yet: finish the ECAM actions, then clear.';
