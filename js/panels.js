@@ -757,7 +757,7 @@
     return o;
   }
   function drawKnob(it, st) {
-    var r = it.r || 9, x = it.x, y = it.y, a = st.angle != null ? st.angle : 0, o = '';
+    var r = (it.r || 9) * (st.down ? (st.out ? 1.08 : 0.94) : 1), x = it.x, y = it.y, a = st.angle != null ? st.angle : 0, o = '';
     if (it.lo || it.hi) {
       for (var d = -120; d <= 120; d += 30) {
         var p1 = polar(x, y, r + 1.4, d), p2 = polar(x, y, r + 3.4, d);
@@ -1174,7 +1174,8 @@
     else if (k === 'hdg') n = ((n + dir + 359) % 360) + 1;
     else if (k === 'alt') { var step = ring ? 1000 : 100; n = Math.min(49000, Math.max(100, Math.round((n + dir * step) / step) * step)); }
     else n = Math.min(6000, Math.max(-6000, n + dir * 100));
-    ws.n = n; ws.val = fcuText(k, n); states[wi] = ws;
+    // SPD and HDG managed: the turned value is a preset; the dot stays lit until pulled.
+    ws.n = n; ws.val = fcuText(k, n) + ((k === 'spd' || k === 'hdg') && !ws.sel ? '•' : k === 'alt' && ws.man ? '•' : ''); states[wi] = ws;
     return { spd: 'Speed ', hdg: 'Heading ', alt: 'Altitude ', vs: 'Vertical speed ' }[k] + ws.val + (k === 'alt' ? ' ft (' + (ring ? 1000 : 100) + ' ft steps)' : '') + '.';
   }
   // The 100/1000 ring around the FCU ALT knob: a pointer at 100 or 1000.
@@ -1185,9 +1186,36 @@
     o += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="1" class="sel-dot"/>';
     return o;
   }
+  // Push and pull (owner's request, 0.7.15). SPD and HDG: push = managed (dashes and
+  // the managed dot), pull = selected (the value shows). ALT: push = managed CLB or DES
+  // (dot lit), pull = OPEN CLB or OPEN DES. V/S: push = level off (V/S zero), pull =
+  // V/S engaged at the value shown. The knob shows pushed in or pulled out briefly.
+  var FCU_MSG = {
+    spd: ['Pushed: managed speed. The FMGS sets the target (magenta on the PFD); the window shows dashes and the managed dot.', 'Pulled: selected speed '],
+    hdg: ['Pushed: NAV, managed lateral guidance along the flight plan. Dashes and the managed dot.', 'Pulled: selected heading '],
+    alt: ['Pushed: managed climb or descent (CLB or DES), keeping to the flight plan constraints. The managed dot lights.', 'Pulled: OPEN CLB or OPEN DES towards '],
+    vs: ['Pushed: level off. V/S engages at zero.', 'Pulled: V/S engaged at ']
+  };
+  function pushFcu(items, i, states, how) {
+    var it = items[i], k = it.fcu, pull = how === 'pull';
+    states[i] = Object.assign({}, states[i], { down: true, out: pull });
+    var wi = items.findIndex(function (x) { return x.k === 'win' && x.fcu === k; }), ws = Object.assign({}, states[wi]);
+    var n = ws.n != null ? ws.n : FCU_START[k];
+    if (k === 'spd' || k === 'hdg') {
+      ws.sel = pull; ws.n = n; ws.val = pull ? fcuText(k, n) : '---•';
+    } else if (k === 'alt') {
+      ws.man = !pull; ws.n = n; ws.val = fcuText(k, n) + (pull ? '' : '•');
+    } else {
+      ws.n = pull ? n : 0; ws.val = fcuText(k, ws.n);
+    }
+    states[wi] = ws;
+    var m = FCU_MSG[k];
+    if (!pull) return m[0];
+    return m[1] + (k === 'vs' ? (ws.n > 0 ? '+' : '') + ws.n : ws.val) + { spd: ' kt (blue target on the PFD).', hdg: ' degrees (HDG mode).', alt: ' ft, ignoring the flight plan constraints.', vs: ' ft/min (V/S mode).' }[k];
+  }
   function pressItems(items, i, states, dir) {
     var it = items[i], st = states[i] || {};
-    if (it.fcu) return turnFcu(items, i, states, dir || 1);
+    if (it.fcu) return typeof dir === 'string' ? pushFcu(items, i, states, dir) : turnFcu(items, i, states, dir || 1);
     if (it.power == null && poweredOff(items, states) && (it.k === 'pb' || it.k === 'ann' || it.k === 'knob' || it.k === 'disp'))
       return 'Nothing happens: the panel is switched off. Switch it ON first.';
     if (it.agent && !(it.guard && !st.guardOpen)) {

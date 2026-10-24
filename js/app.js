@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.14';
+  var VERSION = '0.7.15';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -289,6 +289,7 @@
     return '<p class="eyebrow">' + kind + (it.guard || it.k === 'fire' ? ' · guarded' : '') + '</p>' +
       '<h3 class="pv-ctl">' + esc(PN.ctlName(it)) + '</h3>' +
       (chips ? '<div class="lchips">' + chips + '</div>' : '') +
+      (it.fcu ? '<div class="fcu-btns">' + [['l', '\u27F2 Turn left'], ['push', 'Push'], ['pull', 'Pull'], ['r', 'Turn right \u27F3']].map(function (b) { return '<button class="btn sm" data-act="fcu" data-how="' + b[0] + '">' + b[1] + '</button>'; }).join('') + '</div>' : '') +
       '<p>' + esc(it.info || '') + '</p>' +
       (PV.note ? '<p class="pv-note">' + esc(PV.note) + '</p>' : '') +
       (note ? '<p class="small">' + esc(note) + '</p>' : '') +
@@ -853,7 +854,9 @@
     if (ctlEl && PV && TURN && TURN.moved) { TURN = null; return; }
     if (ctlEl && PV && ctlEl.classList.contains('turn')) {
       var r = ctlEl.getBoundingClientRect();
-      TURN = null; pressCtl(+ctlEl.getAttribute('data-ctl'), e.clientX < r.left + r.width / 2 ? -1 : 1); return;
+      // The centre of the knob pushes it; either side turns it.
+      var dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
+      TURN = null; pressCtl(+ctlEl.getAttribute('data-ctl'), Math.hypot(dx, dy) < r.width * 0.18 ? 'push' : dx < 0 ? -1 : 1); return;
     }
     if (ctlEl && PV) { pressCtl(+ctlEl.getAttribute('data-ctl')); return; }
     var sdKey = e.target.closest('.sdkey');
@@ -897,6 +900,7 @@
       case 'backEcam': closePanel(); showEcam(); break;
       case 'mute': muted = !muted; try { localStorage.setItem('ecam-mute', muted ? '1' : '0'); } catch (err) { /* ignore */ } if (muted) stopChime(); renderDrill(); break;
       case 'pvmode': if (PV) { setPanelMode(el.getAttribute('data-mode')); renderPanelView(); } break;
+      case 'fcu': if (PV && PV.selected != null) { var how = el.getAttribute('data-how'); pressCtl(PV.selected, how === 'l' ? -1 : how === 'r' ? 1 : how); } break;
       case 'fmsim': FMGC.sim(el.getAttribute('data-sim')); if (PV) renderStage(); break;
       case 'fmguide': FMGC.guide(el.getAttribute('data-g'), PV && PV.id); if (PV) renderStage(); break;
     }
@@ -913,7 +917,8 @@
       e.preventDefault(); FMGC.key(PV.id, e.key === 'Backspace' ? 'CLR' : e.key === '+' || e.key === '-' ? '±' : e.key.toUpperCase()); renderStage(); return;
     }
     var turnEl = e.target.closest && e.target.closest('.ctl.turn');
-    if (turnEl && PV && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) { e.preventDefault(); pressCtl(+turnEl.getAttribute('data-ctl'), e.key === 'ArrowLeft' ? -1 : 1); return; }
+    var turnKey = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: 'pull', ArrowDown: 'push', Enter: 'push' }[e.key];
+    if (turnEl && PV && turnKey != null) { e.preventDefault(); pressCtl(+turnEl.getAttribute('data-ctl'), turnKey); return; }
     if (e.key !== 'Enter' && e.key !== ' ') return;
     var ctlEl = e.target.closest && e.target.closest('.ctl');
     if (ctlEl && PV) { e.preventDefault(); pressCtl(+ctlEl.getAttribute('data-ctl')); return; }
