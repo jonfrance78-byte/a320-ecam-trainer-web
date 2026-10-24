@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.41';
+  var VERSION = '0.7.42';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -426,6 +426,7 @@
       (PV.photo ? '<p class="pv-credit">' + creditHtml() + '</p>' : '') +
       (dims.w / dims.h > 2.2 ? '<p class="pv-rotate">Turn your phone sideways for a bigger panel.</p>' : '') +
       '<div class="pv-body"><p class="pv-desc">' + esc(p.desc) + '</p>' +
+      (PV.id === 'AUTOBRK' && !PV.photo ? '<p><button class="btn sm" data-act="abrkInfo">Autobrake: general and arming conditions</button></p>' : '') +
       (gate ? '<p class="small">The photo was taken on the ground with the engines stopped and the APU running, so some lights are already on (for example GEN FAULT, fuel pumps OFF, APU BLEED ON).</p>' : '') +
       '<div class="pv-info" id="pv-info" aria-live="polite"></div></div></div>';
     el.hidden = false; document.body.classList.add('pv-open');
@@ -977,6 +978,19 @@
         DR.mist.map(function (m) { return '<li class="bad">' + esc(m) + '</li>'; }).join('') +
         '<li>Time: ' + Math.floor(secs / 60) + ' min ' + (secs % 60) + ' s</li></ul>' +
         '<div class="m-btns"><button class="btn" data-act="stopDrill">Back to normal</button><button class="btn primary" data-act="againDrill">Run again</button></div>';
+    } else if (kind === 'abrk') {
+      // Owner's request (0.7.42), from the owner's FCOM page DSC-32-30-10 Auto Brake.
+      h = '<button class="icon-btn sm m-x" data-act="closeModal" aria-label="Close">' + ICON.close + '</button>' +
+        '<p class="eyebrow">FCOM DSC-32-30-10</p><h2 class="m-title">Auto brake</h2>' +
+        '<h3 class="m-h">General</h3><p>The purposes of the autobrake system are to:</p><ul class="m-list">' +
+        '<li>Reduce the braking distance in case of an aborted takeoff.</li>' +
+        '<li>Establish and maintain a selected deceleration rate during landing, improving passenger comfort and reducing crew workload.</li></ul>' +
+        '<h3 class="m-h">System arming</h3><p>The crew may arm the system by pressing the LO, MED or MAX pushbutton, provided all the following arming conditions are met:</p><ul class="m-list">' +
+        '<li>Green pressure available</li><li>Anti-skid electrically powered</li><li>No failure in the braking system</li><li>At least one ADIRU available</li></ul>' +
+        '<p class="small">Note: 1. Auto brake may be armed with the parking brake on. 2. MAX autobrake mode cannot be armed in flight.</p>' +
+        '<p>The armed AUTO BRK mode is displayed in blue on the FMA.</p>' +
+        '<p class="small">In this trainer: green pressure and the A/SKID &amp; N/W STRG switch are checked, a mode disarms when they are lost, and MAX cannot be armed in flight. Due to differences between fleet and airlines - refer to own OMs</p>' +
+        '<div class="m-btns"><button class="btn primary" data-act="closeModal">Close</button></div>';
     }
     el.innerHTML = '<div class="m-card" role="dialog" aria-modal="true">' + h + '</div>';
     el.hidden = false;
@@ -1169,6 +1183,7 @@
       case 'beginDrill': begin(); break;
       case 'cancelDrill': stopDrill(); break;
       case 'closeModal': hideModal(); break;
+      case 'abrkInfo': showModal('abrk'); break;
       case 'answer': answer(+el.getAttribute('data-k')); break;
       case 'quizDone': quizDone(); break;
       case 'quizSkip': quizSkip(); break;
