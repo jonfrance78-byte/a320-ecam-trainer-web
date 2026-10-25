@@ -5,7 +5,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
 <style>
 /* Layout: glass-cockpit panel. Home = three section "displays"; section = one question card at a time (drill) or full list. Paper look from 0.7.12 (owner's request); see the paper theme block. */
 :root{
@@ -231,6 +231,20 @@ h1,h2{text-transform:none;letter-spacing:0}
 .fig svg:not(.inst) [fill="#ff5a52"]{fill:#121212} .fig svg:not(.inst) [stroke="#ff5a52"]{stroke:#121212}
 .fig svg:not(.inst) [fill="#e36bdc"]{fill:#121212} .fig svg:not(.inst) [stroke="#e36bdc"]{stroke:#121212}
 .fig svg:not(.inst) [fill="#2a323b"]{fill:#dcd9d4} .fig svg:not(.inst) [stroke="#2a323b"]{stroke:#dcd9d4}
+/* FLS exam questions (0.7.55, owner's request): multiple choice, own font; a correct pick lights green, a wrong one gets a red X. */
+.view.fls{font-family:"Atkinson Hyperlegible",Verdana,sans-serif}
+.view.fls h2{font-family:inherit}
+.fq{background:var(--panel);border:1px solid var(--rule);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.fq .qn{font-weight:700;font-size:13px;color:var(--muted)}
+.fq .qt{margin:0;font-size:17px;line-height:1.45}
+.fopt{display:flex;gap:10px;align-items:flex-start;text-align:left;width:100%;padding:10px 12px;background:var(--panel-2);border:1px solid var(--rule-2);cursor:pointer;font:inherit;font-size:15px;line-height:1.4}
+.fopt .mk{flex:0 0 1.2em;font-weight:700;font-size:20px;line-height:1;text-align:center}
+.fopt:disabled{cursor:default}
+.fopt.ok{background:#e3f4e8;border-color:#1f7a3d;color:#14532a}
+.fopt.ok .mk{color:#1f7a3d}
+.fopt.bad{background:#fdecec;border-color:#c62828;color:#8e1b1b}
+.fopt.bad .mk{color:#c62828}
+.fscore{font-weight:700}
 </style>
 
 </head><body>
@@ -2150,10 +2164,70 @@ a:`<p>Small asymmetric thrust, <b>idle on the inside engine</b>. The PM watches 
 src:"Safety First #22, July 2016: 180° Turns on Runway"}
 );
 
+/* FLS exam questions (0.7.55, owner's request, from the owner's exam pages; no references shown).
+   ok = index of the correct option. */
+const FLS = [
+ {q:"Can you perform glideslope interception from above during an RNAV approach with FLS guidance?",
+  o:["NO. Glideslope interception from above is a procedure only for ILS approaches.","Yes.","NO, for an RNAV approach at the FDP you must be in the defined capture zone."],ok:1},
+ {q:"Unlike the ILS G/S, the F-G/S deviations are:",
+  o:["radio referenced","satellite referenced","baro referenced"],ok:2},
+ {q:"Can you fly an RNAV FLS guided approach with LNAV/VNAV minima when OAT is below the published temperature on the chart?",
+  o:["NO. If OAT is below the published temperature, the lowest minimum is LNAV.","NO. When OAT is below the published temperature, FLS guidance can't be used.","YES. The virtual FLS beam is corrected for temperature below ISA thanks to the airport temperature entered in the MCDU PERF APPR page."],ok:2},
+ {q:"For RNAV approaches with LNAV/VNAV minima, discontinue the approach if external visual references are not sufficient to proceed visually, and the F-G/S deviation exceeds:",
+  o:["1 dot below the F-G/S beam","1/2 dot below the F-G/S beam","1/2 dot above the F-G/S beam"],ok:1},
+ {q:"During a VOR/DME FLS guided approach, FLS capability is downgraded to RAW ONLY. Can you continue?",
+  o:["Yes, the flight crew must press the LS pb to OFF and revert to TRK-FPA guidance.","Yes, as long as GPS PRIMARY is displayed on at least one ND.","No. Discontinue the approach."],ok:0},
+ {q:"You are flying a VOR/DME approach using FLS guidance. FLS capability downgrades to \"F-APP + RAW\". Can you continue the approach?",
+  o:["The flight crew can continue to use FLS, provided that radio NAVAID raw data confirms that the lateral navigation is correct, and crosscheck distances versus altitudes as published on the charts.","NO. Only RNAV(GNSS) approaches can be flown with FLS capability downgraded to \"F-APP+RAW\".","NO. A VOR/DME approach can be flown only with \"F-APP\" capability displayed on the PFD."],ok:0},
+ {q:"F-APP+RAW is displayed on the PFD. What does it mean?",
+  o:["FLS deviations and F-G/S, F-LOC guidance are reliable.","The flight crew can refer to FLS deviations but must cross-check with navaid raw data, i.e. VOR, NDB and/or DME.","The flight crew must not use the FLS and refer exclusively to NAVAID raw data, i.e. VOR, NDB and/or DME, to perform the approach."],ok:1},
+ {q:"For RNAV approaches with LNAV minima and LNAV/VNAV minima, discontinue the approach if external visual references are not sufficient to proceed visually, and the F-LOC deviation exceeds:",
+  o:["1 dot","1/2 dot","3/4 dot"],ok:0},
+ {q:"Can you use the FLS function when RAW ONLY capability is displayed on the FMA?",
+  o:["Only when flying an RNAV approach.","YES","NO."],ok:2},
+ {q:"The FLS vertical guidance requires a precise BARO setting. The maximum acceptable discrepancy between altimeters is:",
+  o:["300 ft","100 ft","50 ft"],ok:1},
+ {q:"RAW ONLY is displayed on the PFD. What does it mean?",
+  o:["The flight crew must not use the FLS and refer exclusively to NAVAID raw data, i.e. VOR, NDB and/or DME, to perform the approach.","FLS deviations and F-G/S, F-LOC guidance are reliable.","The flight crew can refer to FLS deviations but must cross-check with navaid raw data, i.e. VOR, NDB and/or DME."],ok:0},
+ {q:"F-APP is displayed on the PFD. What does it mean?",
+  o:["The flight crew must not use the FLS and refer exclusively to NAVAID raw data, i.e. VOR, NDB and/or DME, to perform the approach.","FLS deviations and F-G/S, F-LOC guidance are reliable.","The flight crew can refer to FLS deviations but must cross-check with navaid raw data, i.e. VOR, NDB and/or DME."],ok:1}
+].map((x,i)=>Object.assign(x,{id:"fls"+String(i+1).padStart(2,"0"),s:"fls",t:"FLS"}));
+Q.push(...FLS);
+let flsPick = {};   // this visit's answers: id -> chosen option
+
+function renderFls(sec){
+  const done = FLS.filter(x=>x.id in flsPick), right = done.filter(x=>flsPick[x.id]===x.ok).length;
+  app.innerHTML = `
+  <div class="view fls" style="display:flex;flex-direction:column;gap:16px">
+    <a class="back" href="#home">◀ All sections</a>
+    <header class="shead">
+      <div class="eyebrow">${FLS.length} questions · single answer</div>
+      <h2>${sec.title}</h2>
+      <p class="fscore">${done.length} answered · ${right} correct</p>
+    </header>
+    ${FLS.map((x,i)=>{const p=flsPick[x.id]; return `
+    <section class="fq">
+      <div class="qn">Question ${i+1}</div>
+      <p class="qt">${esc(x.q)}</p>
+      ${x.o.map((t,j)=>{const c = p===undefined?"":j===x.ok?"ok":j===p?"bad":"";
+        return `<button class="fopt ${c}" data-q="${x.id}" data-o="${j}" ${p===undefined?"":"disabled"}><span class="mk">${c==="ok"?"✓":c==="bad"?"✗":""}</span><span>${esc(t)}</span></button>`;}).join("")}
+    </section>`;}).join("")}
+    <div class="row"><button class="btn ghost" id="flsAgain">Start again</button></div>
+  </div>`;
+  app.querySelectorAll(".fopt").forEach(b=>b.onclick=()=>{
+    const x = FLS.find(f=>f.id===b.dataset.q), y = window.scrollY;
+    flsPick[x.id] = +b.dataset.o;
+    store.marks[x.id] = flsPick[x.id]===x.ok ? "known" : "review"; save();
+    renderFls(sec); window.scrollTo(0,y);
+  });
+  document.getElementById("flsAgain").onclick=()=>{flsPick={};renderFls(sec);window.scrollTo(0,0);};
+}
+
 const SECTIONS = {
   proc:{key:"proc",hash:"procedures",title:"Procedures",cls:"proc",desc:"Normal procedures: takeoff, climb and cruise, descent and approach, landing, go-around. FCOM PRO-NOR and FCTM PR-NP."},
   abn:{key:"abn",hash:"abnormal",title:"Abnormal Procedures",cls:"abn",desc:"Memory items, RTO and engine failure, ECAM and systems failures, emergencies. FCOM PRO-ABN, QRH and FCTM PR-AEP."},
   tech:{key:"tech",hash:"technical",title:"A320 Technical Knowledge",cls:"tech",desc:"Systems at captain oral depth: hydraulics, electrics, flight controls, gear and brakes, fuel, APU, ice protection, LEAP-1A. FCOM DSC."},
+  fls:{key:"fls",hash:"fls",title:"FLS exam questions (FMS Landing System)",cls:"tech",desc:"Multiple choice: tap an answer. Correct lights green; a wrong answer gets a red X."},
   sf:{key:"sf",hash:"safety",title:"Safety First Flight",cls:"sf",desc:"Walk through one flight, gate to gate. Each stop is an Airbus Safety First case for that phase: read the briefing, then answer the questions."}
 };
 const BY_HASH = Object.fromEntries(Object.values(SECTIONS).map(s=>[s.hash,s]));
@@ -2918,6 +2992,7 @@ function renderBrief(sec,f){
 }
 
 function renderSection(sec){
+  if(sec.key==="fls") return renderFls(sec);
   let file = null;
   if(sec.key==="sf"){
     if(!ui.file) return renderSafetyIndex(sec);
