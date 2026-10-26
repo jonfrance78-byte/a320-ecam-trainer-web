@@ -579,7 +579,7 @@
       lights: [ELAC1, ELAC2],
       memo: [],
       steps: [MASTER].concat(RESET_OFF('ELAC 1', ELAC1, 'Captain', 'ELAC 1 left off.'), [
-        N('ELAC 2 FAULT', 'a')
+        N('ELAC 2 FAULT', 'a', { alert: true })
       ], RESET_OFF('ELAC 2', ELAC2, 'F/O', 'ELAC 2 left off: the SECs fly the aircraft in alternate law.'), [
         Q('With both ELACs lost, what gives roll control?', 'The spoilers only', ['The ailerons through the SECs', 'The rudder only', 'The ailerons in direct law'],
           'Both ailerons are lost. The SECs use the roll spoilers, so roll is a little less crisp.')
@@ -639,7 +639,28 @@
       ])
     }
   };
-  Object.keys(DRILLS).forEach(function (id) { DRILLS[id].id = id; addAnc(DRILLS[id]); });
+  // Each underlined alert on the E/WD is cleared with CLR, called by the PF and confirmed by
+  // the PM, before the next alert's actions are done (owner's rule, 0.7.90). A 'clr' step goes
+  // between them: after an alert listed above the title (top), and before each following alert
+  // title in the procedure that has actions of its own. d.lastAlert names the alert the final CLR clears.
+  function addClr(d) {
+    if (d.level < 2) return;
+    var out = [], name = null, main = false, steps = d.steps;
+    function hasAct(from) {
+      for (var k = from + 1; k < steps.length; k++) { if (isTitle(steps[k])) return false; if (steps[k].k === 'act') return true; }
+      return false;
+    }
+    function isTitle(st) { return st.k === 'note' && !st.top && (st.word || st.alert); }
+    steps.forEach(function (st, i) {
+      if (st.top && st.k === 'note' && st.word) name = st.word;
+      else if (!main && !st.top && name && ['master', 'card', 'quiz'].indexOf(st.k) < 0) { out.push({ k: 'clr', name: name }); main = true; name = d.sysWord; }
+      if (!main && !st.top && ['master', 'card', 'quiz'].indexOf(st.k) < 0) { main = true; name = d.sysWord; }
+      if (isTitle(st) && hasAct(i)) { out.push({ k: 'clr', name: name }); name = st.word || d.sysWord; }
+      out.push(st);
+    });
+    d.steps = out; d.lastAlert = name || d.sysWord;
+  }
+  Object.keys(DRILLS).forEach(function (id) { DRILLS[id].id = id; addAnc(DRILLS[id]); addClr(DRILLS[id]); });
 
   // Menu: categories and entries. lvl: w overview, a caution, r warning.
   // drill: the drill id, or several to choose from. Entries without one are still to come.

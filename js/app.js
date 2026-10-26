@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.89';
+  var VERSION = '0.7.90';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -442,7 +442,7 @@
       DR.skips.push(t.text);
     }
     if (st && st.k === 'master') pressMaster(f.level === 3 ? 'W' : 'C');
-    else if (st && preOpen()) pressClr();
+    else if (st && (preOpen() || st.k === 'clr')) pressClr();
     else if (st && st.k === 'act') {
       st.ctls.forEach(function (c) { if (st.press) ctlState(c).down = true; else if (st.move) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].cur + 1; else if (st.pos) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].pos.indexOf([].concat(st.pos)[0]); else setBits(c, { up: bits(c).up, lo: st.sel }); if (st.reset) DR.off[st.item + c.join()] = true; });
       DR.skips.push(st.item + ' ' + st.val);
@@ -765,19 +765,30 @@
       // MASTER WARN only silences the chime (owner's request, 0.7.25): lines above the
       // failure (AUTO FLT AP OFF) stay until CLR.
       if (!DR.preClr) (f.pre || []).forEach(function (l) { out.push(l); });
+      // Alerts cleared with CLR leave the E/WD; the one being worked has its title boxed.
+      var cur = 0, seg = 0, titled = false;
+      f.steps.forEach(function (st, i) { if (st.k === 'clr' && DR.done[i]) cur++; });
       var allDone = DR.phase === 'clr1';
-      function line(st, i) {
+      function line(st, i, box) {
         // gone: lines that clear by themselves once the actions are done; after: lines that only then appear
         if (st.k === 'note' && ((st.gone && allDone) || (st.after && !allDone))) return;
         if (st.k === 'act' && !DR.done[i]) out.push({ text: fmtAct(st.item, st.val), cls: 'c' });
-        if (st.k === 'note' && st.word) out.push({ parts: [{ s: st.word, u: true, c: st.c }, { s: st.text.slice(st.word.length), c: st.c }] });
+        var wd = st.word || '';
+        if (st.k === 'note' && (st.word || box)) out.push({ parts: [{ s: wd, u: !!wd, c: st.c }, { s: st.text.slice(wd.length), c: st.c }], box: box ? (wd ? wd.length + 1 : 0) : null });
         else if (st.k === 'note') out.push({ text: st.text, cls: st.c });
       }
-      // top: an alert shown above the failure's title (AUTO FLT A/THR OFF above FAC 1+2 FAULT).
-      f.steps.forEach(function (st, i) { if (st.top) line(st, i); });
-      // The failure being worked has its title boxed, as on the E/WD.
-      out.push({ parts: [{ s: w, u: true, c: cls }, { s: rest, c: cls }], box: w.length + 1 });
-      f.steps.forEach(function (st, i) { if (!st.top) line(st, i); });
+      // Steps in order; top alerts (AUTO FLT A/THR OFF above FAC 1+2 FAULT) come before the title.
+      f.steps.forEach(function (st, i) {
+        if (st.k === 'clr') { seg++; return; }
+        if (!titled && !st.top && ['master', 'card', 'quiz'].indexOf(st.k) < 0) {
+          titled = true;
+          if (seg >= cur) out.push({ parts: [{ s: w, u: true, c: cls }, { s: rest, c: cls }], box: seg === cur ? w.length + 1 : null });
+        }
+        if (seg < cur) return;
+        var start = st.k === 'note' && (st.top && st.word || i > 0 && f.steps[i - 1].k === 'clr');
+        line(st, i, start && seg === cur);
+      });
+      if (!titled) out.push({ parts: [{ s: w, u: true, c: cls }, { s: rest, c: cls }], box: w.length + 1 });
     }
     if (DR.phase === 'seq') {
       var sg = f.seq[DR.si];
@@ -832,7 +843,8 @@
     if (DR.i >= f.steps.length) {
       if (f.level >= 2) { DR.phase = 'clr1'; PN.LIVE.clr = true; DR.flash = DR.flash || 'All actions done.'; }
       else return finish();
-    } else if (f.steps[DR.i].k === 'quiz') { DR.phase = 'quiz'; showModal('quiz', { q: f.steps[DR.i] }); }
+    } else if (f.steps[DR.i].k === 'clr') PN.LIVE.clr = true;
+    else if (f.steps[DR.i].k === 'quiz') { DR.phase = 'quiz'; showModal('quiz', { q: f.steps[DR.i] }); }
     else if (f.steps[DR.i].k === 'card') { DR.phase = 'quiz'; showModal('card', { c: f.steps[DR.i] }); }
     renderDrill(); refreshHome();
     if (PV && !PV.disp) renderStage();
@@ -888,7 +900,7 @@
     if (cur && cur.k === 'act' && !pre && on(cur)) return;
     f.steps.forEach(function (st, k) {
       if (st.k !== 'act' || DR.done[k] || k === DR.i && !pre || !on(st)) return;
-      var msg = st.item + ' before ' + (cur.k === 'master' ? 'acknowledging the warning' : pre ? 'clearing ' + preName() : cur.k === 'act' ? cur.item + ' ' + cur.val : 'the step before it');
+      var msg = st.item + ' before ' + (cur.k === 'master' ? 'acknowledging the warning' : pre ? 'clearing ' + preName() : cur.k === 'clr' ? 'clearing ' + cur.name : cur.k === 'act' ? cur.item + ' ' + cur.val : 'the step before it');
       if (DR.mist.indexOf(msg) < 0) DR.mist.push(msg);
       DR.flash = 'Out of sequence: ' + msg + '. Follow the ECAM order.';
     });
@@ -907,6 +919,10 @@
       DR.flash = preName() + ' cleared. Now the ' + f.title + ' procedure.';
       DR.preClr = true; PN.LIVE.clr = false;
       drillCheck();
+    } else if (DR.phase === 'run' && f.steps[DR.i] && f.steps[DR.i].k === 'clr') {
+      DR.done[DR.i] = true; DR.i++;
+      DR.flash = 'PM confirmed: ' + f.steps[DR.i - 1].name + ' cleared. Now the next alert on the E/WD.';
+      PN.LIVE.clr = false; advance();
     } else if (DR.phase === 'run') {
       var msg = 'CLR pressed before the actions were complete';
       if (DR.mist.indexOf(msg) < 0) DR.mist.push(msg);
@@ -974,6 +990,9 @@
     if (!quiet) { hideModal(); if (PV) closePanel(); renderDrill(); refreshHome(); }
   }
 
+  // Before every CLR the PF asks and the PM confirms (owner's rule, 0.7.90).
+  function clrCall(name) { return 'PF: "CLEAR ' + name + '?" PM checks and confirms: "CLEAR ' + name + '."'; }
+  function preWords() { return DR.f.pre.map(function (l) { return (l.parts || []).filter(function (p) { return p.u; }).map(function (p) { return p.s; }).join(''); }).filter(Boolean).join(', '); }
   function taskText() {
     var f = DR.f, st = f.steps[DR.i];
     if (DR.phase === 'seq') {
@@ -981,14 +1000,15 @@
       if (sg.task && !DR.stTask) return sg.task.text;
       return sg.text + ' Then press CLR' + (DR.si + 1 < f.seq.length ? '.' : ' to finish.');
     }
-    if (DR.phase === 'clr1') return 'Actions complete. Press CLR on the ECAM control panel (pedestal) to clear the ' + (f.level === 3 ? 'warning' : 'caution') + '.';
+    if (DR.phase === 'clr1') return 'Actions complete. ' + clrCall(f.lastAlert || f.sysWord) + ' Then press CLR on the ECAM control panel (pedestal).';
     if (DR.phase === 'stsq') return 'Review the STATUS page on the SD.';
     if (DR.phase === 'clr2') return 'STATUS reviewed. Press CLR again to clear it.';
     if (DR.phase === 'done') return 'Drill complete.';
     if (!st) return '';
     if (st.k === 'master') return 'Press the flashing MASTER ' + (f.level === 3 ? 'WARN' : 'CAUT') + ' on the glareshield to ' + (f.level === 3 ? 'silence the chime' : 'acknowledge the caution') + '.';
     if (st.k === 'card') return 'Confirm the failure, then aviate, navigate, communicate. Press Continue.';
-    if (preOpen()) return 'Press CLR on the ECAM control panel (pedestal) to clear ' + preName() + ' first: it is the top alert on the E/WD, and the procedure below starts once it is cleared.';
+    if (preOpen()) return clrCall(preWords()) + ' Then press CLR on the ECAM control panel (pedestal) to clear ' + preName() + ' first: it is the top alert on the E/WD, and the procedure below starts once it is cleared.';
+    if (st.k === 'clr') return 'Actions for ' + st.name + ' done. ' + clrCall(st.name) + ' Then press CLR on the ECAM control panel (pedestal): no other ECAM action until it is cleared.';
     if (st.k === 'act') return 'ECAM action: ' + st.item + ' ' + st.val + '. ' + (st.hint || 'Overhead ' + panelName(st.ctls[0][0]) + ' panel.');
     if (st.k === 'task') return st.text;
     return '';
