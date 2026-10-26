@@ -2788,7 +2788,16 @@ const WXFIG = (()=>{
   const dots=(id,c=R,g=6,r=1.4)=>`<pattern id="${id}" width="${g}" height="${g}" patternUnits="userSpaceOnUse"><circle cx="${g/2}" cy="${g/2}" r="${r}" fill="${c}"/></pattern>`;
   const wrap=(h,body,label,defs="")=>`<svg viewBox="0 0 360 ${h}" role="img" aria-label="${label}"><defs>${defs}</defs><rect width="360" height="${h}" rx="6" fill="${SL}"/><g font-family="sans-serif" font-size="11" fill="${W}">${body}</g></svg>`;
   const scr=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${BK}"/>`;
-  const plane=(x,y,s=1,f="#f2f4f5")=>`<path transform="translate(${x} ${y}) scale(${s})" d="M0 0 C6 -4 30 -4 44 -3 L50 -1 L44 2 L6 2 C2 2 0 1 0 0Z M2 -1 L-2 -12 L4 -12 L12 -2Z M18 1 L28 7 L32 7 L28 1Z" fill="${f}"/>`;
+  // A320 side view (nose to the right at about x 50) and top view (nose up).
+  const plane=(x,y,s=1)=>`<g transform="translate(${x} ${y}) scale(${s*.82})"><path d="M3 -16 L9 -16 L19 -4 L6 -3Z" fill="#dfe4ea" stroke="#8a96a3" stroke-width=".6"/>
+    <path d="M6 -3 L50 -4.6 Q58 -4.6 61.5 0 Q58.5 4.3 50 4.6 L16 4.6 Q8 4.2 3 -1.5Z" fill="#f4f6f8" stroke="#8a96a3" stroke-width=".7"/><path d="M8 2 L50 3.2 Q57 3 60 1.2 Q57 4.3 50 4.6 L16 4.6 Q10 4.3 8 2Z" fill="#c9d1da"/>
+    <path d="M1 -1.5 L13 -0.5 L12 1 L3 0.5Z" fill="#c9d1da" stroke="#8a96a3" stroke-width=".5"/><path d="M24 2.5 L40 2.5 L22 8.5 L18 8.5Z" fill="#c9d1da" stroke="#8a96a3" stroke-width=".5"/>
+    <rect x="27" y="4.5" width="12" height="5" rx="2.4" fill="#aab4bf" stroke="#7d8996" stroke-width=".5"/><rect x="37.5" y="5" width="1.5" height="4" fill="#5a6672"/>
+    <path d="M53 -3.4 L57.5 -2.6 L56.5 -1.2 L52.6 -1.6Z" fill="#2d3e52"/>${[...Array(11)].map((_,i)=>`<rect x="${17+i*3}" y="-2.4" width="1.3" height="1.6" rx=".5" fill="#4f6276"/>`).join("")}</g>`;
+  const planeTop=(x,y,s=1)=>`<g transform="translate(${x} ${y}) scale(${s})" fill="#f4f6f8" stroke="#8a96a3" stroke-width=".5">
+    <path d="M-2 -2 L-15 5 L-15 7 L-2 3.5Z M2 -2 L15 5 L15 7 L2 3.5Z M-1.5 10 L-6 13.5 L-6 14.6 L-1.2 13.6Z M1.5 10 L6 13.5 L6 14.6 L1.2 13.6Z"/>
+    <rect x="-8.6" y="0" width="2.2" height="5" rx="1" fill="#aab4bf"/><rect x="6.4" y="0" width="2.2" height="5" rx="1" fill="#aab4bf"/>
+    <path d="M0 -15 Q2.3 -13 2.3 -8 L2.3 10 L1 15 L-1 15 L-2.3 10 L-2.3 -8 Q-2.3 -13 0 -15Z"/><path d="M-1.2 -12.6 L1.2 -12.6 L1 -11.6 L-1 -11.6Z" fill="#2d3e52" stroke="none"/></g>`;
   const sky=id=>`<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f5d9e"/><stop offset="1" stop-color="#6aa6dc"/></linearGradient>`;
   const cb=(x,base,top,w)=>`<path d="M${x-w*.45} ${base} Q${x-w*.55} ${base-(base-top)*.5} ${x-w*.3} ${top+18} Q${x-w*.8} ${top+6} ${x-w*.7} ${top} H${x+w*.75} Q${x+w*.85} ${top+8} ${x+w*.35} ${top+18} Q${x+w*.6} ${base-(base-top)*.5} ${x+w*.45} ${base}Z" fill="#a9c6e2"/><path d="M${x-w*.2} ${base} Q${x-w*.35} ${top+40} ${x} ${top+22} Q${x+w*.3} ${top+40} ${x+w*.3} ${base}Z" fill="#d9e8f5" opacity=".7"/>`;
   const rain=(x0,x1,y0,y1)=>{let s="";for(let x=x0;x<x1;x+=6)s+=`<path d="M${x} ${y0} l-6 ${y1-y0}" stroke="#d9e8f5" stroke-width="1" opacity=".7"/>`;return s;};
@@ -2829,10 +2838,10 @@ const WXFIG = (()=>{
     ${[78,83,88].map(r=>`<path d="${arcP(254,196,r,14,30)}" fill="none" stroke="${R}" stroke-width="3"/>`).join("")}
     <text x="210" y="58" fill="${A}" font-weight="700" font-size="10">W/S SET RNG 10 NM</text><text x="346" y="204" text-anchor="end" fill="${G}" font-size="9">PWS SCAN</text>
     <text x="79" y="22" text-anchor="middle" fill="${YL}" font-size="10">PFD message</text><text x="254" y="24" text-anchor="middle" fill="${YL}" font-size="10">ND: predicted windshear area</text>`,"Predictive windshear on the PFD and ND"),
-  ahead: wrap(200,`<path d="M50 34 H140 V140 L95 165 L50 140Z" fill="#2c343c"/><path d="M95 30 V180" stroke="${W}" stroke-dasharray="3 3"/><path d="M95 172 l-14 10 h28z M95 168 v20 M89 188 h12" stroke="#f2f4f5" stroke-width="3" fill="#f2f4f5"/>
+  ahead: wrap(200,`<path d="M50 34 H140 V140 L95 165 L50 140Z" fill="#2c343c"/><path d="M95 30 V180" stroke="${W}" stroke-dasharray="3 3"/>${planeTop(95,178,1.3)}
     ${arrow(40,100,40,36)}${arrow(40,100,40,162)}<text x="4" y="96" fill="${YL}" font-size="10">3 min</text>${arrow(118,24,95,24)}${arrow(118,24,140,24)}<text x="118" y="18" text-anchor="middle" fill="${YL}">2 NM</text>
-    <path d="M262 36 H348 V146 H262 L250 91Z" fill="#2c343c"/><path d="M190 91 H350" stroke="${W}" stroke-dasharray="4 3"/>${plane(196,91,.95)}
-    ${arrow(222,64,222,36)}${arrow(222,64,222,90)}${arrow(222,118,222,92)}${arrow(222,118,222,146)}<text x="228" y="66" fill="${YL}" font-size="10">4 000 ft</text><text x="228" y="122" fill="${YL}" font-size="10">4 000 ft</text>
+    <path d="M262 36 H348 V146 H262 L250 91Z" fill="#2c343c"/><path d="M190 91 H350" stroke="${W}" stroke-dasharray="4 3"/>${plane(204,91,.9)}
+    ${arrow(196,64,196,36)}${arrow(196,64,196,90)}${arrow(196,118,196,92)}${arrow(196,118,196,146)}<text x="202" y="56" fill="${YL}" font-size="10">4 000 ft</text><text x="202" y="132" fill="${YL}" font-size="10">4 000 ft</text>
     ${arrow(300,164,250,164)}${arrow(300,164,348,164)}<text x="300" y="182" text-anchor="middle" fill="${YL}">3 min</text>`,"Weather ahead detection area"),
   pac: wrap(240,scr(8,30,344,202)+`<path d="M${pt(180,222,98,-20).join(" ")} L${pt(180,222,172,-24).join(" ")} ${arcP(180,222,172,-24,-6).replace(/^M[^A]*/,"")} L${pt(180,222,98,-4).join(" ")} Z" fill="none" stroke="${W}" stroke-width="2"/>`+
     storm(155,140,15,11,91)+[[230,150],[245,125],[262,100],[285,80],[300,62],[225,170]].map(([x,y],i)=>`<path d="${blob(x,y,9,6,95+i,{rough:.35,n:14})}" fill="${Y}"/><path d="${blob(x+1,y,5,3,120+i,{rough:.3,n:12})}" fill="${A}"/>`).join("")+
