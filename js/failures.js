@@ -65,6 +65,7 @@
   function ptuOff(s) { s.hyd.ptu = 'off'; s.hyd.ptuActive = false; }
   // AUTO FLT controls: the FACs (overhead FLT CTL panels), the thrust levers, GPWS TERR
   var FAC1 = ['FLTCTL1', 'FAC 1', 1], FAC2 = ['FLTCTL2', 'FAC 2', 1], THR1 = ['THR', 'Thrust lever 1', 1], THR2 = ['THR', 'Thrust lever 2', 1], GPWS_TERR = ['GPWS', 'TERR', 1];
+  var AUDIO_SW = ['AUDIOSW', 'AUDIO SWITCHING', 1], GPWS_SYS = ['GPWS', 'SYS', 1];
   var PRESS_MODE = ['CABPRESS', 'MODE SEL', 1], ASKID = ['AUTOBRK', 'A/SKID & N/W STRG', 1], PARK_BRK = ['PARKBRK', 'PARKING BRK', 1];
   var ALTN_LAW = [{ parts: [{ s: 'F/CTL', u: true, c: 'a' }, { s: ' ALTN LAW', c: 'a' }] }, { text: '     (PROT LOST)', cls: 'a' }];
   function ATHR_OFF(why) {
@@ -488,6 +489,55 @@
         Q('Holding MAN V/S CTL to DN does what to the cabin?', 'Closes the outflow valve, so the cabin descends', ['Opens the outflow valve, so the cabin descends', 'Closes the valve, so the cabin climbs', 'Lowers the landing elevation'],
           'Less air out means more pressure: the cabin altitude goes down. UP opens the valve and the cabin climbs. The valve is slow in MAN, so small inputs and patience.')
       ]
+    },
+
+    // ELEC: E/WD, secondary pages and STATUS from ReadECAM's slides (displays only; questions
+    // and notes are our own). 0.7.88.
+    'elec-dc-ess': {
+      title: 'ELEC DC ESS BUS FAULT', sysWord: 'ELEC', level: 3, tc: 'a', sd: 'ELEC', phase: 'Cruise · FL350',
+      brief: 'In cruise, the DC ESS bus is lost. Many Captain-side and essential items go with it: VHF 1, both audio control panels, AP 1, FAC 1, the blue electric pump, one pressure controller and the hydraulic pressure indications.',
+      learn: ['The DC ESS bus is normally fed from DC BAT bus. Losing it takes out items on the Captain side and some essential ones, while the aircraft keeps both engines\' generators.',
+        'With ACP 1 and 2 lost, communication goes through ACP 3 (overhead AUDIO SWITCHING to CAPT 3 or F/O 3) and VHF 2 or 3. Many crews think they have lost all radios here when only the selections are wrong.',
+        'The blue electric pump is lost (spoiler 3, slow slats); the other hydraulic systems work but their pressures show XX.'],
+      pre: AP_OFF,
+      setup: function (s) { s.elec.dcEss = false; s.hyd.xx = true; s.hyd.B.fail = true; s.hyd.B.p = 0; s.press.sys = ['fault', 'ok']; s.press.active = 1; },
+      lights: [GPWS_SYS],
+      memo: [{ t: '*CAB PRESS', c: 'a' }, { t: '*HYD', c: 'a' }, { t: '*F/CTL', c: 'a' }],
+      steps: [
+        MASTER,
+        N('-VHF 2 OR 3...........USE'),
+        Q('Why VHF 2 or 3?', 'VHF 1 is lost with the DC ESS bus', ['VHF 2 has the better range', 'VHF 3 is for data only', 'To keep VHF 1 free for the cabin'],
+          'VHF 1 is powered through the essential buses. VHF 2 or 3 are used, through ACP 3 since ACP 1 and 2 are lost too.'),
+        A('AUDIO SWTG', 'SELECT', AUDIO_SW, { pos: ['CAPT 3', 'F/O 3'], hint: 'Overhead AUDIO SWITCHING selector: CAPT 3 (or F/O 3).',
+          why: 'That pilot\'s headset, microphone and PTT now go through ACP 3.' }),
+        N('-BARO REF.............CHECK'),
+        A('GPWS SYS', 'OFF', GPWS_SYS, { clears: true, hint: 'Overhead GPWS panel: SYS off.', why: 'The GPWS has lost its supply; switching it off stops false alerts.' })
+      ].concat(ATHR_OFF('Autothrust is lost: thrust is now set by hand.').map(function (st) { return Object.assign({}, st, { top: false }); }), [
+        Q('After AUDIO SWTG to CAPT 3, how does the Captain transmit?', 'Through ACP 3, with VHF 2 or 3 selected on it, or the sidestick PTT', ['Through ACP 1 as before', 'Only through the F/O\'s ACP 2', 'Only on the cabin interphone'],
+          'ACP 3 normally only monitors. Select the VHF 2 or 3 transmission key and its receiver on it.')
+      ]),
+      seq: [
+        { lines: [N('NAV GPWS FAULT', 'a', { word: 'NAV', boxed: true }), N('-GPWS SYS..............OFF'), N('FUEL L TK PUMP 1 LO PR', 'a', { word: 'FUEL' }), N('     R TK PUMP 1 LO PR', 'a')],
+          memo: [{ t: '*CAB PRESS', c: 'a' }, { t: '*HYD', c: 'a' }, { t: '*F/CTL', c: 'a' }], sd: 'FUEL',
+          text: 'Following alerts: GPWS FAULT (its action is already done) and the No 1 wing tank pumps.', note: 'DC ESS BUS FAULT cleared. The alerts that follow from it are shown.',
+          q: Q('Why does -GPWS SYS OFF show again under NAV GPWS FAULT?', 'The ECAM cannot sense that it was done, so it shows it again', ['It must be pressed a second time', 'The first selection did not work', 'It is a different GPWS switch'],
+            'Some actions are not monitored by the ECAM. Already done: check and clear.') },
+        { lines: [], memo: [{ t: '*CAB PRESS', c: 'a' }, { t: '*HYD', c: 'a' }, { t: '*F/CTL', c: 'a' }], sd: 'PRESS',
+          text: 'Secondary failure *CAB PRESS: the PRESS page shows SYS 1 lost. SYS 2 controls the cabin.', note: 'ECAM shows the CAB PRESS page for the secondary failure.' },
+        { lines: [], memo: [{ t: '*HYD', c: 'a' }, { t: '*F/CTL', c: 'a' }], sd: 'HYD',
+          text: 'Secondary failure *HYD: the blue electric pump is lost; the other pressures show XX.', note: 'ECAM shows the HYD page for the secondary failure.',
+          q: Q('Green and yellow show XX. Are they lost?', 'No: their titles stay white, so they are above 1450 PSI', ['Yes: XX means no pressure', 'Only yellow is lost', 'It cannot be known'],
+            'Only the pressure readout is lost. A white title and green lines still mean the system is pressurised.') },
+        { lines: [], memo: [{ t: '*F/CTL', c: 'a' }], sd: 'F/CTL',
+          text: 'Secondary failure *F/CTL: spoiler 3 is lost with blue; the hydraulic letters are missing.', note: 'ECAM shows the F/CTL page for the secondary failure.' },
+        { lines: [], memo: [], sd: 'STS',
+          sts: { left: [['AVOID ICING CONDITIONS', 'c'], ['.IF SEVERE ICE ACCRETION:', 'w'], [' MIN SPD.....VLS+10/G DOT', 'c'], [' MANEUVER WITH CARE', 'c'], ['LDG DIST PROC......APPLY', 'c'],
+            ['ENG 1 APPR IDLE ONLY', 'g'], ['ENG 2 APPR IDLE ONLY', 'g'], ['BOTH PFD ON SAME FAC', 'g'], ['PACK 2 AT FIXED TEMP', 'g'], ['SLATS/FLAPS SLOW', 'g'], ['CAT 3 SINGLE ONLY', 'g']],
+            inop: ['B HYD', 'SPLR 3', 'VHF 1', 'ACP 1+2', 'WING A.ICE', 'AP 1', 'A/THR', 'FCU 1', 'CAT 3 DUAL', 'FAC 1', 'L TK PUMP 1', 'R TK PUMP 1', 'AUTO BRK', 'ALTN BRK', 'REVERSER 2', 'ENG 2 START', 'CAB PR 1'] },
+          text: 'STATUS is shown. Review it with the other pilot.', note: 'Secondary failures reviewed. STATUS is shown.',
+          q: Q('Why AVOID ICING CONDITIONS?', 'The wing anti-ice is lost', ['The engine anti-ice is lost', 'The probes are no longer heated', 'The windshield heat is lost'],
+            'WING A.ICE is on the INOP list. If ice builds up anyway, fly at least VLS + 10 kt or green dot and manoeuvre with care.') }
+      ]
     }
   };
   Object.keys(DRILLS).forEach(function (id) { DRILLS[id].id = id; addAnc(DRILLS[id]); });
@@ -502,7 +552,7 @@
     ['AUTO FLT', [E('FMGC SYSTEM OVERVIEW', 'w'), E('FAC FAULTS', 'a', ['afl-fac1', 'afl-fac12']), E('FCU FAULTS', 'a', ['afl-fcu1', 'afl-fcu12']), E('FMGC SINGLE FAULT', 'a'), E('DUAL FMGC FAILURE', 'a', 'afl-dual-fmgc')]],
     ['BRAKES', [E('BRAKES SYS OVERVIEW', 'w'), E('BRAKES SYS 1(2) FAULT', 'a', 'brk-sys1'), E('LOSS OF BRAKING [MEM]', 'r')]],
     ['CAB PRESS', [E('EXCESSIVE CAB ALT', 'r'), E('CPC FAULTS', 'a', 'press-sys12')]],
-    ['ELEC', [E('ELECTRICAL SYSTEM OVERVIEW', 'w'), E('C/B TRIPPED', 'a'), E('DC ESS BUS FAULT', 'a'), E('ELEC EMER CONFIG', 'r')]],
+    ['ELEC', [E('ELECTRICAL SYSTEM OVERVIEW', 'w'), E('C/B TRIPPED', 'a'), E('DC ESS BUS FAULT', 'a', 'elec-dc-ess'), E('ELEC EMER CONFIG', 'r')]],
     ['ENG', [E('ABN/NON-STD ENG START', 'a'), E('ENGINE MALFUNCTIONS', 'a'), E('ALL ENG FAIL', 'r'), E('ENG FAIL IN CRUISE', 'a'), E('ENG FAIL AFTER V1', 'a'),
       E('OEI APP AND LANDING', 'a'), E('OEI GO AROUND', 'a'), E('OEI BLEED MANAGEMENT', 'a'), E('TAILPIPE FIRE', 'a'), E('THRUST LOCKED', 'a'), E('TOGA LK', 'a'), E('THR LEVERS MANAGEMENT', 'a')]],
     ['F/CTL', [E('F/CTL LAWS OVERVIEW', 'w'), E('ELAC FAULTS', 'a'), E('ELEVATOR FAULTS', 'a'), E('RUDDER JAM', 'a'), E('SEC FAULTS', 'a'), E('SLATS OR FLAPS JAMMED', 'a'), E('STABILISER JAM', 'a'), E('TAKEOVER PB', 'w')]],

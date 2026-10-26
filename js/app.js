@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.87';
+  var VERSION = '0.7.88';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -444,7 +444,7 @@
     if (st && st.k === 'master') pressMaster(f.level === 3 ? 'W' : 'C');
     else if (st && preOpen()) pressClr();
     else if (st && st.k === 'act') {
-      st.ctls.forEach(function (c) { if (st.press) ctlState(c).down = true; else if (st.move) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].cur + 1; else if (st.pos) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].pos.indexOf(st.pos); else setBits(c, { up: bits(c).up, lo: st.sel }); if (st.reset) DR.off[st.item + c.join()] = true; });
+      st.ctls.forEach(function (c) { if (st.press) ctlState(c).down = true; else if (st.move) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].cur + 1; else if (st.pos) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].pos.indexOf([].concat(st.pos)[0]); else setBits(c, { up: bits(c).up, lo: st.sel }); if (st.reset) DR.off[st.item + c.join()] = true; });
       DR.skips.push(st.item + ' ' + st.val);
     }
     else if (st && st.k === 'task') doTask(st);
@@ -846,7 +846,7 @@
     if (st.k === 'master') return !masterLit();
     // reset: OFF THEN ON, done once the control has been seen OFF and is back ON.
     if (st.k === 'act') return st.ctls.every(function (c) {
-      if (st.pos) return posName(c) === st.pos;
+      if (st.pos) return [].concat(st.pos).indexOf(posName(c)) >= 0;
       if (st.reset) { var k = st.item + c.join(); if (isOff(c)) DR.off[k] = true; return !!DR.off[k] && !isOff(c); }
       // move: a lever moved out of the detent it started in (THR LEVERS....MOVE).
       if (st.move) { var cur = ctlState(c).cur; return cur != null && cur !== PN.P[c[0]].items[ctlIndex(c)].cur; }

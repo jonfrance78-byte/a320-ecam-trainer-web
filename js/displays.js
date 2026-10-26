@@ -298,7 +298,8 @@
     o += t(110, 52, 'PSI', 'c', 8, 'middle') + t(210, 52, 'PSI', 'c', 8, 'middle');
     cols.forEach(function (c) {
       var sys = h[c[1]], ok = sys.p >= 1450, x = c[2], lc = ok ? 'sg' : 'sa';
-      o += t(x, 40, c[0], ok ? 'w' : 'a', 11, 'middle') + t(x, 56, round10(sys.p), ok ? 'g' : 'a', 12, 'middle');
+      // xx: pressure indications lost (DC ESS BUS FAULT); title and line still show above or below 1450 PSI
+      o += t(x, 40, c[0], ok ? 'w' : 'a', 11, 'middle') + t(x, 56, h.xx ? 'XX' : round10(sys.p), h.xx || !ok ? 'a' : 'g', 12, 'middle');
       o += ln(x, 62, x, 240, lc, 1.5);
       var lo = sys.rsvr === 'lo', lvl = Math.max(0, Math.min(1, sys.qty));
       o += rc(x - 4, 240, 8, 44, 'sw', 1) + fillRect(x - 2.5, 276, 5, 7, 'fa') + ln(x, 274, x, 274 - 32 * lvl, lo ? 'sa' : 'sg', 2.4);
@@ -476,6 +477,7 @@
     var o = ul(10, 40, 'F/CTL', 'w', 12), h = s.hyd;
     var ok = { G: h.G.p >= 1450, B: h.B.p >= 1450, Y: h.Y.p >= 1450 };
     function letters(x, y, list) {
+      if (h.xx) return ''; // hydraulic pressure indications lost: no letters
       var out = '';
       list.forEach(function (L, idx) { out += t(x + idx * 11, y, L, ok[L] ? 'g' : 'a', 11, 'middle'); });
       return out;
