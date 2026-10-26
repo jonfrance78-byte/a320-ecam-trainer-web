@@ -155,28 +155,53 @@
         'The yellow electric pump (overhead, normally off) can be switched ON. The RAT is blue only.')
     },
 
+    // HYD B+Y: the ECAM display sequence (E/WD, SD pages, STATUS) laid out from ReadECAM's
+    // B+Y slides, which the owner has permission to use as a reference (displays only;
+    // questions, notes and explanations are our own). 0.7.84.
     'hyd-by': {
       title: 'HYD B+Y SYS LO PR', sysWord: 'HYD', level: 3, sd: 'HYD', phase: 'Cruise · FL350',
-      brief: 'In cruise. A yellow leak empties the yellow reservoir, and the blue electric pump fails. Only green remains.',
-      learn: HYD_LEARN.concat(['With B+Y lost: alternate law, right elevator and spoilers 2, 3 and 4 lost, slats and flaps slow (green only), alternate braking and reverser 2 lost. The gear and normal brakes (green) still work.']),
-      setup: function (s) { var y = s.hyd.Y; y.rsvr = 'lo'; y.qty = 0.05; y.leak = true; y.p = 0; s.hyd.B.fail = true; s.hyd.B.p = 0; s.fctl.law = 'ALTN'; },
-      lights: [Y_PUMP, B_PUMP, PTU],
-      memo: [{ t: 'LAND ASAP', c: 'r' }],
+      brief: 'In cruise. The blue reservoir empties (a leak), then the yellow system loses its fluid too. Blue and yellow pressure fall; only green remains, and the autopilot disconnects.',
+      learn: HYD_LEARN.concat([
+        'Of the three dual hydraulic failures, B+Y is the least demanding: the flight controls stay in normal law, and the slats, flaps and normal brakes (green) remain, though slowly.',
+        'Lost with B+Y: both autopilots, the right elevator, spoilers 2, 3 and 4 (so no speed brakes, and a longer landing distance), nose wheel steering, reverser 2, yaw damper 2 and the emergency generator (the RAT drives blue).',
+        'The gear is still lowered by gravity if the hydraulics are not recovered, to spare green, the only system left.']),
+      pre: AP_OFF,
+      memo: [{ t: 'LAND ASAP', c: 'r' }, { t: '*F/CTL', c: 'a' }],
+      setup: function (s) { var b = s.hyd.B, y = s.hyd.Y; b.rsvr = y.rsvr = 'lo'; b.qty = y.qty = 0.05; b.leak = y.leak = true; b.p = y.p = 0; },
+      lights: [B_PUMP, Y_PUMP, PTU],
       steps: [
         MASTER,
-        A('PTU', 'OFF', PTU, { clears: true, fx: ptuOff, why: 'With the yellow reservoir empty the PTU would only overheat.' }),
-        A('YELLOW ENG 2 PUMP', 'OFF', Y_PUMP, { clears: true, fx: function (s) { s.hyd.Y.pump = 'off'; }, why: 'Protects the engine pump from running dry.' }),
-        A('BLUE ELEC PUMP', 'OFF', B_PUMP, { clears: true, fx: function (s) { s.hyd.B.pump = 'off'; }, why: 'Protects the failed pump.' }),
+        A('BLUE ELEC PUMP', 'OFF', B_PUMP, { clears: true, fx: function (s) { s.hyd.B.pump = 'off'; }, why: 'Blue has lost its fluid: switching its pump off stops it running dry.' }),
+        A('YELLOW ENG 2 PUMP', 'OFF', Y_PUMP, { clears: true, fx: function (s) { s.hyd.Y.pump = 'off'; }, why: 'The same for yellow: its engine pump would otherwise run with no fluid.' }),
+        Q('Which flight control law applies with blue and yellow lost?', 'Normal law: the protections remain',
+          ['Alternate law, protections lost', 'Direct law', 'Mechanical backup'],
+          'B+Y is the one dual hydraulic failure that keeps normal law: green still powers enough of the flight controls for the computers to keep their protections. Fly with care all the same: the right elevator and three spoilers on each wing are gone.'),
+        N('MAX SPEED.......320/.77'),
         N('MANEUVER WITH CARE'),
-        Q('Which elevator remains available?', 'The left elevator (green)', ['The right elevator', 'Both elevators', 'Neither'],
-          'Left elevator B+G keeps green. Right elevator Y+B is lost. The THS (G+Y) still works on green.'),
-        Q('Which law do the flight controls revert to?', 'Alternate law', ['Normal law', 'Direct law at all times', 'Mechanical backup'],
-          'Any dual hydraulic failure gives alternate law. It reverts to direct law when the gear is extended.')
+        N('HYD PTU FAULT', 'a', { word: 'HYD' }),
+        N('-PTU......................OFF')
       ],
-      sts: { left: [['MAX SPEED.........320 KT', 'c'], ['MANEUVER WITH CARE', 'c'], ['APPR PROC', 'w'], ['SLATS SLOW', 'g'], ['FLAPS SLOW', 'g']],
-        inop: ['B+Y HYD', 'F/CTL PROT', 'SPLR 2+3+4', 'ALTN BRK', 'REVERSER 2', 'CAT 2'] },
-      statusQ: Q('Can the landing gear be extended normally?', 'Yes: the gear is green, which still works', ['No: gravity extension is needed', 'Only with the yellow electric pump', 'Only with the RAT'],
-        'The landing gear uses green only, so normal extension and normal braking are available.')
+      seq: [
+        { lines: [N('HYD PTU FAULT', 'a', { word: 'HYD', boxed: true }), N('-PTU......................OFF')], memo: [{ t: 'LAND ASAP', c: 'r' }, { t: '*F/CTL', c: 'a' }],
+          sd: 'HYD', text: 'HYD PTU FAULT is now shown.', note: 'HYD B+Y cleared. The next alert is HYD PTU FAULT.',
+          task: T('HYD PTU FAULT: PTU OFF (overhead HYD panel).', { ctl: PTU, sel: true }, 'PTU OFF: the PTU links green and yellow; with yellow empty it could only overheat, and green is now the one system to protect.'),
+          q: Q('Why does HYD PTU FAULT follow, and what does PTU OFF protect?', 'Yellow has no fluid, so the PTU cannot work properly; switching it off protects green, the only system left',
+            ['The PTU needs blue to run', 'It restores yellow pressure', 'It powers the RAT'],
+            'The PTU only transfers power between green and yellow. With yellow empty it can do nothing useful and could overheat, putting green at risk.') },
+        { lines: [], memo: [{ t: 'LAND ASAP', c: 'r' }], sd: 'F/CTL',
+          text: 'Secondary failure *F/CTL: the SD shows the F/CTL page. Check what is left to fly the aircraft.', note: 'ECAM shows the F/CTL page for the secondary failure.',
+          q: Q('From the F/CTL page, what is lost for roll and pitch?', 'Spoilers 2, 3 and 4 and the right elevator; the ailerons, left elevator, stabilizer and rudder remain on green',
+            ['Both ailerons and both elevators', 'The stabilizer and the rudder', 'Nothing: all surfaces have green'],
+            'Each spoiler pair has one system: 2 and 4 are yellow and 3 is blue, so only 1 and 5 (green) are left. The right elevator is yellow and blue. Everything with a green actuator still works.') },
+        { lines: [], memo: [{ t: 'LAND ASAP', c: 'r' }], sd: 'STS',
+          sts: { left: [['MAX SPEED........320/.77', 'c'], ['MANEUVER WITH CARE', 'c'], ['SPD BRK.......DO NOT USE', 'c'], ['', 'c'],
+            ['.IF HYD NOT RECOVERED:', 'w'], [' -L/G.........GRVTY EXTN', 'c'], ['LDG DIST PROC......APPLY', 'c'], ['', 'c'], ['SLATS/FLAPS SLOW', 'g']],
+            inop: [['B+Y HYD', 'r'], 'R ELEV', 'SPLR 2+3+4', 'SPD BRK', 'AP 1+2', 'CAT 2', 'N/W STRG', 'REVERSER 2', 'CARGO DOOR', 'EMER GEN', 'Y ENG 2 PUMP', 'B ELEC PUMP', 'YAW DAMPER 2'] },
+          text: 'STATUS is shown. Review it with the other pilot.', note: 'Secondary failure reviewed. STATUS is shown.',
+          q: Q('Green still works. Why does STATUS ask for the gear to be lowered by gravity?', 'To spare green, the only hydraulic system left: the gear takes a lot from it',
+            ['Because the gear is powered by yellow', 'Because normal extension needs blue', 'To keep normal law'],
+            'Gear extension puts a large demand on a hydraulic system. With green the last one left, gravity extension keeps it for the flight controls and brakes. Expect no nose wheel steering after landing, and a longer landing distance without spoilers 2, 3 and 4.') }
+      ]
     },
 
     // HYD G+B and G+Y follow the FCOM procedures the owner supplied (PRO-ABN-HYD).
