@@ -2636,7 +2636,119 @@ const COLD = [
   ex:"Coverage of less than 10% in a runway third is not reported as a percentage, so the SNOWTAM does not show 10% for 5% ice."}
 ].map((x,i)=>Object.assign(x,{id:"cold"+String(i+1).padStart(2,"0"),s:"cold",t:"Cold weather"}));
 Q.push(...COLD);
-const EXAMS = {fls:FLS, sys:SYS, rvsm:RVSM, cold:COLD};
+
+/* Upset Prevention and Recovery (UPRT) exam questions (owner's request, from the owner's train-the-trainer assessment photos; own wording).
+   Answers are the ones marked in the photos; explanations are written from general Airbus UPRT teaching (FCTM / FCOM upset prevention and recovery), not copied. */
+const UPRT = [
+ {q:"When should an upset recovery be started?",
+  o:["Only when the airspeed is changing rapidly.","Only when pitch or bank reaches fixed limit values.","Whenever the aircraft diverges from its intended flight path or airspeed in an unintended and excessive way."],ok:2,ex:"Start as soon as the aircraft diverges from the intended path or speed without your intending it. Training material adds that the crew must still recognise and confirm what is happening first, because arbitrary full-scale control inputs can make the upset worse."},
+ {q:"The stall recovery can be summarised as four actions:",
+  o:["Take over, disconnect AP, disconnect A/THR, seat belt signs ON.","Push/unload, roll, thrust, recover to level flight.","Wings level, pitch up, thrust TOGA, return to assigned altitude.","Wings level, pitch down, thrust idle, return to assigned altitude."],ok:1,ex:"FCOM [MEM] STALL RECOVERY and the FCTM reduce it to push/unload, roll, thrust, recover to level flight. Push/unload comes first and is the most essential action to regain lift. Losing height matters less than reducing the angle of attack, and thrust goes up smoothly once out of the stall, not the moment it is recognised."},
+ {q:"Dihedral is the positive angle between the lateral axis of the aircraft and a line through the centre of the wing. Which statement is incorrect?",
+  o:["\"Dihedral effect\" describes how wing sweep and rudder affect lateral stability.","Dihedral adds to lateral stability.","With sideslip, the wing facing into the wind loses lift.","A wing with dihedral develops stable rolling moments in sideslip."],ok:2,ex:"In sideslip the wing facing the relative wind has a higher effective angle of attack and gains lift, which rolls the aircraft back toward level. That is the stabilising effect, so the statement that it loses lift is wrong."},
+ {q:"Movement about the lateral axis is called:",
+  o:["Roll.","Yaw.","Sideslip.","Pitch."],ok:3,ex:"Pitch is rotation about the lateral axis (nose up or down), roll is about the longitudinal axis and yaw about the vertical axis."},
+ {q:"Cyclic, abrupt rudder pedal inputs can: (select two)",
+  o:["Cause structural damage below VA.","Cause structural damage above VA.","Not cause structural damage below VA."],ok:[0,1],ex:"VA protects against a single full control input only. Alternating or reversing rudder inputs can build up loads and damage the structure at any speed, below or above VA."},
+ {q:"If you exceed the critical angle of attack, the surface will stall and lift will decrease instead of increasing. This is true:",
+  o:["Only if the airspeed is low.","Unless the aircraft is in a nose-down pitch attitude.","Regardless of airspeed or attitude.","Only if the aircraft is in a nose-high pitch attitude."],ok:2,ex:"A stall depends on angle of attack alone. It can happen at any speed, any pitch attitude and any bank angle."},
+ {q:"For a NOSE LOW upset:",
+  o:["Normally airspeed is decreasing, altitude is decreasing and the VSI shows a climb.","Normally airspeed is increasing, altitude is decreasing and the VSI shows a descent.","Normally airspeed is decreasing, altitude is increasing and the VSI shows a descent.","Normally airspeed is increasing, altitude is increasing and the VSI shows a climb."],ok:1,ex:"FCTM: use the PFD as the primary reference. In a nose-low upset the airspeed is normally increasing, the altitude decreasing and the VSI shows a descent."},
+ {q:"Stability about the vertical axis tends to drive the sideslip angle toward zero. On modern jet transports, most of the dynamic stability about the vertical axis comes from:",
+  o:["The rudder.","Pilot roll input.","An active stability augmentation system / yaw damper.","The vertical fin."],ok:2,ex:"The fin gives static directional stability, but the damping of the yaw oscillation (Dutch roll) on a modern jet is mainly provided by the yaw damper."},
+ {q:"What is the role of the rudder travel limitation function of the FACs?",
+  o:["To allow any succession of rudder inputs below VA.","To protect the structure, but at the price of the rudder authority needed at high speed.","To allow full rudder pedal input in one direction at any speed, while keeping the rudder travel appropriate for that speed."],ok:2,ex:"Rudder travel is reduced as speed increases, so a full pedal input in one direction stays within structural limits yet still gives the rudder effect needed at that speed. It does not protect against repeated reversals."},
+ {q:"For a NOSE HIGH upset:",
+  o:["Normally airspeed is decreasing, altitude is increasing and the VSI shows a climb.","Normally airspeed is decreasing, altitude is increasing and the VSI shows a descent.","Normally airspeed is increasing, altitude is increasing and the VSI shows a climb.","Normally airspeed is increasing, altitude is decreasing and the VSI shows a descent."],ok:0,ex:"FCTM: use the PFD as the primary reference. In a nose-high upset the airspeed is normally decreasing, the altitude increasing and the VSI shows a climb."},
+ {q:"Most multi-engine turbojet loss-of-control incidents caused by environmental factors are because of:",
+  o:["Windshear.","Wake turbulence.","Airframe icing.","Microbursts."],ok:1,ex:"Wake turbulence encounters account for most of the environmental loss-of-control events in this category. Keep the recommended wake separation and know the avoidance and recovery actions."},
+ {q:"Pilot-induced oscillations are:",
+  o:["Oscillations due to a rudder and aileron out-of-trim condition.","Oscillations due to cyclic control inputs by the pilot, with an out-of-phase aircraft response.","Oscillations due to cyclic control inputs by the pilot, with an immediate aircraft response in the same direction."],ok:1,ex:"The pilot keeps correcting a response that lags behind the input, so the corrections end up in the wrong phase and feed the oscillation. The remedy is to stop chasing it and make smaller, smoother inputs."},
+ {q:"The most common cause of airplane upsets is:",
+  o:["Pilot-induced factors.","Aircraft system anomalies.","Environmental factors."],ok:2,ex:"Environmental factors (turbulence, wake, windshear, icing) lead the list, ahead of system anomalies and pilot-induced events. Awareness and avoidance are the first defence."},
+ {q:"If the engines are not aligned with the aircraft centre of gravity, a change in engine thrust will:",
+  o:["Be accompanied by a change in pitching moment.","Have no effect on pitching moment."],ok:0,ex:"With underwing engines, thrust acts below the CG, so any thrust change comes with a pitching moment. The FCTM warns that more thrust can reduce the effect of nose-down pitch control, so thrust may have to be limited or reduced until pitch is under control."},
+ {q:"The aircraft angle of attack is the angle between the aircraft longitudinal axis and the oncoming air.",
+  o:["False.","True."],ok:1,ex:"Strictly it is the angle between the wing chord and the relative airflow, and it is often loosely given against the longitudinal axis. In this paper the statement is marked true."},
+ {q:"With insufficient aerodynamic force (stalled), the trajectory is mostly ballistic and it may be hard for the pilot to command an attitude change until:",
+  o:["The aircraft arrives at a lower altitude.","Full nose-up elevator is applied.","Full rudder input is applied.","Gravity gives enough airspeed once the angle of attack is reduced."],ok:3,ex:"A stalled wing gives too little aerodynamic force for normal control. Reduce the angle of attack and let the aircraft trade altitude for airspeed: that is the only way out of a stall, and it is why losing height is secondary."},
+ {q:"The angle of attack at which a wing stalls reduces with ______ Mach.",
+  o:["Decreasing","Increasing"],ok:1,ex:"At high Mach the compressibility effects and shock-induced separation make the wing stall at a lower angle of attack, so the margin to the stall shrinks as Mach rises."},
+ {q:"Positive static stability is the initial tendency to return to the undisturbed state after a disturbance.",
+  o:["True.","False."],ok:0,ex:"That is the definition. Dynamic stability then describes whether the motion damps out over time."},
+ {q:"After recognising a NOSE HIGH upset, the pilot should:",
+  o:["Transfer control to the commander.","Apply nose-down input (push the sidestick), adjust thrust if and as required, and roll wings level or near level.","Engage the autopilot and autothrust as soon as possible.","Apply TOGA thrust."],ok:1,ex:"FCTM nose-high recovery: push the sidestick as much as needed for a nose-down pitch rate, adjust thrust if and as required (not automatically TOGA, since more thrust can weaken nose-down control), and roll wings level or near level once the nose is dropping. Banking is only used to help the nose fall, never beyond about 60 degrees. Recover to level flight once the airspeed is increasing enough."},
+ {q:"After recognising a NOSE LOW upset, the pilot should:",
+  o:["Engage the autopilot and autothrust as soon as possible.","Apply forward pitch control toward 1 g to reduce g-loading, unload and roll to wings level by the shortest way, and control airspeed with reduced thrust and/or speed brake.","Reduce thrust to idle.","Apply TOGA thrust."],ok:1,ex:"FCTM nose-low recovery: apply forward pitch toward 1 g to reduce the g-loading, roll the shortest way to wings level while the wing is unloaded (this improves roll effectiveness and reduces asymmetric loads), and control speed with reduced thrust and/or speedbrakes. Then recover to level flight without stalling from pulling too early at low speed or too hard at high speed."},
+ {q:"During lateral manoeuvring, aileron and spoiler effectiveness:",
+  o:["Decreases with increasing angle of attack.","Increases with increasing angle of attack.","Is a function of the aircraft inertia about the vertical axis."],ok:0,ex:"As the angle of attack nears the stall, the flow over the outer wing separates and the roll controls lose effect."},
+ {q:"Which statement is always true?",
+  o:["Lift must always be aligned with the centre of gravity.","The centre of gravity never changes in flight.","Weight acts 90 degrees from the longitudinal axis.","Weight always points to the centre of the Earth."],ok:3,ex:"Weight is a gravity force and always acts toward the centre of the Earth, whatever the attitude of the aircraft."},
+ {q:"The objective when manoeuvring the aircraft is to manage energy so that:",
+  o:["Potential energy stays between limits (terrain to buffet altitude).","Kinetic energy stays between limits (stall and placard speeds).","Chemical energy stays above certain thresholds (not running out of fuel).","All of the other answers are correct."],ok:3,ex:"Energy management covers all three: height (potential), speed (kinetic) and fuel (chemical)."},
+ {q:"A good analysis of an upset should include:",
+  o:["Determining the aircraft attitude (pitch and bank).","Confirming the attitude against other indicators (ISIS, PM instruments).","Assessing the aircraft energy.","All of the other answers are valid."],ok:3,ex:"FCTM situation analysis: assess the energy state and its rate of change, determine pitch and bank, communicate with the other crew member, and confirm the attitude on other indicators (ISIS, PM instruments). All of these apply."},
+ {q:"Large downward aileron deflections:",
+  o:["Could cause airflow separation over that part of the wing at very high angles of attack.","Should never be used when recovering from an upset.","Are more effective at high angles of attack."],ok:0,ex:"At a very high angle of attack, a down aileron raises the local angle of attack further and can stall that part of the wing, so roll control may be poor or reversed."},
+ {q:"The first step in an upset recovery is to:",
+  o:["Ask the PM \"what is it doing?\".","Pull up, wings level.","Immediately disconnect the autopilot and take over.","Become situationally aware: recognise and confirm the situation."],ok:3,ex:"FCTM: always start by recognising and confirming the situation, using observation and communication. The first pilot to notice a PFD divergence announces pitch, bank or speed as appropriate. Rushing in with arbitrary full-scale inputs can aggravate the situation."},
+ {q:"Which statement is true?",
+  o:["A stall is a controlled situation.","To recover from a nose-low stall, the angle of attack must be reduced.","An approach-to-stall warning is an uncontrolled situation.","Recovery from the approach to stall warning is the same as recovery from a stall."],ok:1,ex:"Whatever the attitude, the first action in a stall recovery is to reduce the angle of attack. The approach to the stall is still a controlled situation, so its recovery is lighter than a full stall recovery."},
+ {q:"Which statements about recovering from an upset are correct? (select three)",
+  o:["Regaining potential energy first is paramount.","Finding the cause of the upset comes second to starting the recovery.","Regaining and keeping control of the aircraft is paramount.","The actions should be correct and timely."],ok:[1,2,3],ex:"The FCTM puts control first: the first actions must be correct and timely, and the cause is looked at after the recovery has started. Regaining height is secondary to regaining control and reducing the angle of attack."},
+ {q:"The recovery techniques can be summarised as four actions:",
+  o:["Wings level, pitch down, thrust idle, return to assigned altitude.","Push/unload, roll, thrust, recover to level flight.","Take over, disconnect AP, disconnect A/THR, seat belt signs ON.","Wings level, pitch up, thrust TOGA, return to assigned altitude."],ok:1,ex:"The stall recovery and the upset recovery techniques follow the same pattern: push/unload, roll, thrust (and drag), recover to level flight. Push/unload comes first when the wing needs lift back."},
+ {q:"Which statement about energy is true?",
+  o:["Kinetic energy can be traded for potential energy, and potential energy for kinetic energy.","Potential energy is roughly proportional to airspeed.","Chemical energy stays constant during a flight.","Kinetic energy decreases with increasing airspeed."],ok:0,ex:"Speed can be exchanged for height and back again. Potential energy depends on height, kinetic energy rises with speed, and fuel (chemical energy) is used up."},
+ {q:"If a pilot applies full rudder in a normal, symmetric situation, it will result in very large sideslip angles and large structural loads.",
+  o:["False.","True."],ok:1,ex:"Full rudder at speed produces a large sideslip and heavy fin and fuselage loads. The FAC rudder travel limiting reduces the travel with speed for this reason."},
+ {q:"Rudders on modern jet transports are usually designed and sized to:",
+  o:["Counter the yawing moment of an engine failure at very low take-off speeds.","Create a large sideslip capability during stall recovery.","Counter the rolling moment created by ailerons and spoilers."],ok:0,ex:"The rudder is sized for the engine-failure yaw at low speed, so it is far more powerful than needed at high speed. That is why large inputs at speed are dangerous."},
+ {q:"To maintain altitude in a banked turn, the lift must be:",
+  o:["Greater than the weight, and the amount depends on altitude.","Greater than the weight, and the amount depends on the bank angle.","Equal to the weight."],ok:1,ex:"Only the vertical part of lift supports the weight, so total lift must be greater, by 1/cos of the bank angle. That is why the load factor rises with bank."},
+ {q:"Which statement about stall recovery and upset recovery is correct?",
+  o:["Both are fixed procedures that must be followed exactly.","Stall recovery is a procedure, while upset recovery is a set of techniques for guidance.","Upset recovery is a memory item and stall recovery is a technique.","Neither is described in the FCOM or FCTM."],ok:1,ex:"The [MEM] STALL RECOVERY is a published procedure. Upset recovery is guidance in the FCTM and an Airbus training transmission, because the number of possible upsets is too large for one fixed procedure. Not every action is needed once recovery is under way."},
+ {q:"What is the difference between startle and surprise?",
+  o:["They are the same thing.","Startle is a physical, unconscious reaction; surprise is a brief mental state when events differ from expectations.","Startle is a mental state; surprise is a physical reflex.","Startle only happens at night."],ok:1,ex:"Startle is an innate, unconscious physical reaction. Surprise is a brief mental state when reality differs from what you expected. Both can impair thinking."},
+ {q:"Which action helps most against startle and surprise?",
+  o:["Reacting immediately with a large control input.","Fixing on the single indication that is most alarming.","Staying engaged, monitoring actively, and pausing to assess before acting.","Handing control to the other pilot at once."],ok:2,ex:"An engaged pilot can intercept a divergence early. When it does happen, pause and assess before acting, and avoid fixating on a single indication."},
+ {q:"What may cognitive impairment from startle lead a pilot to do?",
+  o:["Freeze or make incorrect actions.","Recover faster.","Ignore only the stall warning.","Nothing, if the autopilot is on."],ok:0,ex:"Cognitive impairment can make a pilot freeze or act incorrectly, which is why engagement and a pause to assess matter."},
+ {q:"What should the first pilot to notice a PFD divergence do?",
+  o:["Take control silently.","Announce \"Pitch\", \"Bank\" or \"Speed\" as appropriate.","Call ATC.","Switch off the autopilot."],ok:1,ex:"Communication is crucial to recognising an upset. The first pilot to notice announces which parameter is diverging."},
+ {q:"Which is NOT part of the situation analysis for an upset?",
+  o:["Assessing the energy state and its rate of change.","Determining pitch and bank.","Communicating with the other crew member.","Reading the QRH before acting."],ok:3,ex:"Situation analysis is: assess the energy, determine attitude, communicate, and confirm the attitude on other indicators (ISIS, PM instruments). It does not mean reading the QRH first."},
+ {q:"Which items make up the energy assessment?",
+  o:["Airspeed and altitude only.","Airspeed, altitude, attitude, load factor, thrust, drag and high-lift devices, and their rates of change.","Fuel and weight only.","Thrust lever position only."],ok:1,ex:"The energy assessment covers airspeed, altitude, attitude, load factor, thrust setting, the position of drag and high-lift devices, and the rate of change of all of them."},
+ {q:"In a nose-low upset, what is normally seen on the PFD?",
+  o:["Airspeed decreasing, altitude increasing, VSI climb.","Airspeed increasing, altitude decreasing, VSI descent.","Airspeed constant, altitude constant.","Airspeed increasing, altitude increasing."],ok:1,ex:"A nose-low upset trades height for speed: airspeed rises, altitude falls and the VSI shows a descent."},
+ {q:"What does PM do during an upset recovery?",
+  o:["Takes no action.","Monitors and calls out attitude, airspeed and altitude, announces any continued divergence, and calls out omissions.","Reads the QRH aloud.","Sets the radios."],ok:1,ex:"PM monitors the PFD throughout, calls attitude, airspeed and altitude, announces continued divergence, and verifies that required actions are completed."},
+ {q:"When should the autopilot and autothrust be disconnected in a recovery?",
+  o:["Always, first.","Never.","If they are not arresting the divergence.","Only below 10,000 ft."],ok:2,ex:"If the AP and A/THR are responding correctly to arrest the divergence, keeping them may be appropriate. If not, disconnect them: press and hold the AP disconnect pushbutton to take control positively."},
+ {q:"What does the PF announce when initiating recovery?",
+  o:["\"Mayday\".","\"I have control\"; and \"STALL RECOVERY\" if a stall recovery comes first.","\"Go around\".","\"Your control\"."],ok:1,ex:"The PF confirms the recovery has started with \"I have control\". If recovery from a stall comes first, the standard call is \"STALL RECOVERY\"."},
+ {q:"In the [MEM] stall recovery, when is thrust increased?",
+  o:["Immediately on recognising the stall.","Smoothly, once out of the stall.","Never.","Only with the speedbrakes extended."],ok:1,ex:"Thrust is increased smoothly as needed once the stall indications have gone. Doing it at once can produce another stall warning."},
+ {q:"In the [MEM] stall recovery, what flap action is taken?",
+  o:["Flaps full.","In clean configuration below 20,000 ft, select flap 1.","Retract all flaps.","No flap action is ever taken."],ok:1,ex:"If in clean configuration and below 20,000 ft, select flap 1. Speedbrakes are checked retracted."},
+ {q:"Which two angles give the angle of attack (no wind)?",
+  o:["Bank angle and pitch angle.","Pitch angle minus flight path angle.","Heading minus track.","Pitch plus bank."],ok:1,ex:"Angle of attack is the pitch angle minus the flight path angle, with no wind. It can be shown on the PFD with the flight path vector."},
+ {q:"What does unloading to 0.5 g do to the stall speed?",
+  o:["Raises it by 30%.","Has no effect.","Lowers it by about 30%.","Makes it zero."],ok:2,ex:"At 0.5 g the stall speed is about 0.7 × VS1, around 30% lower, while g stays positive."},
+ {q:"What is the stall speed at 2.0 g compared with 1 g?",
+  o:["VS1","1.19 × VS1","1.41 × VS1","2 × VS1"],ok:2,ex:"Stall speed rises with the square root of load factor: 2.0 g gives about 1.41 × VS1. This is the load in a 60° level turn."},
+ {q:"Why must a pilot be willing to unload below 1 g?",
+  o:["It is the only way to climb.","Pushing forward to unload reduces the angle of attack and regains lift.","It cools the engines.","The autopilot requires it."],ok:1,ex:"Pilots are normally uncomfortable below 1 g in a passenger aircraft, but a recovery may need a forward push on the pitch controls to reduce the angle of attack and regain lift."},
+ {q:"In a nose-low, high-bank upset, what is the correct order?",
+  o:["Pull, then roll, then unload.","Roll, then pull.","Unload, then roll to wings level, then pull to level flight.","Increase thrust, then pull."],ok:2,ex:"Reduce the g-loading first so the roll is more effective and asymmetric loads are lower, then roll the shortest way to wings level, then pull smoothly to level flight."},
+ {q:"In a nose-high upset, what limit applies to the bank angle used to help the nose drop?",
+  o:["There is no limit.","About 30°.","Never exceed about 60°, and use the least bank needed.","Always 90°."],ok:2,ex:"If normal pitch control fails, keeping or banking the aircraft may be necessary to let the nose fall. Use the least bank possible, and never beyond about 60°."},
+ {q:"For aircraft with underwing engines, what is the thrust consideration in a nose-high recovery?",
+  o:["More thrust always helps pitch down.","Increasing thrust can reduce nose-down pitch control, so thrust may need limiting or reducing.","Thrust has no effect on pitch.","Thrust should always be set to TOGA."],ok:1,ex:"Under-wing engines give a nose-up moment with added thrust, which can weaken nose-down control. Limit or reduce thrust until pitch is controlled."}
+].map((x,i)=>Object.assign(x,{id:"uprt"+String(i+1).padStart(2,"0"),s:"uprt",t:"UPRT"}));
+Q.push(...UPRT);
+const EXAMS = {fls:FLS, sys:SYS, rvsm:RVSM, cold:COLD, uprt:UPRT};
 let flsPick = {}, flsPend = {};   // this visit's answers: id -> chosen options; flsPend: picks so far on a two-answer question
 const okList = x => [].concat(x.ok);
 const isRight = x => { const p=flsPick[x.id]; return p.length===okList(x).length && p.every(j=>okList(x).includes(j)); };
@@ -2652,6 +2764,7 @@ function renderFls(sec){
       <h2>${sec.title}</h2>
       <p class="fscore">${done.length} answered · ${right} correct</p>
     </header>
+    ${sec.extra||""}
     ${list.map((x,i)=>{const p=flsPick[x.id], pend=flsPend[x.id]||[], n=okList(x).length; return `
     <section class="fq">
       <div class="qn">Question ${i+1}${n>1?` · select ${n} answers`:""}</div>
@@ -2683,6 +2796,8 @@ const SECTIONS = {
   sys:{key:"sys",hash:"systems-exam",title:"Systems exam questions",cls:"tech",desc:"Multiple choice: tap an answer. Correct lights green; a wrong answer gets a red X."},
   rvsm:{key:"rvsm",hash:"rvsm-exam",title:"RVSM exam questions (Reduced Vertical Separation Minimum)",cls:"tech",desc:"Multiple choice: tap an answer. Correct lights green; a wrong answer gets a red X."},
   cold:{key:"cold",hash:"cold-exam",title:"Cold weather operations exam questions",cls:"tech",desc:"Multiple choice: tap an answer. Correct lights green; a wrong answer gets a red X."},
+  uprt:{key:"uprt",hash:"uprt-exam",title:"UPRT",cls:"tech",desc:"Upset Prevention and Recovery: training presentation, two videos and the exam. Multiple choice: correct lights green; a wrong answer gets a red X.",
+    extra:'<section class="fq"><div class="qn">Presentation</div><p class="qt"><a href="https://claude.ai/artifact/CR2uqXnoRiXCQhvsexPg33" target="_blank" rel="noopener">Open the UPRT training presentation (32 slides)</a></p></section><section class="fq"><div class="qn">Video · recovery SOP</div><video controls preload="none" playsinline style="width:100%;border-radius:8px" src="videos/uprt-recovery-sop.mp4"></video></section><section class="fq"><div class="qn">Video · cockpit demonstration</div><video controls preload="none" playsinline style="width:100%;border-radius:8px" src="videos/uprt-cockpit-demo.mp4"></video></section>'},
   sf:{key:"sf",hash:"safety",title:"Safety First Flight",cls:"sf",desc:"Walk through one flight, gate to gate. Each stop is an Airbus Safety First case for that phase: read the briefing, then answer the questions."}
 };
 const BY_HASH = Object.fromEntries(Object.values(SECTIONS).map(s=>[s.hash,s]));

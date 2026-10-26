@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.69';
+  var VERSION = '0.7.70';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -787,6 +787,7 @@
       if (f.level >= 2) { DR.phase = 'clr1'; PN.LIVE.clr = true; DR.flash = DR.flash || 'All actions done.'; }
       else return finish();
     } else if (f.steps[DR.i].k === 'quiz') { DR.phase = 'quiz'; showModal('quiz', { q: f.steps[DR.i] }); }
+    else if (f.steps[DR.i].k === 'card') { DR.phase = 'quiz'; showModal('card', { c: f.steps[DR.i] }); }
     renderDrill(); refreshHome();
     if (PV && !PV.disp) renderStage();
   }
@@ -952,6 +953,7 @@
     if (DR.phase === 'done') return 'Drill complete.';
     if (!st) return '';
     if (st.k === 'master') return 'Press the flashing MASTER ' + (f.level === 3 ? 'WARN' : 'CAUT') + ' on the glareshield to ' + (f.level === 3 ? 'silence the chime' : 'acknowledge the caution') + '.';
+    if (st.k === 'card') return 'Confirm the failure, then aviate, navigate, communicate. Press Continue.';
     if (preOpen()) return 'Press CLR on the ECAM control panel (pedestal) to clear ' + preName() + ' first: it is the top alert on the E/WD, and the procedure below starts once it is cleared.';
     if (st.k === 'act') return 'ECAM action: ' + st.item + ' ' + st.val + '. ' + (st.hint || 'Overhead ' + panelName(st.ctls[0][0]) + ' panel.');
     if (st.k === 'task') return st.text;
@@ -1002,6 +1004,11 @@
         return '<button class="opt' + c + '" data-act="answer" data-k="' + k + '"' + (ans != null ? ' disabled' : '') + '>' + esc(q.options[oi]) + '</button>';
       }).join('') + '</div>' +
         (ans != null ? '<p class="m-explain"><b>' + (data.order[ans] === 0 ? 'Correct.' : 'Not quite.') + '</b> ' + esc(q.explain) + '</p><div class="m-btns"><button class="btn primary" data-act="quizDone">Continue</button></div>' : '');
+    } else if (kind === 'card') {
+      // A card read before going on, e.g. confirm the failure and ANC (closes like a question).
+      h = '<p class="eyebrow">PF and PM · ' + esc(f.title) + '</p><h2 class="m-title">' + esc(data.c.title) + '</h2>' +
+        data.c.sections.map(function (sec) { return '<h3 class="m-h">' + esc(sec[0]) + '</h3><ul class="m-list">' + sec[1].map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'; }).join('') +
+        '<div class="m-btns"><button class="btn primary" data-act="quizDone">Continue</button></div>';
     } else if (kind === 'debrief') {
       var secs = Math.round((Date.now() - DR.t0) / 1000);
       h = '<p class="eyebrow">Debrief</p><h2 class="m-title">' + esc(f.title) + '</h2>' +

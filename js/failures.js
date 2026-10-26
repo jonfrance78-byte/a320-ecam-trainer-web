@@ -30,6 +30,18 @@
   function T(text, want, info) { return { k: 'task', text: text, want: want, info: info }; }
   function Q(q, correct, wrong, explain) { return { k: 'quiz', q: q, options: [correct].concat(wrong), explain: explain }; }
   var MASTER = { k: 'master' };
+  // A card the trainee reads before going on (sections: [[heading, [lines]]]).
+  function CARD(title, sections) { return { k: 'card', title: title, sections: sections }; }
+  // Before the ECAM actions of a dual hydraulic failure with AP OFF (owner's text, 0.7.x):
+  // the PF asks the PM to confirm the failure, then flies ANC. pm: what the PM reads out.
+  function ANC(pm) {
+    return CARD('Confirm the failure, then ANC', [
+      ['Confirm', ['PF: "Confirm the failure."', 'PM reads the E/WD and says what it shows: "' + pm + '"']],
+      ['Aviate', ['PF flies the aircraft by hand: both autopilots are lost.', 'Below MSA, keep terrain separation in mind.', 'RVSM airspace cannot be continued.']],
+      ['Navigate', ['On a Tango route, start turning towards land.', 'Navigate towards several likely airports.']],
+      ['Communicate', ['Red LAND ASAP is a MAYDAY situation: tell ATC.']]
+    ]);
+  }
 
   // HYD overhead panel controls
   var RAT = ['HYD', 'RAT MAN ON', 1];
@@ -166,6 +178,7 @@
       lights: [G_PUMP, B_PUMP, PTU],
       steps: [
         MASTER,
+        ANC('AP OFF, dual hydraulic failure: green and blue.'),
         A('RAT', 'MAN ON', [RAT], { press: true, hint: 'RAT MAN ON is guarded: lift the guard, then press it.',
           fx: function (s) { s.elec.rat = true; },
           why: 'With the blue electric pump lost, the RAT is the other way to pressurise blue. Keep at least 140 kt with the RAT out.' }),
@@ -210,6 +223,7 @@
       lights: [G_PUMP, Y_PUMP, PTU],
       steps: [
         MASTER,
+        ANC('AP OFF, dual hydraulic failure: green and yellow.'),
         Q('The autopilot has disconnected with the warning. What comes first?', 'Fly the aircraft: aviate, then navigate, then communicate',
           ['Start the ECAM actions straight away', 'Re-engage the autopilot', 'Call ATC and declare an emergency'],
           'Both autopilots are lost with G+Y (AP 1+2 on INOP SYS). The PF flies manually and keeps control of the flight path; the ECAM actions come once the aircraft is under control.'),
