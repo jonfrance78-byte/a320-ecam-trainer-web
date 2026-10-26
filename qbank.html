@@ -2395,7 +2395,25 @@ const SYS = [
  {q:"What causes a DU to display a black screen with a white diagonal line or the text \"INVALID DATA\"?",
   o:["No power.","DU failure.","DMC failure.","All three other answers are correct."],ok:2},
  {q:"Course information from the #1 ILS receiver will be displayed:",
-  o:["On the FO's PFD when the FO's ILS pushbutton is selected on, and on the captain's ND when it is selected to ROSE ILS.","On the captain's PFD and ND when the captain's ILS pushbutton is selected ON.","On the captain's PFD when the captain's ILS pushbutton is selected ON.","All the other answer options are correct."],ok:2}
+  o:["On the FO's PFD when the FO's ILS pushbutton is selected on, and on the captain's ND when it is selected to ROSE ILS.","On the captain's PFD and ND when the captain's ILS pushbutton is selected ON.","On the captain's PFD when the captain's ILS pushbutton is selected ON.","All the other answer options are correct."],ok:2},
+ {q:"Normal operating pressure in the hydraulic system [PSI]:",
+  o:["3000 PSI (2750 PSI when powered by the RAT)","2000 PSI (1500 PSI when powered by the RAT)","3000 PSI (2500 PSI when powered by the RAT)","3000 PSI (3000 PSI when powered by the RAT)"],ok:2},
+ {q:"The ENG 1(2) PUMP pb FAULT light goes out when the engine pump switch is selected OFF, except for:",
+  o:["All of the other three answers are correct.","Pump low pressure.","An overheat.","Reservoir low level."],ok:2},
+ {q:"The hydraulic PTU will activate if:",
+  o:["a significant pressure loss occurs in the green or yellow hydraulic system.","None of the above.","a significant pressure loss occurs in any of the three hydraulic systems.","Both A and B are correct."],ok:0},
+ {q:"The A320's three hydraulic systems are normally pressurised by:",
+  o:["two electric pumps and one PTU.","two electric pumps and two engine driven pumps.","two engine driven pumps and one electric pump.","two electric pumps and one engine driven pump."],ok:2},
+ {q:"How are the hydraulic reservoirs pressurised?",
+  o:["By the Blue electric pump.","By high pressure nitrogen.","HP bleed from engine 1 or from the crossbleed duct.","By ram air."],ok:2},
+ {q:"What parts of the wings are heated to protect against icing?",
+  o:["Three outboard leading-edge slats of each wing.","Two inboard leading-edge slats of each wing.","Both other two answers are correct."],ok:0},
+ {q:"What happens when either engine anti-ice valve is open?",
+  o:["Maximum N1 is limited, minimum RPM is increased.","Maximum N1 is limited, continuous ignition is provided, maximum idle RPM is increased.","Maximum N1 is limited, continuous ignition is provided, minimum RPM is increased.","Pneumatics blowing across all flight deck windows."],ok:0},
+ {q:"Which surfaces are NOT protected by the hot bleed air ice protection system?",
+  o:["The tail leading edges.","Three outboard leading-edge slats of each wing.","Engine air intake lips."],ok:0},
+ {q:"If you press the RAIN RPLNT button very briefly, is it possible to dispense a small amount of repellent fluid in the event of light rain?",
+  o:["No. A timer applies a measured quantity of rain repellent to the windshield.","Yes."],ok:0}
 ].map((x,i)=>Object.assign(x,{id:"sys"+String(i+1).padStart(2,"0"),s:"sys",t:"Systems"}));
 Q.push(...SYS);
 const EXAMS = {fls:FLS, sys:SYS};
