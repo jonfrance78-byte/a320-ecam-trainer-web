@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.85';
+  var VERSION = '0.7.86';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -443,7 +443,7 @@
     if (st && st.k === 'master') pressMaster(f.level === 3 ? 'W' : 'C');
     else if (st && preOpen()) pressClr();
     else if (st && st.k === 'act') {
-      st.ctls.forEach(function (c) { if (st.press) ctlState(c).down = true; else setBits(c, { up: bits(c).up, lo: st.sel }); });
+      st.ctls.forEach(function (c) { if (st.press) ctlState(c).down = true; else if (st.move) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].cur + 1; else setBits(c, { up: bits(c).up, lo: st.sel }); if (st.reset) DR.off[st.item + c.join()] = true; });
       DR.skips.push(st.item + ' ' + st.val);
     }
     else if (st && st.k === 'task') doTask(st);
@@ -755,22 +755,25 @@
   }
   function ewdCore() {
     if (!DR || !DR.s) return { lines: APOFF ? [AP_OFF_LINE] : [], memo: [] };
-    var f = DR.f, out = [], cls = f.level === 3 ? 'r' : 'a';
+    var f = DR.f, out = [], cls = f.tc || (f.level === 3 ? 'r' : 'a');
     if (f.level >= 2 && (DR.phase === 'run' || DR.phase === 'clr1' || DR.phase === 'quiz')) {
       var w = f.sysWord, rest = f.title.indexOf(w) === 0 ? f.title.slice(w.length) : ' ' + f.title;
       // MASTER WARN only silences the chime (owner's request, 0.7.25): lines above the
       // failure (AUTO FLT AP OFF) stay until CLR.
       if (!DR.preClr) (f.pre || []).forEach(function (l) { out.push(l); });
-      // The failure being worked has its title boxed, as on the E/WD.
-      out.push({ parts: [{ s: w, u: true, c: cls }, { s: rest, c: cls }], box: w.length + 1 });
       var allDone = DR.phase === 'clr1';
-      f.steps.forEach(function (st, i) {
+      function line(st, i) {
         // gone: lines that clear by themselves once the actions are done; after: lines that only then appear
         if (st.k === 'note' && ((st.gone && allDone) || (st.after && !allDone))) return;
         if (st.k === 'act' && !DR.done[i]) out.push({ text: fmtAct(st.item, st.val), cls: 'c' });
         if (st.k === 'note' && st.word) out.push({ parts: [{ s: st.word, u: true, c: st.c }, { s: st.text.slice(st.word.length), c: st.c }] });
         else if (st.k === 'note') out.push({ text: st.text, cls: st.c });
-      });
+      }
+      // top: an alert shown above the failure's title (AUTO FLT A/THR OFF above FAC 1+2 FAULT).
+      f.steps.forEach(function (st, i) { if (st.top) line(st, i); });
+      // The failure being worked has its title boxed, as on the E/WD.
+      out.push({ parts: [{ s: w, u: true, c: cls }, { s: rest, c: cls }], box: w.length + 1 });
+      f.steps.forEach(function (st, i) { if (!st.top) line(st, i); });
     }
     if (DR.phase === 'seq') {
       var sg = f.seq[DR.si];
@@ -808,7 +811,7 @@
     if (JSON.stringify(f.pre || []).indexOf('AP OFF') < 0) seedAp();
     if (PV) closePanel();
     HIST = [];
-    DR.s = cruiseState(); DR.i = 0; DR.skips = []; DR.done = {}; DR.mist = []; DR.right = 0; DR.asked = 0; DR.flash = null; DR.t0 = Date.now();
+    DR.s = cruiseState(); DR.i = 0; DR.skips = []; DR.done = {}; DR.off = {}; DR.mist = []; DR.right = 0; DR.asked = 0; DR.flash = null; DR.t0 = Date.now();
     if (f.setup) f.setup(DR.s);
     (f.lights || []).forEach(function (c) { setFault(c, true); });
     if (f.level >= 2) { masters(f.level === 3 ? 'W' : 'C', true); chime(); }
@@ -837,7 +840,13 @@
   function stepMet(st) {
     if ((st.k === 'act' || st.k === 'task') && preOpen()) return false;
     if (st.k === 'master') return !masterLit();
-    if (st.k === 'act') return st.ctls.every(function (c) { return st.press ? !!ctlState(c).down : bits(c).lo === st.sel; });
+    // reset: OFF THEN ON, done once the control has been seen OFF and is back ON.
+    if (st.k === 'act') return st.ctls.every(function (c) {
+      if (st.reset) { var k = st.item + c.join(); if (bits(c).lo) DR.off[k] = true; return !!DR.off[k] && !bits(c).lo; }
+      // move: a lever moved out of the detent it started in (THR LEVERS....MOVE).
+      if (st.move) { var cur = ctlState(c).cur; return cur != null && cur !== PN.P[c[0]].items[ctlIndex(c)].cur; }
+      return st.press ? !!ctlState(c).down : bits(c).lo === st.sel;
+    });
     if (st.k === 'task') {
       var w = st.want;
       if (w.sd) return sdPage === w.sd;
@@ -869,8 +878,11 @@
   function drillPress(panel, i) {
     if (!DR || DR.phase !== 'run') return;
     var f = DR.f, cur = f.steps[DR.i], pre = preOpen();
+    function on(st) { return st.ctls.some(function (c) { return c[0] === panel && ctlIndex(c) === i; }); }
+    // A press on the current step's own control is in order (FAC 1 OFF THEN ON before FAC 1 OFF).
+    if (cur && cur.k === 'act' && !pre && on(cur)) return;
     f.steps.forEach(function (st, k) {
-      if (st.k !== 'act' || DR.done[k] || k === DR.i && !pre || !st.ctls.some(function (c) { return c[0] === panel && ctlIndex(c) === i; })) return;
+      if (st.k !== 'act' || DR.done[k] || k === DR.i && !pre || !on(st)) return;
       var msg = st.item + ' before ' + (cur.k === 'master' ? 'acknowledging the warning' : pre ? 'clearing ' + preName() : cur.k === 'act' ? cur.item + ' ' + cur.val : 'the step before it');
       if (DR.mist.indexOf(msg) < 0) DR.mist.push(msg);
       DR.flash = 'Out of sequence: ' + msg + '. Follow the ECAM order.';

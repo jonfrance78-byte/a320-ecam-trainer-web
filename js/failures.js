@@ -12,7 +12,8 @@
  *   master  press the lit MASTER WARN or MASTER CAUT
  *   act     an ECAM action line, done by setting panel controls
  *           (ctls: [[panel, control name, nth]...], sel: the selection legend lit, e.g. OFF;
- *           press: a momentary control to press, e.g. RAT MAN ON)
+ *           press: a momentary control to press, e.g. RAT MAN ON; reset: OFF THEN ON;
+ *           move: a lever moved out of its detent; top: shown above the failure's title)
  *   note    an ECAM line that needs no action
  *   task    a lesson task (want: { sd: page } or { panel: id } or { ctl, sel })
  *   quiz    a knowledge check (the correct answer first; options are shuffled)
@@ -62,6 +63,13 @@
   var RAT = ['HYD', 'RAT MAN ON', 1];
   var G_PUMP = ['HYD', 'ENG 1\nPUMP', 1], B_PUMP = ['HYD', 'ELEC\nPUMP', 1], PTU = ['HYD', 'PTU', 1], Y_PUMP = ['HYD', 'ENG 2\nPUMP', 1], Y_ELEC = ['HYD', 'ELEC\nPUMP', 2];
   function ptuOff(s) { s.hyd.ptu = 'off'; s.hyd.ptuActive = false; }
+  // AUTO FLT controls: the FACs (overhead FLT CTL panels), the thrust levers, GPWS TERR
+  var FAC1 = ['FLTCTL1', 'FAC 1', 1], FAC2 = ['FLTCTL2', 'FAC 2', 1], THR1 = ['THR', 'Thrust lever 1', 1], THR2 = ['THR', 'Thrust lever 2', 1], GPWS_TERR = ['GPWS', 'TERR', 1];
+  var ALTN_LAW = [{ parts: [{ s: 'F/CTL', u: true, c: 'a' }, { s: ' ALTN LAW', c: 'a' }] }, { text: '     (PROT LOST)', cls: 'a' }];
+  function ATHR_OFF(why) {
+    return [Object.assign(TITLE('AUTO FLT', 'A/THR OFF'), { top: true }),
+      A('THR LEVERS', 'MOVE', [THR1, THR2], { move: true, top: true, hint: 'Pedestal, thrust levers: move them out of the CL detent to the thrust needed.', why: why })];
+  }
 
   var HYD_LEARN = [
     'Three independent systems at 3000 psi. Green: engine 1 pump and the PTU. Blue: an electric pump and the RAT. Yellow: engine 2 pump, an electric pump and a hand pump (cargo doors).',
@@ -329,6 +337,111 @@
           q: Q('When does the STATUS ask for the gravity gear extension?', 'When in CONF 3 and stabilised at VAPP', ['At 200 kt', 'Before descent', 'At 1000 ft AGL'],
             'Being stabilised at VAPP before the gear goes down lets the aircraft be trimmed for the approach, because the stabilizer is lost. APPR SPD is VREF + 25 kt.') }
       ]
+    },
+
+    // AUTO FLT: the E/WD lines and STATUS follow ReadECAM's slides (displays only; questions
+    // and notes are our own). Where a STATUS picture could not be read, the drill says so. 0.7.86.
+    'afl-fac1': {
+      title: 'AUTO FLT FAC 1 FAULT', sysWord: 'AUTO FLT', level: 2, sd: null, phase: 'Cruise · FL350',
+      brief: 'In cruise, FAC 1 fails. FAC 2 takes over everything it did, so both PFDs now show speeds from the same computer.',
+      learn: ['Each FAC (Flight Augmentation Computer) does yaw damping and turn coordination, rudder trim, the rudder travel limit, and computes the speeds on the PFD: VLS, VFE, VMAX, green dot, S and F, and the alpha protection speeds.',
+        'Normally FAC 1 feeds PFD 1 and FAC 2 feeds PFD 2. With one FAC lost, the other does it all.',
+        'A FAC is reset by switching it OFF, then ON. If the FAULT light stays, it is left OFF.'],
+      lights: [FAC1],
+      memo: [],
+      steps: [
+        MASTER,
+        A('FAC 1', 'OFF THEN ON', FAC1, { reset: true, sel: false, hint: 'Overhead FLT CTL panel (Captain side): FAC 1 OFF, then ON again.',
+          why: 'A reset: a passing fault can clear. Here the FAULT light stays on.' }),
+        Q('Why is FAC 1 switched OFF and then ON first?', 'To reset it, in case the fault was only passing', ['To test the FAULT light', 'To hand the yaw damper to the ELACs', 'To make FAC 2 take over'],
+          'Many computer faults clear with a reset. FAC 2 takes over on its own anyway; the reset is a chance to get FAC 1 back.'),
+        N('.IF UNSUCCESSFUL :', 'w'),
+        A('FAC 1', 'OFF', FAC1, { clears: true, why: 'The reset did not work, so FAC 1 is left off. FAC 2 does all its work.' })
+      ],
+      // The STATUS INOP SYS column could not be read on ReadECAM's picture: own knowledge.
+      sts: { left: [['BOTH PFD ON SAME FAC', 'g'], ['CAT 3 SINGLE ONLY', 'g']], inop: ['FAC 1', 'CAT 3 DUAL'] },
+      statusQ: Q('What does BOTH PFD ON SAME FAC tell the crew?', 'Both PFDs show speeds computed by FAC 2 alone', ['Both PFDs have lost their speed scales', 'The F/O must fly the approach', 'FAC 1 still feeds the Captain\'s PFD'],
+        'With one FAC the two PFDs no longer cross-check each other\'s speeds: an error in FAC 2 would show on both sides.')
+    },
+
+    'afl-fac12': {
+      title: 'AUTO FLT FAC 1+2 FAULT', sysWord: 'AUTO FLT', level: 3, tc: 'a', sd: 'F/CTL', phase: 'Cruise · FL350',
+      brief: 'In cruise, both FACs fail. The autopilot and autothrust drop out, the flight controls go to alternate law, and the PFD speed scales lose their limit speeds.',
+      learn: ['With both FACs lost: no autopilot or autothrust, alternate law without protections, no yaw damper beyond the ELACs\' basic function, and no characteristic speeds (VLS, VFE, VMAX, alpha speeds) on the PFDs.',
+        'The rudder travel limit is frozen where it was: rudder inputs above 160 kt must be made with care.',
+        'The approach is flown at VREF + 10 kt, and the landing is made in direct law once the gear is down.'],
+      pre: AP_OFF.concat(ALTN_LAW, [{ text: 'MAX SPEED........320 KT', cls: 'c' }]),
+      setup: function (s) { s.fctl.law = 'ALTN'; },
+      lights: [FAC1, FAC2],
+      memo: [],
+      steps: [
+        MASTER
+      ].concat(ATHR_OFF('With autothrust lost, thrust stays locked where it was until the levers are moved: the pilot now sets thrust by hand.'), [
+        Q('Why must the thrust levers be moved after A/THR OFF?', 'Thrust is locked at its last value until the levers are moved', ['To reset the FACs', 'To re-engage the autothrust', 'To select the alternate law'],
+          'The FMA shows THR LK. Moving the levers gives the pilot manual thrust from that point.'),
+        N('RUD WITH CARE ABV 160 KT'),
+        A('FAC 1', 'OFF THEN ON', FAC1, { reset: true, sel: false, hint: 'Overhead FLT CTL panel (Captain side): FAC 1 OFF, then ON again.', why: 'Reset tried: FAULT stays on.' }),
+        A('FAC 2', 'OFF THEN ON', FAC2, { reset: true, sel: false, hint: 'Overhead FLT CTL panel (F/O side): FAC 2 OFF, then ON again.', why: 'Reset tried: FAULT stays on.' }),
+        N('.IF UNSUCCESSFUL :', 'w'),
+        A('FAC 1', 'OFF', FAC1, { clears: true, why: 'Both resets failed: the FACs are left off.' }),
+        A('FAC 2', 'OFF', FAC2, { clears: true, why: 'Both FACs are now off.' }),
+        Q('Why "RUD WITH CARE ABV 160 KT"?', 'The rudder travel limit is frozen and no longer reduces with speed', ['The rudder has no hydraulic power', 'The yaw damper moves the rudder fully', 'The rudder trim runs away'],
+          'The FACs set how far the rudder may move for the speed. Lost, the limit stays where it was, so a large input at high speed could overstress the fin.')
+      ]),
+      sts: { left: [['MAX SPEED........320/.77', 'c'], ['RUD WITH CARE ABV 160 KT', 'c'], ['APPR SPD: VREF + 10 KT', 'c'], ['LDG DIST PROC......APPLY', 'c'], ['ALTN LAW : PROT LOST', 'a'], ['WHEN L/G DN : DIRECT LAW', 'a']],
+        inop: ['REAC W/S DET', 'F/CTL PROT', 'FAC 1+2', 'AP 1+2', 'A/THR', 'CAT 2'] },
+      statusQ: Q('What changes once the gear is down?', 'The flight controls revert to direct law', ['Alternate law protections come back', 'The autothrust can be re-engaged', 'The FACs can be reset again'],
+        'Direct law with the gear down means no auto trim: the PFD shows USE MAN PITCH TRIM and the pilot trims by hand.')
+    },
+
+    'afl-fcu1': {
+      title: 'AUTO FLT FCU 1 FAULT', sysWord: 'AUTO FLT', level: 2, sd: null, phase: 'Cruise · FL350',
+      brief: 'In cruise, one of the two FCU channels fails. The FCU keeps working on the other channel.',
+      learn: ['The FCU has two independent channels. With one lost, the other runs the whole FCU; the autopilot and flight directors stay.',
+        'The barometric reference settings on the EFIS panels go through the FCU, so the crew checks them against the PFDs.'],
+      memo: [],
+      steps: [
+        MASTER,
+        N('-BARO REF.............CHECK'),
+        Q('Why check the BARO REF after an FCU channel fault?', 'The baro settings pass through the FCU, so they may no longer agree with the PFDs', ['The standby altimeter has failed', 'The altitude alert is lost', 'The autopilot uses QNH only'],
+          'Compare the setting on each EFIS panel with both PFDs and the standby altimeter.')
+      ]
+    },
+
+    'afl-fcu12': {
+      title: 'AUTO FLT FCU 1+2 FAULT', sysWord: 'AUTO FLT', level: 3, tc: 'a', sd: null, phase: 'Cruise · FL350',
+      brief: 'In cruise, both FCU channels fail. The autopilot and autothrust drop out and the FCU can no longer be used.',
+      learn: ['With the FCU lost: no autopilot, autothrust or flight directors, and no FCU target selection. The aircraft is flown by hand.',
+        'The PFD altimeters revert to STD (1013 hPa). Only the standby altimeter can be set to QNH, so it is used near the ground, and the PM makes the minimum callouts from it.'],
+      pre: AP_OFF,
+      memo: [],
+      steps: [
+        MASTER,
+        Object.assign(TITLE('AUTO FLT', 'A/THR OFF'), { top: true }),
+        N('-PFD BARO REF: STD ONLY'),
+        Q('With both FCU channels lost, how is QNH flown on the approach?', 'On the standby altimeter, set to QNH', ['On the PFDs, set to QNH on the EFIS panel', 'On the radio altimeter only', 'Through the MCDU PERF page'],
+          'The PFDs stay on STD. The PM makes the "hundred above" and "minimum" callouts from the standby altimeter, so no MDA is entered in the MCDU.')
+      ]
+    },
+
+    'afl-dual-fmgc': {
+      title: 'NAV GPWS TERR DET FAULT', sysWord: 'NAV', level: 3, tc: 'a', sd: null, phase: 'Cruise · FL350',
+      brief: 'Dual FMGC failure in cruise. The autopilot and autothrust drop out, and the terrain functions that use the FMGC position are lost. There is no "FMGC" ECAM title: the E/WD shows what follows from it.',
+      learn: ['The two FMGCs give the autopilot, flight directors, autothrust and the flight plan. With both lost, the aircraft is flown by hand with raw data.',
+        'The terrain awareness (TERR) mode uses the FMGC position, so it is switched off.',
+        'After the ECAM, both FMGCs may be recovered from the MCDU MENU (QRH), on each MCDU.'],
+      pre: AP_OFF,
+      memo: [],
+      steps: [
+        MASTER,
+        A('GPWS TERR', 'OFF', GPWS_TERR, { hint: 'Overhead GPWS panel: TERR off.', why: 'Without a valid FMGC position, the terrain display and alerts could be wrong.' }),
+        Q('Why is GPWS TERR switched off?', 'The terrain mode needs the FMGC position, which is lost', ['To stop nuisance stall warnings', 'Because the radio altimeters have failed', 'To silence the AP OFF warning'],
+          'The basic GPWS modes using the radio altimeter still work; only the predictive terrain function is lost.'),
+        TITLE('AUTO FLT', 'A/THR OFF'),
+        A('THR LEVERS', 'MOVE', [THR1, THR2], { move: true, hint: 'Pedestal, thrust levers: move them out of the CL detent to the thrust needed.', why: 'Thrust is now set by hand.' }),
+        Q('After the ECAM, how can the FMGCs be recovered?', 'From the MCDU MENU on each MCDU (QRH)', ['By pulling the FAC circuit breakers', 'With the FCU AP pushbuttons', 'They cannot be recovered in flight'],
+          'The QRH reset is done from the MCDU MENU page, on both MCDUs for a dual failure.')
+      ]
     }
   };
   Object.keys(DRILLS).forEach(function (id) { DRILLS[id].id = id; addAnc(DRILLS[id]); });
@@ -340,7 +453,7 @@
     ['MEMORY ITEMS', [E('EMER DESCENT [MEM]', 'r'), E('UNRELIABLE SPEED [MEM]', 'a'), E('STALL RECOVERY [MEM]', 'r'), E('STALL WARNING AT LIFTOFF [MEM]', 'r'),
       E('GPWS [MEM]', 'r'), E('TCAS [MEM]', 'r'), E('REACTIVE WINDSHEAR [MEM]', 'r'), E('LOSS OF BRAKING [MEM]', 'r')]],
     ['AIR', [E('BLEED 1+2 FAULT', 'a'), E('PACK 1+2 FAULT', 'a')]],
-    ['AUTO FLT', [E('FMGC SYSTEM OVERVIEW', 'w'), E('FAC FAULTS', 'a'), E('FCU FAULTS', 'a'), E('FMGC SINGLE FAULT', 'a'), E('DUAL FMGC FAILURE', 'a')]],
+    ['AUTO FLT', [E('FMGC SYSTEM OVERVIEW', 'w'), E('FAC FAULTS', 'a', ['afl-fac1', 'afl-fac12']), E('FCU FAULTS', 'a', ['afl-fcu1', 'afl-fcu12']), E('FMGC SINGLE FAULT', 'a'), E('DUAL FMGC FAILURE', 'a', 'afl-dual-fmgc')]],
     ['BRAKES', [E('BRAKES SYS OVERVIEW', 'w'), E('BRAKES SYS 1(2) FAULT', 'a'), E('LOSS OF BRAKING [MEM]', 'r')]],
     ['CAB PRESS', [E('EXCESSIVE CAB ALT', 'r'), E('CPC FAULTS', 'a')]],
     ['ELEC', [E('ELECTRICAL SYSTEM OVERVIEW', 'w'), E('C/B TRIPPED', 'a'), E('DC ESS BUS FAULT', 'a'), E('ELEC EMER CONFIG', 'r')]],

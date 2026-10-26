@@ -120,7 +120,9 @@
         o += rc(6 + l.box * 6.6 - 1.5, y - 9.2, (len - l.box) * 6.6 + 3, 12, 's' + l.parts[1].c, 1);
       }
       if (l.parts) {
-        o += '<text x="6" y="' + y + '" font-size="10.5">' + l.parts.map(function (p) {
+        // a boxed title is held to the 6.6 pitch, so the box fits long titles too
+        var fit = l.box != null ? ' textLength="' + (l.parts.reduce(function (n, p) { return n + p.s.length; }, 0) * 6.6).toFixed(1) + '" lengthAdjust="spacing"' : '';
+        o += '<text x="6" y="' + y + '" font-size="10.5"' + fit + '>' + l.parts.map(function (p) {
           return '<tspan class="' + p.c + '"' + (p.u ? ' text-decoration="underline"' : '') + '>' + esc(p.s) + '</tspan>';
         }).join('') + '</text>';
       } else {
