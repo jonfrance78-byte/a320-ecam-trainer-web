@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.71';
+  var VERSION = '0.7.72';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -469,7 +469,7 @@
     var drill = !PV.disp && !!(DR && DR.s), guide = drill && guidedOn();
     document.body.classList.toggle('pv-drill-open', drill && !guide);
     document.body.classList.toggle('pv-guide-open', guide);
-    el.innerHTML = '<div class="pv-card' + (PV.disp ? ' pv-disp' : guide ? ' pv-guide' : drill ? ' pv-drill' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
+    el.innerHTML = '<div class="pv-card' + (PV.disp ? ' pv-disp' : guide ? ' pv-guide' + (PV.id === 'ECP' ? ' pv-ecpstep' : '') : drill ? ' pv-drill' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       (PV.disp ? '<button class="icon-btn sm pv-back" data-act="closePanel" aria-label="' + (guidedOn() ? 'One step back' : 'Back to flight deck') + '">' + ICON.back + '</button>' :
       '<header class="pv-bar"><button class="icon-btn" data-act="closePanel" aria-label="' + (guidedOn() ? 'One step back' : 'Back to flight deck') + '">' + ICON.back + '</button>' +
       '<h2 class="appbar-title">' + esc(panelName(PV.id)) + '</h2><span class="icon-btn-spacer"></span></header>') +

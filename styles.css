@@ -830,3 +830,21 @@ body:not(:has(.appbar.slim)) .drill-task { color: var(--ink); }
   .pv-guide .pv-sdtop svg { border-bottom: 4px solid #15191d; border-radius: 4px; }
   .pv-guide .ecp-wrap .pv-svg { flex: 1 1 0; min-width: 0; width: auto; }
 }
+
+/* Guided, ECAM control panel step (owner's request, 0.7.72): the SD and E/WD side by side at
+   the same size, as large as the window allows, the ECAM control panel smaller and centred
+   under them; the panel information on the left, the instruction box on the right. --s is
+   the screen size: half the middle width, or what the height leaves after the panel row. */
+@media (min-width: 1000px) {
+  .pv-guide.pv-ecpstep { --s: min(calc((100vw - 600px) / 2), calc((100vh - 76px) / 1.56));
+    grid-template-columns: minmax(180px, 1fr) var(--s) var(--s) minmax(180px, 1fr); grid-template-rows: auto calc(var(--s) + 10px) auto;
+    align-content: start; column-gap: 16px; }
+  .pv-guide.pv-ecpstep > .pv-bar { grid-column: 1 / -1; grid-row: 1; }
+  .pv-guide.pv-ecpstep > .pv-body { grid-column: 1; grid-row: 2 / span 2; align-self: start; justify-self: end; max-width: 260px; max-height: none; margin: 10px 0 0 16px; }
+  .pv-guide.pv-ecpstep > .drill { grid-column: 4; grid-row: 2 / span 2; align-self: start; justify-self: start; max-width: 260px; margin: 10px 16px 0 0; }
+  .pv-guide.pv-ecpstep > .pv-stage, .pv-guide.pv-ecpstep .ecp-wrap { display: contents; }
+  .pv-guide.pv-ecpstep .pv-sdtop { grid-column: 2; grid-row: 2; width: var(--s); margin: 10px 0 0; }
+  .pv-guide.pv-ecpstep > .pv-ecam { grid-column: 3; grid-row: 2; padding: 10px 0 0; }
+  .pv-guide.pv-ecpstep > .pv-ecam .pv-screen { width: var(--s); max-width: none; }
+  .pv-guide.pv-ecpstep .ecp-wrap .pv-svg { grid-column: 2 / span 2; grid-row: 3; justify-self: center; width: 72%; max-height: none; margin: 10px 0; }
+}
