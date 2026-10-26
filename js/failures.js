@@ -94,13 +94,15 @@
       ]
     },
 
+    // HYD G RSVR LO LVL, HYD B ELEC PUMP LO PR and HYD Y ENG 2 PUMP LO PR: E/WD, SD pages and
+    // STATUS checked against ReadECAM's slides (displays only; questions and notes are our own). 0.7.85.
     'hyd-g-rsvr': {
       title: 'HYD G RSVR LO LVL', sysWord: 'HYD', level: 2, sd: 'HYD', phase: 'Cruise · FL370',
       brief: 'Cruise at FL370. The green reservoir level drops quickly: a leak. Green pressure follows.',
       learn: HYD_LEARN.concat(['With green lost: normal brakes and autobrake, gear retraction and normal extension, spoilers 1 and 5 and reverser 1 are lost. The gear is gravity extended.']),
       setup: function (s) { var g = s.hyd.G; g.rsvr = 'lo'; g.qty = 0.05; g.leak = true; g.p = 0; },
       lights: [G_PUMP, PTU],
-      memo: [],
+      memo: [{ t: '*WHEEL', c: 'a' }, { t: '*F/CTL', c: 'a' }],
       steps: [
         MASTER,
         A('PTU', 'OFF', PTU, { clears: true, fx: ptuOff,
@@ -108,33 +110,56 @@
         Q('Why is the PTU switched off first?', 'It would run against an empty green system and overheat', ['It transfers fluid from yellow into the leak', 'It is needed to power the RAT', 'It only works on the ground'],
           'The PTU transfers power, not fluid. With no green fluid it runs unloaded and overheats.'),
         A('GREEN ENG 1 PUMP', 'OFF', G_PUMP, { clears: true, fx: function (s) { s.hyd.G.pump = 'off'; }, why: 'Stops the pump running dry.' }),
+        N('G ENG 1 PUMP LO PR', 'a'),
+        N('G SYS LO PR', 'a'),
         Q('Green is now lost. Which wheel braking is still available?', 'Alternate braking (yellow), without autobrake', ['Normal braking with autobrake', 'Normal braking without autobrake', 'No wheel braking'],
           'Normal brakes and autobrake are green, so they are lost (NORM BRK and AUTO BRK on INOP SYS). The alternate brakes are yellow: the STATUS shows ALTN BRK ONLY.')
       ],
-      sts: { left: [['APPR PROC', 'w'], ['L/G.......GRVTY EXTN', 'c'], ['SLATS SLOW', 'g'], ['FLAPS SLOW', 'g'], ['ALTN BRK ONLY', 'g']],
-        inop: ['G HYD', 'NORM BRK', 'AUTO BRK', 'SPLR 1+5', 'REVERSER 1', 'L/G RETRACT'] },
-      statusQ: Q('With green lost, how is the landing gear extended?', 'Gravity extension, using the handcrank', ['Normal extension, powered by yellow', 'Normal extension, powered by blue', 'It cannot be extended'],
-        'The gear uses green only. The gravity extension handcrank releases the uplocks and the gear free-falls.')
+      seq: [
+        { lines: [], memo: [{ t: '*WHEEL', c: 'a' }, { t: '*F/CTL', c: 'a' }], sd: 'WHEEL',
+          text: 'Secondary failure *WHEEL: the SD shows the WHEEL page. Check what is left for stopping.', note: 'ECAM shows the WHEEL page for the secondary failure.',
+          q: Q('On the WHEEL page, which ground spoilers are lost with green?', 'Spoilers 1 and 5', ['Spoilers 2 and 4', 'Spoiler 3', 'All of them'],
+            'Spoilers 1 and 5 are green. The others still extend on landing, so the ground spoiler function is reduced, not lost.') },
+        { lines: [], memo: [{ t: '*F/CTL', c: 'a' }], sd: 'F/CTL',
+          text: 'Secondary failure *F/CTL: the SD shows the F/CTL page. Check what is left to fly the aircraft.', note: 'ECAM shows the F/CTL page for the secondary failure.',
+          q: Q('Which flight control law applies with green lost?', 'Normal law', ['Alternate law', 'Direct law', 'Mechanical backup'],
+            'Each surface still has blue or yellow, so the protections stay. Only a dual hydraulic failure costs normal law.') },
+        { lines: [], memo: [], sd: 'STS',
+          sts: { left: [['-L/G.........GRVTY EXTN', 'c'], ['LDG DIST PROC......APPLY', 'c'], ['ALTN Y BRK WITH A/SKID', 'g'], ['SLATS/FLAPS SLOW', 'g'], ['CAT 3 SINGLE ONLY', 'g']],
+            inop: ['G HYD', 'SPLR 1+5', 'CAT 3 DUAL', 'NORM BRK', 'AUTO BRK', 'L/G RETRACT', 'REVERSER 1', 'G ENG 1 PUMP', 'YAW DAMPER 1'] },
+          text: 'STATUS is shown. Review it with the other pilot.', note: 'Secondary failures reviewed. STATUS is shown.',
+          q: Q('With green lost, how is the landing gear extended?', 'Gravity extension, using the handcrank', ['Normal extension, powered by yellow', 'Normal extension, powered by blue', 'It cannot be extended'],
+            'The gear uses green only, and it cannot be raised again once down, so plan the extension late: fuel burn rises sharply with the gear out.') }
+      ]
     },
 
     'hyd-b-lopr': {
-      title: 'HYD B SYS LO PR', sysWord: 'HYD', level: 2, sd: 'HYD', phase: 'Cruise · FL350',
+      title: 'HYD B ELEC PUMP LO PR', sysWord: 'HYD', level: 2, sd: 'HYD', phase: 'Cruise · FL350',
       brief: 'Cruise at FL350. The blue electric pump fails and blue pressure is lost. Green and yellow are normal.',
       learn: HYD_LEARN.concat(['Blue powers one aileron and one elevator actuator each side, spoiler 3, the slats (with green) and the emergency generator when the RAT is out.']),
       setup: function (s) { s.hyd.B.fail = true; s.hyd.B.p = 0; },
       lights: [B_PUMP],
-      memo: [],
+      memo: [{ t: '*F/CTL', c: 'a' }],
       steps: [
         MASTER,
         A('BLUE ELEC PUMP', 'OFF', B_PUMP, { clears: true, fx: function (s) { s.hyd.B.pump = 'off'; }, why: 'Switching off a pump that has lost pressure protects it and confirms the failure.' }),
+        N('B SYS LO PR', 'a'),
         Q('Can the PTU help the blue system?', 'No: it only links green and yellow', ['Yes, automatically', 'Yes, when selected ON', 'Only on the ground'],
           'The PTU sits between green and yellow. Blue has its own electric pump and the RAT.'),
         Q('With blue lost, how do the slats move?', 'Slowly, on green only', ['Normally', 'Not at all', 'Slowly, on yellow'],
           'Slats are powered by green and blue. With blue lost they still work on green, but slowly: SLATS SLOW on the STATUS.')
       ],
-      sts: { left: [['SLATS SLOW', 'g']], inop: ['B HYD', 'SPLR 3'] },
-      statusQ: Q('Which spoiler is lost with the blue system?', 'Spoiler 3 on each wing', ['Spoilers 1 and 5', 'Spoilers 2 and 4', 'All spoilers'],
-        'Spoiler 3 is blue. 1 and 5 are green, 2 and 4 yellow.')
+      seq: [
+        { lines: [], memo: [{ t: '*F/CTL', c: 'a' }], sd: 'F/CTL',
+          text: 'Secondary failure *F/CTL: the SD shows the F/CTL page. Check what is left to fly the aircraft.', note: 'ECAM shows the F/CTL page for the secondary failure.',
+          q: Q('Which spoiler is lost with the blue system?', 'Spoiler 3 on each wing', ['Spoilers 1 and 5', 'Spoilers 2 and 4', 'All spoilers'],
+            'Spoiler 3 is blue. 1 and 5 are green, 2 and 4 yellow.') },
+        { lines: [], memo: [], sd: 'STS',
+          sts: { left: [['LDG DIST PROC......APPLY', 'c'], ['SLATS SLOW', 'g'], ['CAT 3 SINGLE ONLY', 'g']], inop: ['B HYD', 'SPLR 3', 'CAT 3 DUAL', 'B ELEC PUMP'] },
+          text: 'STATUS is shown. Review it with the other pilot.', note: 'Secondary failure reviewed. STATUS is shown.',
+          q: Q('Why does the STATUS ask for the landing distance procedure?', 'Spoiler 3 is lost, so the ground spoilers are less effective', ['The normal brakes are lost', 'Both reversers are lost', 'The flaps cannot extend'],
+            'The brakes and reversers are unaffected, but one ground spoiler pair less means a longer landing roll.') }
+      ]
     },
 
     'hyd-y-pump': {
@@ -143,7 +168,7 @@
       learn: HYD_LEARN,
       setup: function (s) { s.hyd.Y.fail = true; s.hyd.ptuActive = true; },
       lights: [Y_PUMP],
-      memo: [],
+      memo: [{ t: 'HYD PTU', c: 'g' }],
       steps: [
         MASTER,
         A('YELLOW ENG 2 PUMP', 'OFF', Y_PUMP, { clears: true, fx: function (s) { s.hyd.Y.pump = 'off'; }, why: 'Protects the failed pump. The PTU keeps the yellow system pressurised.' }),
