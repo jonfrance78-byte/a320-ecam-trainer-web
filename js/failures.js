@@ -65,6 +65,7 @@
   function ptuOff(s) { s.hyd.ptu = 'off'; s.hyd.ptuActive = false; }
   // AUTO FLT controls: the FACs (overhead FLT CTL panels), the thrust levers, GPWS TERR
   var FAC1 = ['FLTCTL1', 'FAC 1', 1], FAC2 = ['FLTCTL2', 'FAC 2', 1], THR1 = ['THR', 'Thrust lever 1', 1], THR2 = ['THR', 'Thrust lever 2', 1], GPWS_TERR = ['GPWS', 'TERR', 1];
+  var PRESS_MODE = ['CABPRESS', 'MODE SEL', 1], ASKID = ['AUTOBRK', 'A/SKID & N/W STRG', 1], PARK_BRK = ['PARKBRK', 'PARKING BRK', 1];
   var ALTN_LAW = [{ parts: [{ s: 'F/CTL', u: true, c: 'a' }, { s: ' ALTN LAW', c: 'a' }] }, { text: '     (PROT LOST)', cls: 'a' }];
   function ATHR_OFF(why) {
     return [Object.assign(TITLE('AUTO FLT', 'A/THR OFF'), { top: true }),
@@ -442,6 +443,51 @@
         Q('After the ECAM, how can the FMGCs be recovered?', 'From the MCDU MENU on each MCDU (QRH)', ['By pulling the FAC circuit breakers', 'With the FCU AP pushbuttons', 'They cannot be recovered in flight'],
           'The QRH reset is done from the MCDU MENU page, on both MCDUs for a dual failure.')
       ]
+    },
+
+    // BRAKES and CAB PRESS: E/WD lines from ReadECAM's slides (displays only; questions and
+    // notes are our own). No STATUS picture for either, so the drills end after CLR. 0.7.87.
+    'brk-sys1': {
+      title: 'BRAKES SYS 1 FAULT', sysWord: 'BRAKES', level: 2, sd: 'WHEEL', phase: 'Taxi',
+      brief: 'Taxiing out, BSCU channel 1 fails. Channel 2 takes over the braking and steering; the crew stops and tries a reset of the BSCU (QRH).',
+      learn: ['The BSCU (Brake and Steering Control Unit) has two channels. With one lost, the other controls normal braking, anti-skid and nose wheel steering.',
+        'On the ground the QRH allows a BSCU reset: stop, set the parking brake, then A/SKID & N/W STRG OFF and back ON.',
+        'While A/SKID & N/W STRG is OFF there is no nose wheel steering or anti-skid, and the brake pressure is limited (the ECAM asks for max 1000 PSI).'],
+      setup: function (s) { s.onGround = true; s.alt = 0; s.phaseLabel = ''; },
+      memo: [],
+      steps: [
+        MASTER,
+        Q('With BSCU channel 1 lost, what still controls the brakes?', 'BSCU channel 2', ['The alternate brakes with the accumulator only', 'Nothing until the reset', 'The parking brake'],
+          'The second channel takes over normal braking and steering. The reset tries to get channel 1 back.'),
+        T('QRH reset: stop the aircraft and set the PARKING BRK ON (pedestal).', { ctl: PARK_BRK, pos: 'ON' },
+          'Parking brake set, so the aircraft stays still while the steering and anti-skid are off.'),
+        T('A/SKID & N/W STRG OFF (main panel, next to the autobrake).', { ctl: ASKID, pos: 'OFF' },
+          'With it OFF there is no steering or anti-skid: the reset is only done stopped.'),
+        T('A/SKID & N/W STRG back ON: the BSCU is reset.', { ctl: ASKID, pos: 'ON' }, 'The BSCU restarts. If the fault comes back, it stays with channel 2.'),
+        Q('Why is the BSCU reset done only with the aircraft stopped and the parking brake on?', 'Steering and anti-skid are lost while the switch is OFF', ['The engines must be shut down for it', 'The parking brake powers the BSCU', 'It needs the autobrake set to MAX'],
+          'Without nose wheel steering the aircraft could not be steered, and the brakes would work without anti-skid.')
+      ]
+    },
+
+    'press-sys12': {
+      title: 'CAB PR SYS 1+2 FAULT', sysWord: 'CAB PR', level: 2, sd: 'PRESS', phase: 'Cruise · FL350',
+      brief: 'In cruise, both cabin pressure controllers fail. The crew takes manual control of the outflow valve.',
+      learn: ['Two cabin pressure controllers (CPC) work the outflow valve; one is active, the other on standby. With both lost, MODE SEL MAN gives direct control of the valve through its manual motor.',
+        'MAN V/S CTL is spring-loaded: UP opens the valve (cabin climbs), DN closes it (cabin descends). The valve moves slowly in MAN.',
+        'Aim to keep the cabin altitude below 8000 ft in cruise, the cabin V/S gentle (around 1000 ft/min or less), and the differential pressure at zero for landing.'],
+      setup: function (s) { s.press.sys = ['fault', 'fault']; },
+      lights: [PRESS_MODE],
+      memo: [],
+      steps: [
+        MASTER,
+        A('MODE SEL', 'MAN', PRESS_MODE, { fx: function (s) { s.press.mode = 'man'; }, hint: 'Overhead CABIN PRESS panel: MODE SEL to MAN (MAN lit).',
+          why: 'MAN lit: the outflow valve now answers MAN V/S CTL. The PRESS page shows MAN.' }),
+        Q('What does MODE SEL MAN do?', 'Gives the crew direct control of the outflow valve with MAN V/S CTL', ['Resets both controllers', 'Opens the outflow valve fully', 'Closes the packs'],
+          'In MAN the third motor of the outflow valve is driven by the MAN V/S CTL switch.'),
+        N('-MAN V/S CTL........AS RQRD'),
+        Q('Holding MAN V/S CTL to DN does what to the cabin?', 'Closes the outflow valve, so the cabin descends', ['Opens the outflow valve, so the cabin descends', 'Closes the valve, so the cabin climbs', 'Lowers the landing elevation'],
+          'Less air out means more pressure: the cabin altitude goes down. UP opens the valve and the cabin climbs. The valve is slow in MAN, so small inputs and patience.')
+      ]
     }
   };
   Object.keys(DRILLS).forEach(function (id) { DRILLS[id].id = id; addAnc(DRILLS[id]); });
@@ -454,8 +500,8 @@
       E('GPWS [MEM]', 'r'), E('TCAS [MEM]', 'r'), E('REACTIVE WINDSHEAR [MEM]', 'r'), E('LOSS OF BRAKING [MEM]', 'r')]],
     ['AIR', [E('BLEED 1+2 FAULT', 'a'), E('PACK 1+2 FAULT', 'a')]],
     ['AUTO FLT', [E('FMGC SYSTEM OVERVIEW', 'w'), E('FAC FAULTS', 'a', ['afl-fac1', 'afl-fac12']), E('FCU FAULTS', 'a', ['afl-fcu1', 'afl-fcu12']), E('FMGC SINGLE FAULT', 'a'), E('DUAL FMGC FAILURE', 'a', 'afl-dual-fmgc')]],
-    ['BRAKES', [E('BRAKES SYS OVERVIEW', 'w'), E('BRAKES SYS 1(2) FAULT', 'a'), E('LOSS OF BRAKING [MEM]', 'r')]],
-    ['CAB PRESS', [E('EXCESSIVE CAB ALT', 'r'), E('CPC FAULTS', 'a')]],
+    ['BRAKES', [E('BRAKES SYS OVERVIEW', 'w'), E('BRAKES SYS 1(2) FAULT', 'a', 'brk-sys1'), E('LOSS OF BRAKING [MEM]', 'r')]],
+    ['CAB PRESS', [E('EXCESSIVE CAB ALT', 'r'), E('CPC FAULTS', 'a', 'press-sys12')]],
     ['ELEC', [E('ELECTRICAL SYSTEM OVERVIEW', 'w'), E('C/B TRIPPED', 'a'), E('DC ESS BUS FAULT', 'a'), E('ELEC EMER CONFIG', 'r')]],
     ['ENG', [E('ABN/NON-STD ENG START', 'a'), E('ENGINE MALFUNCTIONS', 'a'), E('ALL ENG FAIL', 'r'), E('ENG FAIL IN CRUISE', 'a'), E('ENG FAIL AFTER V1', 'a'),
       E('OEI APP AND LANDING', 'a'), E('OEI GO AROUND', 'a'), E('OEI BLEED MANAGEMENT', 'a'), E('TAILPIPE FIRE', 'a'), E('THRUST LOCKED', 'a'), E('TOGA LK', 'a'), E('THR LEVERS MANAGEMENT', 'a')]],

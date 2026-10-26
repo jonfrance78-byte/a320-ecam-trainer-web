@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.86';
+  var VERSION = '0.7.87';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -436,14 +436,15 @@
     function doTask(t) {
       var w = t.want;
       if (w.sd && sdPage !== w.sd) setSd(w.sd);
-      if (w.ctl) setBits(w.ctl, { up: bits(w.ctl).up, lo: w.sel });
+      if (w.ctl && w.pos) ctlState(w.ctl).cur = PN.P[w.ctl[0]].items[ctlIndex(w.ctl)].pos.indexOf(w.pos);
+      else if (w.ctl) setBits(w.ctl, { up: bits(w.ctl).up, lo: w.sel });
       if (w.panel) openPanel(w.panel);
       DR.skips.push(t.text);
     }
     if (st && st.k === 'master') pressMaster(f.level === 3 ? 'W' : 'C');
     else if (st && preOpen()) pressClr();
     else if (st && st.k === 'act') {
-      st.ctls.forEach(function (c) { if (st.press) ctlState(c).down = true; else if (st.move) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].cur + 1; else setBits(c, { up: bits(c).up, lo: st.sel }); if (st.reset) DR.off[st.item + c.join()] = true; });
+      st.ctls.forEach(function (c) { if (st.press) ctlState(c).down = true; else if (st.move) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].cur + 1; else if (st.pos) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].pos.indexOf(st.pos); else setBits(c, { up: bits(c).up, lo: st.sel }); if (st.reset) DR.off[st.item + c.join()] = true; });
       DR.skips.push(st.item + ' ' + st.val);
     }
     else if (st && st.k === 'task') doTask(st);
@@ -692,6 +693,9 @@
     var it = PN.P[c[0]].items[ctlIndex(c)];
     ctlState(c).lit = b.up && b.lo ? 'both' : b.up ? 'up' : b.lo ? 'lo' : (it.lit ? 'none' : null);
   }
+  // A switch or lever's position by name (pos: 'ON'); OFF for a reset is the lit OFF legend or the OFF position.
+  function posName(c) { var it = PN.P[c[0]].items[ctlIndex(c)], cur = ctlState(c).cur; return it.pos && it.pos[cur != null ? cur : it.cur]; }
+  function isOff(c) { return PN.P[c[0]].items[ctlIndex(c)].pos ? posName(c) === 'OFF' : bits(c).lo; }
   function setFault(c, on) { var b = bits(c); b.up = on; setBits(c, b); }
   function masters(type, on) {
     ['GSL', 'GSR'].forEach(function (id) {
@@ -842,7 +846,8 @@
     if (st.k === 'master') return !masterLit();
     // reset: OFF THEN ON, done once the control has been seen OFF and is back ON.
     if (st.k === 'act') return st.ctls.every(function (c) {
-      if (st.reset) { var k = st.item + c.join(); if (bits(c).lo) DR.off[k] = true; return !!DR.off[k] && !bits(c).lo; }
+      if (st.pos) return posName(c) === st.pos;
+      if (st.reset) { var k = st.item + c.join(); if (isOff(c)) DR.off[k] = true; return !!DR.off[k] && !isOff(c); }
       // move: a lever moved out of the detent it started in (THR LEVERS....MOVE).
       if (st.move) { var cur = ctlState(c).cur; return cur != null && cur !== PN.P[c[0]].items[ctlIndex(c)].cur; }
       return st.press ? !!ctlState(c).down : bits(c).lo === st.sel;
@@ -851,7 +856,7 @@
       var w = st.want;
       if (w.sd) return sdPage === w.sd;
       if (w.panel) return !!PV && PV.id === w.panel;
-      if (w.ctl) return bits(w.ctl).lo === w.sel;
+      if (w.ctl) return w.pos ? posName(w.ctl) === w.pos : bits(w.ctl).lo === w.sel;
     }
     return false;
   }
