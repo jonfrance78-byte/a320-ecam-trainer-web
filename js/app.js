@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.72';
+  var VERSION = '0.7.73';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -89,8 +89,7 @@
 
   var drawerOpen = false, searchOpen = false, searchTerm = '';
   // Guided drills (owner's request, 0.7.49): the trainer opens the panel for each step in turn.
-  var GUIDED = true, guideT = null;
-  try { GUIDED = localStorage.getItem('ecam-guided') !== '0'; } catch (e) { GUIDED = true; }
+  var guideT = null;
   var PV = null; // expanded panel: { id, states, selected }
 
   /* ----------------------------------------------------------------- home */
@@ -398,7 +397,7 @@
       (fm ? '<div class="fm-wrap">' + FMGC.guideHtml() : '') + (ecp ? '<div class="ecp-wrap"><div class="pv-sdtop" aria-label="System display">' + sdSvg() + '</div>' : '') +
       '<svg viewBox="-4 ' + (ecp ? 0 : -4) + ' ' + (p.w + 8) + ' ' + (p.h + (ecp ? 4 : 8)) + '" class="pv-svg' + (/^MCDU[12]$/.test(PV.id) ? ' pv-mcdu' : '') + (PV.id === 'ATC' ? ' pv-atc' : '') + (/^(FCU|EFIS[LR])$/.test(PV.id) ? ' pv-fcu' : '') + '" style="--ar: ' + ((p.h + (ecp ? 4 : 8)) / (p.w + 8)).toFixed(4) + '" role="group" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' + (fm || ecp ? '</div>' : '') +
-      (FMGC && /^MCDU[12]$/.test(PV.id) ? FMGC.simHtml() : '') + (guidedOn() ? '' : miniEwd());
+      (FMGC && /^MCDU[12]$/.test(PV.id) ? FMGC.simHtml() : '');
     document.getElementById('pv-info').innerHTML = infoHtml(p);
     // Guided: the E/WD on the right, large.
     var ec = document.getElementById('pv-ecam');
@@ -426,7 +425,7 @@
     stopChime(); if (masterLit()) chime(DR.f.level, JSON.stringify(DR.f.pre || []).indexOf('AP OFF') >= 0);
     PV = null; openPanel(guidePanel()); renderDrill(); refreshHome();
   }
-  function guidedOn() { return GUIDED && DECK_MODE === 'abnormal' && !!(DR && DR.s) && DR.phase !== 'done'; }
+  function guidedOn() { return DECK_MODE === 'abnormal' && !!(DR && DR.s) && DR.phase !== 'done'; }
   // The panel the current step is worked on: MASTER on the glareshield, an action's panel,
   // a task's panel; otherwise (CLR, STATUS, SD pages) the ECAM control panel (owner's request, 0.7.50).
   function guidePanel() {
@@ -458,7 +457,7 @@
   function renderPanelView() {
     var el = document.getElementById('pv'), dr = document.getElementById('drill');
     if (dr.parentNode !== el.parentNode) el.after(dr); // back from a drill panel layout before the card is redrawn
-    if (!PV) { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('pv-open', 'pv-disp-open', 'pv-drill-open', 'pv-guide-open'); return; }
+    if (!PV) { el.hidden = true; el.innerHTML = ''; document.body.classList.remove('pv-open', 'pv-disp-open', 'pv-guide-open'); return; }
     var p = getP(PV.id) || { desc: '' }, dims = PV.photo || (PV.disp ? { w: 1, h: 1 } : p);
     var gate = PV.photo && PV.items.some(function (it) { return it.photoLit; });
     // An expanded display (PFD, ND, E/WD, SD; owner's request): no title bar, only a small
@@ -467,9 +466,8 @@
     // A panel expanded during a drill (owner's request): a small title bar; below the panel,
     // the information left, the mini E/WD in the middle and the drill bar right.
     var drill = !PV.disp && !!(DR && DR.s), guide = drill && guidedOn();
-    document.body.classList.toggle('pv-drill-open', drill && !guide);
     document.body.classList.toggle('pv-guide-open', guide);
-    el.innerHTML = '<div class="pv-card' + (PV.disp ? ' pv-disp' : guide ? ' pv-guide' + (PV.id === 'ECP' ? ' pv-ecpstep' : '') : drill ? ' pv-drill' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
+    el.innerHTML = '<div class="pv-card' + (PV.disp ? ' pv-disp' : guide ? ' pv-guide' + (PV.id === 'ECP' ? ' pv-ecpstep' : '') : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       (PV.disp ? '<button class="icon-btn sm pv-back" data-act="closePanel" aria-label="' + (guidedOn() ? 'One step back' : 'Back to flight deck') + '">' + ICON.back + '</button>' :
       '<header class="pv-bar"><button class="icon-btn" data-act="closePanel" aria-label="' + (guidedOn() ? 'One step back' : 'Back to flight deck') + '">' + ICON.back + '</button>' +
       '<h2 class="appbar-title">' + esc(panelName(PV.id)) + '</h2><span class="icon-btn-spacer"></span></header>') +
@@ -838,38 +836,16 @@
       return;
     }
     if (!DR || DR.phase !== 'run') return;
-    var st = DR.f.steps[DR.i], moved = false, acted = false;
+    var st = DR.f.steps[DR.i], moved = false;
     while (st && (st.k === 'master' || st.k === 'act' || st.k === 'task') && stepMet(st)) {
       DR.done[DR.i] = true;
-      if (st.k === 'act') { acted = true; if (st.fx) st.fx(DR.s); if (st.clears) st.ctls.forEach(function (c) { setFault(c, false); }); DR.flash = st.item + ' ' + st.val + ': ' + (st.why || 'done.'); }
+      if (st.k === 'act') { if (st.fx) st.fx(DR.s); if (st.clears) st.ctls.forEach(function (c) { setFault(c, false); }); DR.flash = st.item + ' ' + st.val + ': ' + (st.why || 'done.'); }
       if (st.k === 'master') { DR.masterDone = true; DR.flash = 'Warning acknowledged: light out, chime silenced. ' + (preOpen() ? 'Now press CLR to clear ' + preName() + ', the first alert on the E/WD.' : 'Now read the ECAM procedure on the E/WD.'); }
       if (st.k === 'task') DR.flash = st.info || null;
       DR.i++; moved = true;
       st = DR.f.steps[DR.i];
     }
     if (moved) advance(); else renderDrill();
-    // An ECAM action done in an expanded panel: the panel stays open (with its information)
-    // and its small E/WD pulses as the line clears.
-    if (acted && PV && !PV.disp) {
-      DR.pulse = Date.now();
-      setTimeout(function () { var m = document.querySelector('#pv-stage .pv-ewd'); if (m) m.classList.remove('flash'); }, 1400);
-    }
-  }
-  // During a drill an expanded panel shows the E/WD message area, so the procedure
-  // stays in view while the trainee works the panel.
-  function miniEwd() {
-    if (!DR || !DR.s || DR.f.level < 2 || PV.disp || DR.phase === 'done') return '';
-    var bar = '<div class="pv-ewd-bar"><button class="btn sm" data-act="backEcam">Back to ECAM</button></div>';
-    // Once the actions are done the procedure box goes; the button stays.
-    if (!(DR.phase === 'run' || DR.phase === 'quiz')) return bar;
-    return '<div class="pv-ewd' + (Date.now() - (DR.pulse || 0) < 1300 ? ' flash' : '') + '" aria-label="E/WD procedure">' + DISP.renderEWD(DR.s, ewdView()).replace('viewBox="0 0 320 320"', 'viewBox="0 188 320 132"') + '</div>' + bar;
-  }
-  function showEcam() {
-    var g = document.querySelector('.hot[data-panel="EWD"]');
-    if (!g) return;
-    g.scrollIntoView({ block: 'center', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-    g.classList.add('flash');
-    setTimeout(function () { var g2 = document.querySelector('.hot[data-panel="EWD"]'); if (g2) g2.classList.remove('flash'); }, 1600);
   }
   // A press on a procedure control before its turn is a sequence error.
   function drillPress(panel, i) {
@@ -1145,11 +1121,8 @@
     if (!drawerOpen) { el.hidden = true; return; }
     el.innerHTML = '<nav class="drawer-card" aria-label="Menu">' +
       '<div class="drawer-top"><span class="drawer-brand">A320 ECAM Trainer</span><button class="icon-btn" data-act="closeDrawer" aria-label="Close menu">' + ICON.close + '</button></div>' +
-      // Abnormal procedures (owner's request, 0.7.49): Guided / Non-guided at the top, then the failures.
-      (DECK_MODE === 'abnormal' ? '<div class="seg drawer-guide" role="radiogroup" aria-label="Drill mode">' +
-        '<button role="radio" aria-checked="' + GUIDED + '" class="seg-btn' + (GUIDED ? ' on' : '') + '" data-act="guided" data-g="1">Guided</button>' +
-        '<button role="radio" aria-checked="' + !GUIDED + '" class="seg-btn' + (GUIDED ? '' : ' on') + '" data-act="guided" data-g="0">Non-guided</button></div>' +
-        '<p class="drawer-note">' + (GUIDED ? 'Guided: each panel opens in turn as you work the failure.' : 'Non-guided: find each panel on the flight deck yourself.') + '</p>' :
+      // Abnormal procedures: the failures only; drills are always guided (owner's decision, 0.7.73: Non-guided removed).
+      (DECK_MODE === 'abnormal' ? '<p class="drawer-note">Each panel opens in turn as you work the failure.</p>' :
       '<button class="drawer-link" data-act="home">Start page</button>' +
       '<button class="drawer-link" data-act="choose" data-v="normal">Flight deck overview</button>' +
       '<button class="drawer-link" data-act="choose" data-v="quiz">ECAM drill quiz</button>') +
@@ -1259,7 +1232,6 @@
       case 'beginDrill': begin(); break;
       case 'cancelDrill': stopDrill(); break;
       case 'closeModal': hideModal(); break;
-      case 'guided': GUIDED = el.getAttribute('data-g') === '1'; try { localStorage.setItem('ecam-guided', GUIDED ? '1' : '0'); } catch (err) { /* not saved */ } renderDrawer(); if (PV) renderPanelView(); renderDrill(); break;
       case 'abrkInfo': showAbrkTip(); break;
       case 'abrkTipClose': hideAbrkTip(); break;
       case 'answer': answer(+el.getAttribute('data-k')); break;
@@ -1267,7 +1239,6 @@
       case 'quizSkip': quizSkip(); break;
       case 'againDrill': var id = DR.f.id; brief(id); begin(); break;
       case 'stopDrill': stopDrill(); break;
-      case 'backEcam': closePanel(); showEcam(); break;
       case 'mute': muted = !muted; try { localStorage.setItem('ecam-mute', muted ? '1' : '0'); } catch (err) { /* ignore */ } if (muted) stopChime(); renderDrill(); break;
       case 'pvmode': if (PV) { setPanelMode(el.getAttribute('data-mode')); renderPanelView(); } break;
       case 'fcu': if (PV && PV.selected != null) { var how = el.getAttribute('data-how'); pressCtl(PV.selected, how === 'l' ? -1 : how === 'r' ? 1 : how); } break;
