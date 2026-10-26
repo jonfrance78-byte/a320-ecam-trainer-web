@@ -39,12 +39,10 @@
   }
 
   /* ------------------------------------------------------------- app bar */
-  function bar(title, back) {
-    return '<header class="appbar">' +
-      (back ? '<button class="icon-btn" data-act="home" aria-label="Back to procedures">' + ICON.back + '</button>' : '<span class="icon-btn-spacer"></span>') +
-      '<h1 class="appbar-title">' + esc(title) + '</h1>' +
-      '<a class="np-trainer" href="' + TRAINER + '">ECAM Trainer</a>' +
-      '</header>';
+  // The app's slim dark bar (owner's request, 0.7.78): back only, no title. Back goes one step
+  // back, as Android Back does: a flow or approach to the procedures, the procedures to the trainer.
+  function bar() {
+    return '<header class="appbar"><button class="icon-btn" data-act="back" aria-label="Back">' + ICON.back + '</button><span class="appbar-title"></span></header>';
   }
 
   /* ---------------------------------------------------------------- home */
@@ -57,7 +55,7 @@
       g.flows.push({ f: f, n: i + 1 });
     });
     var total = D.FLOWS.length, done = D.FLOWS.filter(function (f) { return DONE[f.id]; }).length;
-    var h = bar('A320 Normal Procedures', false) +
+    var h = bar() +
       '<main class="np-home">' +
       '<section class="np-hero">' +
       '<p class="eyebrow">A320 family · Airbus SOP</p>' +
@@ -245,7 +243,7 @@
   }
   function renderRun() {
     var f = R.f, n = f.steps.length, k = Math.min(R.k, n), i = D.FLOWS.indexOf(f);
-    var h = bar(f.title, true) +
+    var h = bar() +
       '<main class="np-run">' +
       '<div class="np-run-head">' +
       '<p class="eyebrow">' + (i >= 0 ? 'Flow ' + (i + 1) + ' of ' + D.FLOWS.length + ' · ' : 'Approach practice · ') + esc(f.phase) + '</p>' +
@@ -284,7 +282,7 @@
   }
   function renderAppr() {
     var a = APV.a, t = a.tabs[APV.tab];
-    var h = bar(a.title, true) +
+    var h = bar() +
       '<main class="np-apv">' +
       '<p class="eyebrow">Approach guide</p><h2 class="np-h1 sm">' + esc(a.title) + '</h2>' +
       '<p class="np-lede">' + esc(a.short) + '</p>' +
@@ -314,6 +312,7 @@
     if (!el) return;
     switch (el.getAttribute('data-act')) {
       case 'home': goHome(); break;
+      case 'back': window.appBack(); break;
       case 'mode': MODE = el.getAttribute('data-mode'); store('mode', MODE); if (R) R.note = null; render(); break;
       case 'flow': startFlow(el.getAttribute('data-id'), el.hasAttribute('data-chain')); window.scrollTo(0, 0); break;
       case 'appr': openAppr(el.getAttribute('data-id')); break;

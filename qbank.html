@@ -251,7 +251,16 @@ h1,h2{text-transform:none;letter-spacing:0}
 .fex{margin:2px 0 0;padding:10px 12px;border-left:3px solid #1f7a3d;background:var(--panel-2);font-size:14px;line-height:1.5}
 </style>
 
+<style>
+/* The ECAM Trainer's slim dark bar (owner's request, 0.7.78: the same bar throughout the app).
+   Back steps back through the bank as Android Back does, then returns to the trainer. */
+.qb-bar{position:sticky;top:0;z-index:30;display:flex;align-items:center;min-height:29px;padding:2px max(12px,env(safe-area-inset-left));padding-top:calc(env(safe-area-inset-top,0px) + 2px);background:#0c1220;border-bottom:1px solid #2a3850;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.qb-bar button{display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:6px;background:transparent;cursor:pointer}
+.qb-bar button:hover{background:#19243a}
+.qb-bar svg{width:16px;height:16px;fill:none;stroke:#e6edf3;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+</style>
 </head><body>
+<header class="qb-bar"><button type="button" aria-label="Back" onclick="window.appBack()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button></header>
 <div class="wrap" id="app"></div>
 
 <script>

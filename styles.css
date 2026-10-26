@@ -705,7 +705,8 @@ svg, .lchips, .fma {
   --ecam-g: #2fe04c; --ecam-a: #ffa21a; --ecam-r: #ff3b30; --ecam-c: #33d6f2; --ecam-w: #f2f4f5; --ecam-m: #ff4fd8;
 }
 body:not(:has(.appbar.slim)) { background: var(--night); }
-body:not(:has(.appbar.slim)) .appbar { box-shadow: 0 1px 0 var(--line); }
+/* The bar stays dark on the light pages too (owner's request, 0.7.78): the original dark colours. */
+body:not(:has(.appbar.slim)) .appbar { color-scheme: dark; --night-2: #0c1220; --ink: #e6edf3; --ink-2: #9fb0c0; --line: #2a3850; --card: #19243a; color: var(--ink); }
 body:not(:has(.appbar.slim)) .appbar-title, body:not(:has(.appbar.slim)) .drawer-brand { font-family: var(--font-head); font-weight: 700; }
 body:not(:has(.appbar.slim)) .titem, body:not(:has(.appbar.slim)) .np-acard, body:not(:has(.appbar.slim)) .np-card { border-radius: 6px; box-shadow: none; }
 body:not(:has(.appbar.slim)) .titem:hover, body:not(:has(.appbar.slim)) .np-acard:hover { box-shadow: 0 2px 10px rgba(0, 0, 0, .06); border-color: var(--edge-hi); }
