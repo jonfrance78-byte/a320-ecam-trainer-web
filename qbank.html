@@ -2206,13 +2206,22 @@ hyd:`<svg viewBox="0 0 360 170" role="img" aria-label="Hydraulic systems: green,
 <text x="180" y="116">PTU runs at &gt;500 PSI G/Y difference</text>
 <path d="M180 60 V80 M180 100 V135" stroke="#1f4e79"/><circle cx="180" cy="145" r="10" fill="#fff" stroke="#1f4e79"/><text x="180" y="149">R</text><text x="196" y="149" text-anchor="start">RAT: blue only, ~2500 PSI</text>
 <text x="60" y="80">3000 PSI</text><text x="300" y="80">3000 PSI</text></g></svg>`,
-thr:`<svg viewBox="0 0 360 170" role="img" aria-label="Thrust lever detents"><g font-size="12" font-family="sans-serif">
-<path d="M60 20 Q40 85 60 150" fill="none" stroke="#555" stroke-width="3"/>
-${[["TO/GA",25],["FLX/MCT",50],["CL",75],["IDLE",105],["REV IDLE",128],["MAX REV",150]].map(([t,y])=>`<line x1="48" y1="${y}" x2="70" y2="${y}" stroke="#121212" stroke-width="2"/><text x="80" y="${y+4}">${t}</text>`).join("")}
-<text x="170" y="30" fill="#5f5f5f">Take-off: FLX/MCT or TO/GA</text>
-<text x="170" y="80" fill="#5f5f5f">Climb to landing: CL</text>
-<text x="170" y="110" fill="#5f5f5f">Between detents: higher limit</text>
-<text x="170" y="140" fill="#5f5f5f">Reverse: pull up and back</text></g></svg>`,
+thr:`<svg viewBox="0 0 360 230" role="img" aria-label="Thrust lever quadrant and detents"><g font-family="sans-serif" font-size="10">
+<rect x="60" y="10" width="150" height="200" rx="4" fill="#faf9f7" stroke="#555"/>
+${[["TO\u2009GA",30],["FLX MCT",58],["CL",86]].map(([t,y])=>`<path d="M68 ${y-9} h34 l6 9 l-6 9 h-34 z" fill="#fff" stroke="#121212"/><text x="85" y="${y+3}" text-anchor="middle" font-weight="700" font-size="8">${t}</text>`).join("")}
+<path d="M64 78 V148" stroke="#1f7a3d" stroke-width="3"/><text x="58" y="110" fill="#1f7a3d" text-anchor="end" font-weight="700">A/THR</text><text x="58" y="122" fill="#1f7a3d" text-anchor="end">range</text>
+<path d="M68 150 h40" stroke="#121212" stroke-width="2"/><text x="112" y="153">0</text>
+<text x="70" y="166" font-weight="700">IDLE</text>
+<path d="M64 158 V198" stroke="#c62828" stroke-width="3"/><text x="58" y="182" fill="#c62828" text-anchor="end" font-weight="700">REV</text>
+<path d="M68 198 h34" stroke="#121212" stroke-width="2"/><text x="70" y="208" font-size="8">MAX REV</text>
+<rect x="135" y="30" width="22" height="120" rx="4" fill="#e9e7e3" stroke="#555"/><rect x="165" y="30" width="22" height="120" rx="4" fill="#e9e7e3" stroke="#555"/>
+<rect x="126" y="140" width="70" height="22" rx="5" fill="#fff" stroke="#121212"/>
+<circle cx="122" cy="151" r="5" fill="#c62828"/><circle cx="200" cy="151" r="5" fill="#c62828"/>
+<text x="225" y="150" font-size="9">Red: A/THR instinctive</text><text x="225" y="162" font-size="9">disconnect pushbuttons</text>
+<text x="225" y="34" font-size="9">Take-off: FLX/MCT or TO/GA</text>
+<text x="225" y="90" font-size="9">Normal flight: CL</text>
+<text x="225" y="106" font-size="9">A/THR active from 0 to CL</text>
+<text x="225" y="194" font-size="9">Reverse: lift and pull back</text></g></svg>`,
 ice:`<svg viewBox="0 0 360 150" role="img" aria-label="Ice protection by hot air"><g font-size="11" font-family="sans-serif" text-anchor="middle">
 <rect x="165" y="20" width="30" height="120" rx="14" fill="#faf9f7" stroke="#555"/>
 <path d="M165 70 L20 100 L20 110 L165 90 Z M195 70 L340 100 L340 110 L195 90 Z" fill="#faf9f7" stroke="#555"/>
