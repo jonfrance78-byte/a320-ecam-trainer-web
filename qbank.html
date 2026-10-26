@@ -290,7 +290,7 @@ src:"FCOM DSC-22_30 Ground Speed Mini; Safety First: Control your Speed — Desc
 a:`<ul><li><b>SPEED</b>: speed above VAPP + 10 kt or below VAPP − 5 kt.</li><li><b>SINK RATE</b>: V/S (Vertical Speed) greater than 1 000 ft/min.</li><li><b>BANK</b>: bank angle above 7°.</li><li><b>PITCH</b>: pitch above +10° or below −2.5°.</li><li><b>LOC</b> / <b>GLIDE SLOPE</b>: more than ½ dot.</li><li><b>COURSE</b>: more than ½ dot (VOR) or 5° (NDB).</li></ul>`,
 src:"FCOM PRO-NOR-SOP Flight Parameters / Callouts"},
 {id:"p12",s:"proc",t:"Descent & Approach",q:"What does the FCTM define as a stabilised approach, and at what heights?",
-a:`<p>The aircraft is on the correct lateral and vertical flight path, in the desired landing configuration, with thrust stabilised (usually above idle) and no excessive flight parameter deviation.</p><p>FCTM gate: stabilised by 1 000 ft AAL (Above Aerodrome Level) in IMC (Instrument Meteorological Conditions) and 500 ft AAL in VMC (Visual Meteorological Conditions). Otherwise, go around. Jet2 SOP gates are expressed as ARTE (Above Runway Threshold Elevation), and the operator gate applies.</p>`,
+a:`<p>The aircraft is on the correct lateral and vertical flight path, in the desired landing configuration, with thrust stabilised (usually above idle) and no excessive flight parameter deviation.</p><p>FCTM gate: stabilised by 1 000 ft AAL (Above Aerodrome Level) in IMC (Instrument Meteorological Conditions) and 500 ft AAL in VMC (Visual Meteorological Conditions). Otherwise, go around. Some operators express the gates as ARTE (Above Runway Threshold Elevation); the operator gate applies.</p>`,
 src:"FCTM PR-NP-SOP Stabilized Approach"},
 {id:"p13",s:"proc",t:"Landing",q:"What is the RETARD callout logic for manual landings and autoland?",
 a:`<p>Manual landing: the RETARD auto-callout sounds at 20 ft RA (Radio Altitude) as a reminder to bring the thrust levers to IDLE. Autoland: it sounds at 10 ft RA. RETARD is a reminder, not an order, but the levers must be at IDLE by touchdown at the latest so the ground spoilers extend. The flare starts at about 30 ft RA on the A318/A319/A320 and about <b>40 ft RA on the A321</b>.</p>`,
@@ -310,7 +310,7 @@ src:"FCTM PR-NP-SOP Go-Around Strategy (CAT II/III)"},
 
 /* ================= ABNORMAL PROCEDURES ================= */
 {id:"a01",s:"abn",t:"Memory Items",q:"List the A320 memory items.",
-a:`<ul><li>LOSS OF BRAKING</li><li>EMERGENCY DESCENT (initial actions)</li><li>UNRELIABLE SPEED INDICATION (initial actions)</li><li>WINDSHEAR (reactive) and WINDSHEAR AHEAD (predictive)</li><li>EGPWS (Enhanced Ground Proximity Warning System) / GPWS alerts</li><li>TCAS (Traffic Collision Avoidance System) warnings</li><li>STALL RECOVERY</li><li>STALL WARNING AT LIFT-OFF</li></ul><p>Check the current Jet2 QRH (Quick Reference Handbook) for the exact list on your fleet standard.</p>`,
+a:`<ul><li>LOSS OF BRAKING</li><li>EMERGENCY DESCENT (initial actions)</li><li>UNRELIABLE SPEED INDICATION (initial actions)</li><li>WINDSHEAR (reactive) and WINDSHEAR AHEAD (predictive)</li><li>EGPWS (Enhanced Ground Proximity Warning System) / GPWS alerts</li><li>TCAS (Traffic Collision Avoidance System) warnings</li><li>STALL RECOVERY</li><li>STALL WARNING AT LIFT-OFF</li></ul><p>Check your operator's current QRH (Quick Reference Handbook) for the exact list on your fleet standard.</p>`,
 src:"FCOM PRO-ABN Memory Items; QRH"},
 {id:"a02",s:"abn",t:"Memory Items",q:"UNRELIABLE SPEED INDICATION: state the memory items and the pitch/thrust targets.",
 a:`<p>AP (Autopilot) OFF, A/THR (Autothrust) OFF, FD (Flight Director) OFF, then:</p><ul><li>Below THR RED ALT (thrust reduction altitude): TOGA / 15°.</li><li>Above THR RED ALT, below FL100: CLB / 10°.</li><li>Above FL100: CLB / 5°.</li></ul><p>Flaps: if CONF 0, keep CONF 0. Otherwise keep the current configuration. Speedbrakes retracted. Landing gear up (if safe).</p><p>When the flight path is safe and stable, use the QRH pitch/thrust tables.</p>`,
@@ -2286,13 +2286,13 @@ const SYS = [
   o:["The respective ADIRU is completely lost.","The respective ADIRU is in Backup Nav mode.","The attitude and heading information may be recovered in ATT mode."],ok:2},
  {q:"At what altitudes do the basic modes of GPWS operate?",
   o:["Between radio altitudes 30 and 2450 ft.","Between 0 and 2000 ft height above FMGS arrival RWY threshold.","Below FL 100.","Below 2500 ft altitude by QNH."],ok:0},
- {q:"On board the Wizz Air A320 aircraft, there are ... VOR and ... ILS receiver(s).",
+ {q:"On board the A320, there are ... VOR and ... ILS receiver(s).",
   o:["2, 2","2, 1","4, 2"],ok:0},
  {q:"What is managed climb speed above 10,000 feet?",
   o:["280 knots.","250 knots.","ECON climb speed.","Green dot."],ok:2},
  {q:"What speed will the FMGS use in an expedite climb?",
   o:["Orange dot speed.","250 knots below 10,000 feet.","ECON climb speed.","Green dot speed."],ok:3},
- {q:"On board the Wizz Air A320 aircraft, there are ... pitot probes, ... static pressure probes, ... AOA sensors and ... TAT probes.",
+ {q:"On board the A320, there are ... pitot probes, ... static pressure probes, ... AOA sensors and ... TAT probes.",
   o:["3, 6, 3, 2","2, 4, 2, 2","3, 3, 3, 2"],ok:0},
  {q:"Ground alignment of the IRS is possible in latitudes between:",
   o:["73° North and 73° South","70° North and 73° South","70° North and 70° South","73° North and 70° South"],ok:0},
@@ -2301,7 +2301,31 @@ const SYS = [
  {q:"How does FADEC change engine parameters when an engine anti-ice valve is open?",
   o:["The EPR limit is reduced and, if necessary, the idle EPR is increased for both engines.","The EPR limit is increased and, if necessary, the idle EPR is reduced for both engines.","The EPR limit is reduced and, if necessary, the idle EPR is reduced for both engines.","The EPR limit is increased and, if necessary, the idle EPR is increased for both engines."],ok:0},
  {q:"The engine anti-ice valve automatically closes if air is unavailable (engine not running).",
-  o:["False.","True."],ok:1}
+  o:["False.","True."],ok:1},
+ {q:"When does the amber FAULT light come on on the ENG 1(2) ANTI ICE pb sw?",
+  o:["It comes on briefly as the valve transits.","If the position of the control valve is not the required position.","Both other answers are correct."],ok:2},
+ {q:"At what pressure does the G ENG 1 PUMP LO PR ECAM caution appear?",
+  o:["<= 1500 PSI",">= 2200 PSI","<= 1750 PSI",">= 3200 PSI"],ok:2},
+ {q:"The pump identification number on the ECAM HYD page becomes amber when:",
+  o:["System pressure is below 1450 psi.","The reservoir level is low.","N2 is below idle."],ok:2},
+ {q:"What are the major equipment losses with loss of the Green system?",
+  o:["Speed brakes 2 and 4.","L/G retraction, autobrakes.","Rudder.","Alternate brakes."],ok:1},
+ {q:"All 3 hydraulic systems have a fire shutoff valve.",
+  o:["False.","True."],ok:0},
+ {q:"What indication do you get when Blue hydraulic system pressure is exactly 3200 PSI?",
+  o:["Advisory on HYD ECAM page.","3200 PSI in green on HYD ECAM page.","B SYS HI PR red warning.","B SYS HI PR amber caution."],ok:1},
+ {q:"Can the fire shutoff valves of the hydraulic system be reopened in flight?",
+  o:["After engine relight.","Anytime.","No."],ok:2},
+ {q:"After extending the RAT, is it possible to check its position and status?",
+  o:["No.","Yes, select the ECAM HYD page.","Yes, select the ECAM ELEC page.","Check to see if the blue system ELEC PUMP FAULT light is not illuminated."],ok:1},
+ {q:"After the engine shutdown, you observe a pulsing STS message. What does it mean?",
+  o:["All other answers are correct.","It is an indication that the aircraft has not been shut down correctly.","It is a reminder that the status page holds a maintenance message.","It is an indication that the cabin is still pressurized."],ok:2},
+ {q:"The upper ECAM display unit (DU) has failed. You want to see the DOOR/OXY page. How can you see it?",
+  o:["You have to switch the EIS DMC to CAPT 3.","You have to press and hold the RCL key on the ECP.","You have to press and hold the DOOR key on the ECP."],ok:2},
+ {q:"Where is information displayed by DMC 1 and DMC 2 in normal operations (no failure, no action on the switching panel)?",
+  o:["DMC 1 supplies data to PFD 1, ND 1 and lower ECAM. DMC 2 supplies data to PFD 2, ND 2 and upper ECAM.","DMC 1 supplies data to PFD 1, ND 2 and lower ECAM. DMC 2 supplies data to PFD 2, ND 1 and upper ECAM.","DMC 1 supplies data to PFD 1, ND 1 and both ECAM DUs. DMC 2 supplies data to PFD 2, ND 2.","DMC 1 supplies data to PFD 1, PFD 2 and upper ECAM. DMC 2 supplies data to ND 1, ND 2 and lower ECAM."],ok:2},
+ {q:"How is it determined that the cockpit sliding window is closed and locked?",
+  o:["The red ring below the release button should be in view.","The pin is engaged.","The locking pin was placed in the forward position when the window was closed.","The red ring below the release button should not be in view."],ok:0}
 ].map((x,i)=>Object.assign(x,{id:"sys"+String(i+1).padStart(2,"0"),s:"sys",t:"Systems"}));
 Q.push(...SYS);
 const EXAMS = {fls:FLS, sys:SYS};
@@ -2396,7 +2420,7 @@ function renderHome(){
   </nav>
   <div class="legend"><span><b style="background:var(--green)"></b>Known</span><span><b style="background:var(--amber)"></b>Review</span><span><b style="background:var(--panel-2);outline:1px solid var(--rule-2)"></b>Not seen</span></div>
   <footer class="foot">
-    <p>Sources: FCOM (DSC, PRO-NOR, PRO-ABN, LIM), FCTM and Airbus Safety First only. Each answer cites its reference. Where Jet2 SOP or the current QRH differs, the operator document applies. Progress is saved in this browser only.</p>
+    <p>Sources: FCOM (DSC, PRO-NOR, PRO-ABN, LIM), FCTM and Airbus Safety First only. Each answer cites its reference. Where your operator's SOP or the current QRH differs, the operator document applies. Progress is saved in this browser only.</p>
     ${ui.confirmReset ? `<div class="confirm"><span>Clear all known/review marks in this browser?</span><div class="row"><button class="btn warn" id="doReset">Clear progress</button><button class="btn ghost" id="noReset">Keep</button></div></div>`
       : `<div class="row"><button class="btn ghost" id="askReset">Reset progress</button></div>`}
   </footer>`;
