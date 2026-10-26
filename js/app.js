@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.70';
+  var VERSION = '0.7.71';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -404,6 +404,28 @@
     var ec = document.getElementById('pv-ecam');
     if (ec) ec.innerHTML = '<div class="pv-screen">' + DISP.renderEWD(liveState(), ewdView()) + '</div>'; // E/WD only, large (owner's request, 0.7.52); the ECAM control panel opens itself for CLR and SD steps
   }
+  // Guided drills: the back arrow goes one step back in the procedure (owner's request,
+  // 0.7.70), in place of closing the panel to the flight deck. HIST holds the state at the
+  // start of each step (questions and cards are not steps of their own here).
+  var HIST = [];
+  function stepKey() { return [DR.phase, DR.i, DR.si, DR.preClr, DR.stTask].join('|'); }
+  function snapStep() {
+    if (!DR || !DR.s || DR.phase === 'quiz' || DR.phase === 'done' || MODAL.kind) return;
+    var k = stepKey();
+    if (HIST.length && HIST[HIST.length - 1].k === k) return;
+    var d = {}; Object.keys(DR).forEach(function (n) { if (n !== 'f') d[n] = DR[n]; });
+    HIST.push({ k: k, dr: JSON.stringify(d), ps: JSON.stringify(PSTATE), sd: sdPage, live: JSON.stringify(PN.LIVE) });
+  }
+  function stepBack() {
+    if (HIST.length < 2) { DR.flash = 'This is the first step.'; renderDrill(); return; }
+    HIST.pop();
+    var h = HIST[HIST.length - 1];
+    Object.assign(DR, JSON.parse(h.dr)); PSTATE = JSON.parse(h.ps); sdPage = h.sd; Object.assign(PN.LIVE, JSON.parse(h.live));
+    DR.flash = 'Back one step.';
+    if (guideT) { clearTimeout(guideT.id); guideT = null; }
+    stopChime(); if (masterLit()) chime(DR.f.level, JSON.stringify(DR.f.pre || []).indexOf('AP OFF') >= 0);
+    PV = null; openPanel(guidePanel()); renderDrill(); refreshHome();
+  }
   function guidedOn() { return GUIDED && DECK_MODE === 'abnormal' && !!(DR && DR.s) && DR.phase !== 'done'; }
   // The panel the current step is worked on: MASTER on the glareshield, an action's panel,
   // a task's panel; otherwise (CLR, STATUS, SD pages) the ECAM control panel (owner's request, 0.7.50).
@@ -448,8 +470,8 @@
     document.body.classList.toggle('pv-drill-open', drill && !guide);
     document.body.classList.toggle('pv-guide-open', guide);
     el.innerHTML = '<div class="pv-card' + (PV.disp ? ' pv-disp' : guide ? ' pv-guide' : drill ? ' pv-drill' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
-      (PV.disp ? '<button class="icon-btn sm pv-back" data-act="closePanel" aria-label="Back to flight deck">' + ICON.back + '</button>' :
-      '<header class="pv-bar"><button class="icon-btn" data-act="closePanel" aria-label="Back to flight deck">' + ICON.back + '</button>' +
+      (PV.disp ? '<button class="icon-btn sm pv-back" data-act="closePanel" aria-label="' + (guidedOn() ? 'One step back' : 'Back to flight deck') + '">' + ICON.back + '</button>' :
+      '<header class="pv-bar"><button class="icon-btn" data-act="closePanel" aria-label="' + (guidedOn() ? 'One step back' : 'Back to flight deck') + '">' + ICON.back + '</button>' +
       '<h2 class="appbar-title">' + esc(panelName(PV.id)) + '</h2><span class="icon-btn-spacer"></span></header>') +
       '<div class="pv-stage" id="pv-stage"></div>' + (guide ? '<div class="pv-ecam" id="pv-ecam"></div>' : '') +
       (PHOTO && PHOTO.panels[PV.id] && PN.P[PV.id] && !DR ? '<div class="seg pv-switch" role="radiogroup" aria-label="View">' +
@@ -769,6 +791,7 @@
     PSTATE = {}; gearReset(); APOFF = false;
     if (JSON.stringify(f.pre || []).indexOf('AP OFF') < 0) seedAp();
     if (PV) closePanel();
+    HIST = [];
     DR.s = cruiseState(); DR.i = 0; DR.done = {}; DR.mist = []; DR.right = 0; DR.asked = 0; DR.flash = null; DR.t0 = Date.now();
     if (f.setup) f.setup(DR.s);
     (f.lights || []).forEach(function (c) { setFault(c, true); });
@@ -962,6 +985,7 @@
   function renderDrill() {
     var el = document.getElementById('drill');
     if (!DR || !DR.s) { el.hidden = true; document.body.classList.remove('drill-on'); return; }
+    snapStep();
     var f = DR.f, acts = f.steps.filter(function (s) { return s.k === 'act' || s.k === 'task' || s.k === 'master'; }).length + (f.pre ? 1 : 0);
     var done = f.steps.filter(function (s, i) { return DR.done[i] && (s.k === 'act' || s.k === 'task' || s.k === 'master'); }).length + (f.pre && DR.preClr ? 1 : 0);
     el.innerHTML = '<div class="drill-top"><span class="dot dot-' + ['w', 'w', 'a', 'r'][f.level] + '"></span><b class="drill-title">' + esc(f.title) + '</b>' +
@@ -1229,7 +1253,7 @@
       case 'search': searchOpen = true; renderSearch(); break;
       case 'closeSearch': searchOpen = false; renderSearch(); break;
       case 'open': openPanel(el.getAttribute('data-id'), null); break;
-      case 'closePanel': closePanel(); break;
+      case 'closePanel': if (guidedOn()) stepBack(); else closePanel(); break;
       case 'entry': startEntry(FAIL.CATEGORIES[+el.getAttribute('data-c')][1][+el.getAttribute('data-e')]); break;
       case 'brief': brief(el.getAttribute('data-id')); break;
       case 'beginDrill': begin(); break;
@@ -1276,7 +1300,7 @@
   window.appBack = function () {
     if (MODAL.kind && MODAL.kind !== 'quiz') { if (MODAL.kind === 'brief') stopDrill(); else hideModal(); return true; }
     if (searchOpen || drawerOpen) { searchOpen = false; drawerOpen = false; renderSearch(); renderDrawer(); return true; }
-    if (PV) { closePanel(); return true; }
+    if (PV) { if (guidedOn()) stepBack(); else closePanel(); return true; }
     if (VIEW !== 'start') { if (QZ && VIEW === 'quiz') { QZ = null; renderQuiz(); } else goHome(); return true; }
     return false;
   };
