@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.74';
+  var VERSION = '0.7.75';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -391,7 +391,7 @@
       document.getElementById('pv-info').innerHTML = infoHtml(p);
       return;
     }
-    var fm = FMGC && /^MCDU[12]$/.test(PV.id), ecp = PV.id === 'ECP';
+    var fm = FMGC && /^MCDU[12]$/.test(PV.id), ecp = PV.id === 'ECP' && !guidedOn(); // guided: the SD is beside the E/WD instead
     // ECP: the SD sits on top of the panel, the same width, with no gap (no top margin in the viewBox).
     document.getElementById('pv-stage').innerHTML = PV.photo ? renderPhotoStage(PV.photo) :
       (fm ? '<div class="fm-wrap">' + FMGC.guideHtml() : '') + (ecp ? '<div class="ecp-wrap"><div class="pv-sdtop" aria-label="System display">' + sdSvg() + '</div>' : '') +
@@ -399,9 +399,9 @@
       PN.defs() + PN.render(PV.id, { interactive: true, states: PV.states, selected: PV.selected }) + '</svg>' + (fm || ecp ? '</div>' : '') +
       (FMGC && /^MCDU[12]$/.test(PV.id) ? FMGC.simHtml() : '');
     document.getElementById('pv-info').innerHTML = infoHtml(p);
-    // Guided: the E/WD on the right, large.
+    // Guided: the SD and E/WD side by side above the step's panel, on every step (owner's request, 0.7.75).
     var ec = document.getElementById('pv-ecam');
-    if (ec) ec.innerHTML = '<div class="pv-screen">' + DISP.renderEWD(liveState(), ewdView()) + '</div>'; // E/WD only, large (owner's request, 0.7.52); the ECAM control panel opens itself for CLR and SD steps
+    if (ec) ec.innerHTML = '<div class="pv-screen" aria-label="System display">' + sdSvg() + '</div><div class="pv-screen" aria-label="E/WD">' + DISP.renderEWD(liveState(), ewdView()) + '</div>';
   }
   // Guided drills: the back arrow goes one step back in the procedure (owner's request,
   // 0.7.70), in place of closing the panel to the flight deck. HIST holds the state at the
@@ -467,7 +467,7 @@
     // the information left, the mini E/WD in the middle and the drill bar right.
     var drill = !PV.disp && !!(DR && DR.s), guide = drill && guidedOn();
     document.body.classList.toggle('pv-guide-open', guide);
-    el.innerHTML = '<div class="pv-card' + (PV.disp ? ' pv-disp' : guide ? ' pv-guide' + (PV.id === 'ECP' ? ' pv-ecpstep' : '') : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
+    el.innerHTML = '<div class="pv-card' + (PV.disp ? ' pv-disp' : guide ? ' pv-guide' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
       (PV.disp ? '<button class="icon-btn sm pv-back" data-act="closePanel" aria-label="' + (guidedOn() ? 'One step back' : 'Back to flight deck') + '">' + ICON.back + '</button>' :
       '<header class="pv-bar"><button class="icon-btn" data-act="closePanel" aria-label="' + (guidedOn() ? 'One step back' : 'Back to flight deck') + '">' + ICON.back + '</button>' +
       '<h2 class="appbar-title">' + esc(panelName(PV.id)) + '</h2><span class="icon-btn-spacer"></span></header>') +

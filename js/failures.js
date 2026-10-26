@@ -36,7 +36,7 @@
   // (owner's rule, 0.7.74). The PF asks the PM to confirm the failure, then flies ANC.
   // pm: what the PM reads out. o.apLost: both autopilots lost; o.land: 'r' or 'a' for a red
   // or amber LAND ASAP; o.care: MANEUVER WITH CARE. The AP-lost, red LAND ASAP lines are the
-  // owner's text (HYD G+B, G+Y); the others are our own, for the owner to check.
+  // owner's text (HYD G+B, G+Y); the others are our own wording, approved by the owner (0.7.74).
   function ANC(pm, o) {
     o = o || { apLost: true, land: 'r' };
     return CARD('Confirm the failure, then ANC', [
