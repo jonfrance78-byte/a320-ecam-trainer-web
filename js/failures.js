@@ -32,15 +32,30 @@
   var MASTER = { k: 'master' };
   // A card the trainee reads before going on (sections: [[heading, [lines]]]).
   function CARD(title, sections) { return { k: 'card', title: title, sections: sections }; }
-  // Before the ECAM actions of a dual hydraulic failure with AP OFF (owner's text, 0.7.x):
-  // the PF asks the PM to confirm the failure, then flies ANC. pm: what the PM reads out.
-  function ANC(pm) {
+  // Confirm the failure, then ANC: in every abnormal drill, after MASTER WARN or CAUT
+  // (owner's rule, 0.7.74). The PF asks the PM to confirm the failure, then flies ANC.
+  // pm: what the PM reads out. o.apLost: both autopilots lost; o.land: 'r' or 'a' for a red
+  // or amber LAND ASAP; o.care: MANEUVER WITH CARE. The AP-lost, red LAND ASAP lines are the
+  // owner's text (HYD G+B, G+Y); the others are our own, for the owner to check.
+  function ANC(pm, o) {
+    o = o || { apLost: true, land: 'r' };
     return CARD('Confirm the failure, then ANC', [
       ['Confirm', ['PF: "Confirm the failure."', 'PM reads the E/WD and says what it shows: "' + pm + '"']],
-      ['Aviate', ['PF flies the aircraft by hand: both autopilots are lost.', 'Below MSA, keep terrain separation in mind.', 'RVSM airspace cannot be continued.']],
-      ['Navigate', ['On a Tango route, start turning towards land.', 'Navigate towards several likely airports.']],
-      ['Communicate', ['Red LAND ASAP is a MAYDAY situation: tell ATC.']]
+      ['Aviate', (o.apLost ? ['PF flies the aircraft by hand: both autopilots are lost.', 'Below MSA, keep terrain separation in mind.', 'RVSM airspace cannot be continued.'] :
+        ['PF keeps flying the aircraft and controls the flight path.']).concat(o.care && !o.apLost ? ['Maneuver with care: the flight control protections are lost.'] : [])],
+      ['Navigate', o.land === 'r' ? ['On a Tango route, start turning towards land.', 'Navigate towards several likely airports.'] :
+        o.land === 'a' ? ['Consider the nearest suitable airports.'] : ['Continue on the cleared route.']],
+      ['Communicate', o.land === 'r' ? ['Red LAND ASAP is a MAYDAY situation: tell ATC.'] :
+        o.land === 'a' ? ['Amber LAND ASAP: consider a PAN call to ATC.'] : ['Tell ATC if the failure affects the flight.']]
     ]);
+  }
+  // Every abnormal drill (level 2 or 3) gets the card straight after MASTER, built from its
+  // own data, unless it has its own card (HYD G+B and G+Y, owner's wording for the PM).
+  function addAnc(d) {
+    if (d.level < 2 || d.steps.some(function (s) { return s.k === 'card'; })) return;
+    var m = d.steps.findIndex(function (s) { return s.k === 'master'; }), land = (d.memo || []).filter(function (x) { return x.t === 'LAND ASAP'; })[0];
+    d.steps.splice(m + 1, 0, ANC(d.title, { apLost: JSON.stringify(d.pre || []).indexOf('AP OFF') >= 0, land: land && land.c,
+      care: d.steps.some(function (s) { return s.k === 'note' && s.text === 'MANEUVER WITH CARE'; }) }));
   }
 
   // HYD overhead panel controls
@@ -266,7 +281,7 @@
       ]
     }
   };
-  Object.keys(DRILLS).forEach(function (id) { DRILLS[id].id = id; });
+  Object.keys(DRILLS).forEach(function (id) { DRILLS[id].id = id; addAnc(DRILLS[id]); });
 
   // Menu: categories and entries. lvl: w overview, a caution, r warning.
   // drill: the drill id, or several to choose from. Entries without one are still to come.
