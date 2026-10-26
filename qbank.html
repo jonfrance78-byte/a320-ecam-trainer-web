@@ -2757,7 +2757,153 @@ const UPRT = [
   o:["More thrust always helps pitch down.","Increasing thrust can reduce nose-down pitch control, so thrust may need limiting or reducing.","Thrust has no effect on pitch.","Thrust should always be set to TOGA."],ok:1,ex:"Under-wing engines give a nose-up moment with added thrust, which can weaken nose-down control. Limit or reduce thrust until pitch is controlled."}
 ].map((x,i)=>Object.assign(x,{id:"uprt"+String(i+1).padStart(2,"0"),s:"uprt",t:"UPRT"}));
 Q.push(...UPRT);
-const EXAMS = {fls:FLS, sys:SYS, rvsm:RVSM, cold:COLD, uprt:UPRT};
+/* Weather radar chapter (owner's request, from the owner's training slides and FCOM DSC-34-SURV-30-30 pages; own words, own drawings, no airline names).
+   WXFIG: drawings in the radar's own colours; lessons first, then the questions. */
+const WXFIG = (()=>{
+  const G="#2fd15a",Y="#f2e33a",R="#e8332b",BG="#0b0f14",W="#e8edf3";
+  const svg=(h,body,label)=>`<svg viewBox="0 0 360 ${h}" role="img" aria-label="${label}" style="background:${BG};border-radius:6px"><g font-family="sans-serif" font-size="11" fill="${W}">${body}</g></svg>`;
+  const arc=(r,dash,cx=180,cy=200,a=52)=>{a*=Math.PI/180;const x1=cx-r*Math.sin(a),y=cy-r*Math.cos(a),x2=cx+r*Math.sin(a);return `<path d="M${x1} ${y} A${r} ${r} 0 0 1 ${x2} ${y}" fill="none" stroke="${W}" stroke-width="${dash?1.2:2}" ${dash?'stroke-dasharray="4 4"':''}/>`;};
+  const ac=(x=180,y=200)=>`<path d="M${x-9} ${y-8} H${x+9} M${x} ${y-16} V${y} M${x-5} ${y-2} H${x+5}" stroke="${Y}" stroke-width="2.5"/>`;
+  const cell=(x,y,rx,ry,k=1)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${G}"/><ellipse cx="${x}" cy="${y}" rx="${rx*.62}" ry="${ry*.62}" fill="${Y}"/>${k?`<ellipse cx="${x}" cy="${y}" rx="${rx*.3}" ry="${ry*.3}" fill="${R}"/>`:""}`;
+  const nd=(o="")=>arc(175)+arc(115,1)+arc(58,1)+ac()+o;
+  const dots=(id,c)=>`<defs><pattern id="${id}" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.3" fill="${c}"/></pattern></defs>`;
+  const tag=(x,y,n)=>`<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="${W}"/><text x="${x}" y="${y+4}" text-anchor="middle">${n}</text>`;
+  return {
+  panel: svg(170,`<rect x="8" y="8" width="344" height="154" rx="6" fill="#2b3036" stroke="#555"/>
+    <circle cx="70" cy="92" r="24" fill="#15181c" stroke="#777"/><line x1="70" y1="92" x2="70" y2="70" stroke="${W}" stroke-width="3"/>
+    <text x="70" y="44" text-anchor="middle" font-weight="700">GAIN</text><text x="70" y="62" text-anchor="middle" font-size="9">CAL</text><circle cx="70" cy="59" r="11" fill="none" stroke="#f0a83c" stroke-width="2"/>
+    <text x="34" y="96" font-size="9">MIN</text><text x="96" y="96" font-size="9">MAX</text>
+    <text x="165" y="30" text-anchor="middle" font-weight="700">MULTISCAN</text><text x="138" y="50" font-size="9">MAN</text><text x="178" y="50" font-size="9">AUTO</text><circle cx="189" cy="47" r="14" fill="none" stroke="#f0a83c" stroke-width="2"/><rect x="160" y="40" width="10" height="14" rx="3" fill="#888"/>
+    <text x="250" y="30" text-anchor="middle" font-weight="700">GCS</text><text x="226" y="50" font-size="9">OFF</text><text x="262" y="50" font-size="9">ON</text><rect x="245" y="40" width="10" height="14" rx="3" fill="#888"/>
+    <circle cx="180" cy="112" r="22" fill="#15181c" stroke="#777"/><line x1="180" y1="112" x2="163" y2="98" stroke="${W}" stroke-width="3"/>
+    <text x="180" y="78" text-anchor="middle" font-weight="700">MODE</text><text x="132" y="96" font-size="9">WX+T</text><circle cx="145" cy="93" r="16" fill="none" stroke="#f0a83c" stroke-width="2"/><text x="140" y="128" font-size="9">WX</text><text x="186" y="88" font-size="9">TURB</text><text x="206" y="104" font-size="9">MAP</text>
+    <circle cx="305" cy="92" r="24" fill="#15181c" stroke="#777"/><line x1="305" y1="92" x2="305" y2="70" stroke="${W}" stroke-width="3"/><text x="305" y="58" text-anchor="middle" font-weight="700">TILT</text><text x="336" y="84" font-size="9">UP</text><text x="334" y="106" font-size="9">DN</text>
+    <text x="90" y="152" text-anchor="middle" font-size="9">SYS 1 · OFF · 2</text><text x="270" y="152" text-anchor="middle" font-size="9">PWS OFF · AUTO</text>`,"Weather radar control panel: GAIN CAL, MULTISCAN AUTO, MODE WX+T"),
+  ata: svg(210,dots("wxr",R)+nd(`${cell(105,140,58,26,1)}<ellipse cx="90" cy="140" rx="36" ry="18" fill="url(#wxr)"/>
+    <path d="M226 44 L292 34 L318 120 L252 130 Z" fill="url(#wxr)"/>${cell(300,82,22,58,1)}
+    ${tag(60,108,1)}${tag(222,36,2)}<text x="10" y="205" font-size="10">red dots · 1: lightning and icing · 2: above a storm cell</text>`),"Associated threat areas shown as dots"),
+  pac: svg(210,nd(`<path d="M171 128 L120 52 L82 62 L156 128 Z" fill="#000" opacity=".55"/>
+    ${cell(165,140,26,16,1)}<path d="M${180-175*Math.sin(.62)} ${200-175*Math.cos(.62)} A175 175 0 0 1 ${180-175*Math.sin(.42)} ${200-175*Math.cos(.42)}" fill="none" stroke="${Y}" stroke-width="6"/>
+    <text x="40" y="22" fill="${Y}" font-weight="700">PAC alert bar</text><text x="62" y="98" font-size="10">radar shadow:</text><text x="62" y="110" font-size="10">cells here may</text><text x="62" y="122" font-size="10">not be shown</text>${cell(270,90,14,9,0)}`),"PAC alert bar over an attenuated area behind a cell"),
+  shapes: svg(180,`<text x="45" y="16" text-anchor="middle">Distorted</text><path d="M18 90 Q10 50 45 45 Q70 30 80 60 Q95 90 70 110 Q40 125 18 90Z" fill="${G}"/><ellipse cx="48" cy="80" rx="20" ry="18" fill="${Y}"/><ellipse cx="48" cy="80" rx="10" ry="9" fill="${R}"/><path d="M50 74 L70 40 M54 78 L92 62" stroke="#4aa3ff" stroke-width="2"/>
+    <text x="135" y="16" text-anchor="middle">Steep gradient</text><ellipse cx="135" cy="80" rx="36" ry="32" fill="${G}"/><ellipse cx="128" cy="80" rx="28" ry="26" fill="${Y}"/><ellipse cx="118" cy="80" rx="17" ry="18" fill="${R}"/><path d="M92 120 L104 104" stroke="${Y}" stroke-width="2"/>
+    <text x="225" y="16" text-anchor="middle">U-shape</text><path d="M200 50 Q195 110 225 112 Q255 110 252 50" fill="none" stroke="${G}" stroke-width="26"/><path d="M200 52 Q196 108 225 110 Q254 108 252 52" fill="none" stroke="${Y}" stroke-width="13"/><path d="M200 55 V80 M252 55 V82" stroke="${R}" stroke-width="6"/>
+    <text x="315" y="16" text-anchor="middle">Hook / finger</text><path d="M330 110 Q340 50 305 45 Q280 48 290 75 Q298 88 310 78" fill="none" stroke="${G}" stroke-width="22"/><path d="M330 108 Q338 52 305 47 Q284 50 292 74" fill="none" stroke="${Y}" stroke-width="10"/><path d="M332 100 Q336 70 322 58" stroke="${R}" stroke-width="5" fill="none"/>
+    <text x="180" y="150" text-anchor="middle" font-size="10">All signal strong convection, windshear and turbulence.</text><text x="180" y="166" text-anchor="middle" font-size="10">So do shapes that change quickly and frequent lightning.</text>`,"Cell shapes that signal turbulence"),
+  tilt: svg(180,`<rect x="0" y="0" width="360" height="150" fill="#16324f"/><rect x="0" y="150" width="360" height="30" fill="#3a3f2a"/>
+    <path d="M18 40 L44 40 L48 36 M28 40 L22 34" stroke="${W}" stroke-width="3" fill="none"/><path d="M48 40 L300 40" stroke="${W}" stroke-dasharray="4 4"/>
+    <path d="M48 41 L300 88 L300 80 Z" fill="${Y}" opacity=".85"/><path d="M262 150 Q250 120 270 104 Q275 86 300 86 Q330 80 340 100 Q358 110 352 150Z" fill="#7fa6c8"/>
+    <path d="M300 40 V86" stroke="${W}"/><text x="306" y="66">8 000 ft</text><text x="150" y="34" text-anchor="middle">80 NM</text><text x="95" y="62">1° down</text>
+    <text x="180" y="172" text-anchor="middle" fill="${W}">Height (ft) = tilt (°) × distance (NM) × 100</text>`,"Tilt: 1 degree down, cell top at 80 NM is 8000 ft below"),
+  lateral: svg(210,`${cell(215,95,40,30,1)}<circle cx="215" cy="95" r="62" fill="none" stroke="${R}" stroke-dasharray="5 4"/><text x="282" y="56" fill="${R}">20 NM</text>
+    <path d="M30 30 H90" stroke="#4aa3ff" stroke-width="3"/><path d="M90 30 l-8 -5 v10 z" fill="#4aa3ff"/><text x="30" y="22" fill="#4aa3ff">wind</text>
+    <path d="M210 200 V20" stroke="#777" stroke-dasharray="4 4"/><path d="M210 200 L210 175 Q130 150 140 95 Q145 40 210 20" fill="none" stroke="${G}" stroke-width="2.5"/>${ac(210,200)}
+    <text x="60" y="130" fill="${G}">deviate upwind</text><text x="60" y="144" fill="${G}">≥ 20 NM from the</text><text x="60" y="158" fill="${G}">greatest threat</text>`,"Lateral avoidance: upwind and at least 20 NM"),
+  vertical: svg(190,`<path d="M110 170 V110 Q100 80 130 70 Q140 40 180 45 Q215 40 225 70 Q255 80 245 110 V170Z" fill="#7fa6c8"/><path d="M70 60 Q180 30 300 58 L250 70 Q180 55 110 70Z" fill="#a9c4dc"/>
+    <path d="M150 18 h40 l4 -4" stroke="${W}" stroke-width="3" fill="none"/><path d="M200 22 V48" stroke="${G}" stroke-width="1.5"/><text x="206" y="38" fill="${G}">5 000 ft margin</text>
+    <path d="M150 184 h40" stroke="${W}" stroke-width="3"/><path d="M160 176 l20 16 M180 176 l-20 16" stroke="${R}" stroke-width="3"/><text x="200" y="186" fill="${R}">never below the cloud</text>`,"Vertical avoidance"),
+  nd: svg(200,nd(`${cell(120,110,30,18,1)}${cell(250,90,20,12,0)}<path d="M240 140 q10 -8 22 -2 q8 6 16 -2" stroke="#e36bdc" stroke-width="7" fill="none"/>
+    <text x="8" y="160" fill="#3fc8f0" font-size="10">MAN GAIN</text><text x="8" y="174" fill="${G}" font-size="10">WX+T</text><text x="8" y="188" fill="${G}" font-size="10">+1.25</text>
+    <text x="296" y="174" fill="${R}" font-size="10">WXR RT</text><text x="282" y="188" fill="#f0a83c" font-size="10">WXR WEAK</text>`),"ND weather radar picture and the four rows of indications"),
+  core: svg(150,`${cell(90,70,40,50,0)}<text x="90" y="140" text-anchor="middle">WX or WX+T</text><path d="M160 70 h36" stroke="${Y}" stroke-width="5"/><path d="M196 62 l12 8 l-12 8z" fill="${Y}"/>
+    <ellipse cx="270" cy="70" rx="40" ry="50" fill="${Y}"/><ellipse cx="270" cy="70" rx="22" ry="28" fill="${R}"/><text x="270" y="140" text-anchor="middle">WX+T+HZD: one colour up</text>`,"Core threat assessment raises the colour one level"),
+  overfly: svg(190,dots("wxo",R)+arc(150,0,180,185)+arc(95,1,180,185)+ac(180,185)+`<path d="M140 92 L205 80 L215 125 L150 135 Z" fill="url(#wxo)" stroke="${R}" stroke-width="2"/>
+    <text x="10" y="20" font-size="10">Above 25 000 ft, up to 40 NM: a cell growing</text><text x="10" y="34" font-size="10">fast below you. Avoid it.</text>`,"Predictive overflight icon: red dots in a red outline"),
+  turb: svg(170,arc(160,0,180,190)+arc(100,1,180,190)+ac(180,190)+cell(110,95,40,26,0)+`<path d="M235 70 q20 -14 36 4 q10 20 -10 32 q-24 8 -30 -12z" fill="#e36bdc"/>
+    ${[...Array(28)].map((_,i)=>`<circle cx="${70+((i*37)%70)}" cy="${125+((i*23)%30)}" r="1.8" fill="#e36bdc"/>`).join("")}
+    <text x="232" y="122" fill="#e36bdc" font-size="10">plain: severe</text><text x="40" y="168" fill="#e36bdc" font-size="10">speckle: moderate (WX+T+HZD only)</text>`,"Turbulence shown in magenta: plain severe, speckle moderate"),
+  pws: svg(190,arc(160,0,180,180)+arc(80,1,180,180)+ac(180,180)+`<path d="M180 180 L218 60 M180 180 L250 72" stroke="${Y}" stroke-width="2"/>
+    <path d="M${180+95*Math.sin(.34)} ${180-95*Math.cos(.34)} A95 95 0 0 1 ${180+95*Math.sin(.54)} ${180-95*Math.cos(.54)}" stroke="${R}" stroke-width="12" fill="none" stroke-dasharray="6 3"/>
+    <text x="60" y="40" fill="#f0a83c" font-weight="700">W/S SET RNG 10 NM</text><text x="290" y="180" fill="${G}" font-size="10">PWS SCAN</text>
+    <text x="10" y="180" fill="#f0a83c" font-size="10">PFD: W/S AHEAD</text>`,"Predictive windshear area on the ND"),
+  ahead: svg(170,`<path d="M60 150 V60 L100 30 L140 60 V150Z" fill="#26303a"/><path d="M100 150 V30" stroke="${W}" stroke-dasharray="3 3"/><path d="M92 158 h16 M100 150 v14" stroke="${W}" stroke-width="2"/>
+    <text x="100" y="18" text-anchor="middle" font-size="10">2 NM each side</text><text x="30" y="100" font-size="10">3 min</text>
+    <path d="M200 92 H340" stroke="${W}" stroke-dasharray="3 3"/><rect x="250" y="52" width="90" height="80" fill="#26303a"/><path d="M200 92 h28 l4 -4" stroke="${W}" stroke-width="3" fill="none"/>
+    <text x="256" y="48" font-size="10">±4 000 ft</text><text x="260" y="148" font-size="10">3 min ahead</text>
+    <rect x="186" y="155" width="130" height="14" fill="none" stroke="${W}"/><text x="251" y="166" text-anchor="middle" fill="#f0a83c" font-size="10">WEATHER AHEAD</text>`,"Weather ahead detection area"),
+  blind: `<svg viewBox="0 0 360 200" role="img" aria-label="Blind alley at 40 and 80 NM range" style="background:${BG};border-radius:6px"><g font-family="sans-serif" font-size="11" fill="${W}">
+    <g transform="translate(-44,-22) scale(.75)">${arc(150,0,180,200,48)}${arc(75,1,180,200,48)}${ac()}<path d="M180 200 V140 L220 60" stroke="${G}" stroke-width="2" fill="none"/>${cell(165,62,16,11)}${cell(250,72,16,11)}${cell(205,98,10,8)}</g>
+    <g transform="translate(136,-22) scale(.75)">${arc(150,0,180,200,48)}${arc(75,1,180,200,48)}${ac()}<path d="M180 200 V170 L235 80" stroke="${G}" stroke-width="2" fill="none"/>${cell(140,80,14,9)}${cell(200,148,8,6)}${cell(218,128,9,7)}${cell(245,96,22,12)}${cell(230,120,9,7)}${cell(262,120,9,7)}</g>
+    <text x="90" y="195" text-anchor="middle" fill="${Y}">40 NM: gap looks clear</text><text x="270" y="195" text-anchor="middle" fill="${Y}">80 NM: the gap is closed</text></g></svg>`
+  };
+})();
+const WXR_LESSONS = [
+ ["Settings","Much of the radar works in the background and only shows itself when it finds a threat. For that, set it as the manufacturer recommends: GAIN at CAL, MULTISCAN at AUTO, MODE at WX+T (or WX+T+HZD where fitted).","panel"],
+ ["The picture on the ND","The ND shows the radar picture in every mode except PLAN. Echoes are black, green, yellow or red with the rain rate, magenta for turbulence; the range sets how often it refreshes. Four rows of text: MAN GAIN (blue) when gain is manual; the detection mode (green with MULTISCAN AUTO, blue with MAN); the tilt (green average of both beams in AUTO, blue next to MAN in manual; dashes and amber NO AUTO TILT if MultiScan is lost, until MAN is set); and failure messages: red means no radar picture (NO WXR, WXR RT, WXR ANT, WXR CTL, WXR RNG, WXR DU), amber means the picture is still good (WXR WEAK, WXR ATT, WXR STAB, PRED W/S, NO AUTO TILT, WXR TEST).","nd"],
+ ["Core threat assessment","In WX+T+HZD the radar judges each cell's lightning, hail and turbulence out to 320 NM and raises its colour by up to one level (green to yellow, yellow to red) to show the real threat in the core. The hazard functions need MULTISCAN in AUTO.","core"],
+ ["Associated threat areas","Dotted areas show where hail, lightning and convection are likely, even where the radar sees little or no rain. They are red dots, inside or outside a cell. (1) Lightning and icing in rain around the freezing level: shown when you are below the freezing level or up to 6 000 ft above it. (2) A rectangle of red dots on top of a storm cell: icing, hail or lightning, shown at all altitudes; it can reach beyond the cell to show threats the normal picture misses.","ata"],
+ ["Predictive overflight","Above 25 000 ft, out to 40 NM, an extra low-tilt beam looks for cells growing fast under the main beams. A cell that conflicts with your path shows as red dots inside a red outline: alone over black while the cell is far below, then with the cell's colours as it reaches your level. It goes 1 minute after the threat ends or once the cell shows at least a red core. It is based on real convection: avoid these areas.","overfly"],
+ ["Turbulence","Magenta shows turbulence within 40 NM. Plain magenta: potential severe turbulence (WX+T or WX+T+HZD). Speckled magenta: potential moderate turbulence that affects passenger comfort (WX+T+HZD only).","turb"],
+ ["Predictive windshear","The PWS shows a red and black arc between two yellow radial lines where windshear is predicted, in ARC and ROSE modes. Above 10 NM range the ND asks W/S SET RNG 10 NM. W/S AHEAD shows on the PFD in amber or red with the alert level, sometimes with an aural. PWS SCAN on the ND means only the windshear detection is running; a detected event then brings up the symbol and the weather by itself. PRED W/S OFF on the E/WD is green in flight phases 2 and 6, amber in phases 3, 4, 5, 7, 8 and 9 or when T.O CONFIG is pressed in phase 2.","pws"],
+ ["Weather ahead","Where fitted, the radar watches 3 minutes ahead, 2 NM either side of the track and 4 000 ft above and below. Red or yellow weather, or turbulence, there brings an amber WEATHER AHEAD message on both NDs above 1 500 ft (inhibited below), and above 2 500 ft also a WEATHER AHEAD aural if neither ND shows the radar. Then set a mode and range to see it.","ahead"],
+ ["PAC alert","A yellow bar on the outer range ring is the PAC (path attenuation compensation) alert. Heavy rain nearer the aircraft has absorbed the beam, so the area behind that cell is in radar shadow: weather there may be missing from the picture. Available in WX, WX+T or WX+T+HZD with GAIN at CAL and MULTISCAN in AUTO, within 80 NM of a cell.","pac"],
+ ["Reading cell shapes","The shape tells you how active a cell is. A distorted cell means windshear inside it. A steep gradient (colours changing over a short distance) means strong convection and severe turbulence. U-shapes, hooks, fingers and scalloped edges mean strong windshear and turbulence, as do shapes that change quickly and intense, frequent lightning.","shapes"],
+ ["Tilt and cell height","Height difference (ft) = tilt (°) × distance (NM) × 100. With 1° down, a cell top that appears at 80 NM is 8 000 ft below you. For a cumulonimbus this is the radar top (the wet part); the cloud itself goes higher.","tilt"],
+ ["Lateral avoidance","Avoid sideways rather than by climbing or descending: at high altitude the buffet and performance margins are small, and cells can build faster than you can climb. Deviate upwind, where there is usually less turbulence and hail. Keep at least 20 NM from the area of greatest threat, more if the cells are very active.","lateral"],
+ ["Vertical avoidance","Don't fly under a convective cloud, even in clear air: severe turbulence, windshear, microbursts, lightning and hail. If it can't be avoided, use everything you have (what you see, the radar, weather and pilot reports) before deciding. Flying over, keep 5 000 ft above the area of greatest threat.","vertical"],
+ ["Blind alley","A gap that looks clear at a short range can be closed off further on. Have the two pilots use different ND ranges in convective weather.","blind"]
+];
+const WXR = [
+ {q:"Which settings does the manufacturer recommend so the radar's automatic threat functions are available?",
+  o:["GAIN CAL, MULTISCAN AUTO, MODE WX+T (or WX+T+HZD).","GAIN MAX, MULTISCAN MAN, MODE WX.","GAIN CAL, MULTISCAN MAN, MODE TURB.","GAIN MIN, MULTISCAN AUTO, MODE MAP."],ok:0,ex:"The hidden functions need calibrated gain, automatic MultiScan and a weather mode with turbulence: GAIN CAL, MULTISCAN AUTO, WX+T or WX+T+HZD.",fig:"panel"},
+ {q:"What do the red dotted areas on the ND depict (associated threat assessment)?",
+  o:["Areas of possible hail, lightning and convection, even without strong returns.","Ground clutter.","Areas the radar cannot see.","Turbulence detected by the Doppler function only."],ok:0,ex:"They show the associated threat assessment: likely hail, lightning and convection, which can exist where the radar sees little reflectivity.",fig:"ata"},
+ {q:"The display of potential icing, hail and lightning above a storm is available:",
+  o:["at all altitudes.","only below the freezing level.","from below the freezing level to 6 000 ft above it.","only on the ground."],ok:0,ex:"The above-storm threat display works at all altitudes. The lightning and icing display works from below the freezing level to about 6 000 ft above it.",fig:"ata"},
+ {q:"The potential lightning and icing display is available:",
+  o:["from below the freezing level to about 6 000 ft above it.","at all altitudes.","only above FL300.","only in MAP mode."],ok:0,ex:"The lightning and icing display covers the band from below the freezing level to about 6 000 ft above it.",fig:"ata"},
+ {q:"What does a yellow bar on the outer range scale indicate?",
+  o:["A PAC alert: heavy rain has attenuated the beam, so the area behind the cell is in radar shadow.","Predictive windshear ahead.","The radar is in test.","Turbulence within 40 NM."],ok:0,ex:"It is the PAC (path attenuation compensation) alert. Weather behind the attenuating cell may not show, so don't treat that area as clear.",fig:"pac"},
+ {q:"When is the PAC alert available?",
+  o:["In WX, WX+T or WX+T+HZD with GAIN at CAL and MULTISCAN AUTO, within 80 NM of a cell.","In any mode, at any gain.","Only in TURB mode.","Only beyond 160 NM."],ok:0,ex:"PAC alert needs a weather mode (WX, WX+T or WX+T+HZD), calibrated gain, MULTISCAN in AUTO and a cell within 80 NM.",fig:"pac"},
+ {q:"A distorted cell indicates:",
+  o:["turbulence, from windshear inside the cell.","a weak, dissipating cell.","ground returns.","a radar fault."],ok:0,ex:"Windshear inside the cell pulls it out of shape, so a distorted cell means turbulence.",fig:"shapes"},
+ {q:"A steep reflectivity gradient (colours changing over a short distance) indicates:",
+  o:["strong convection and severe turbulence.","light rain only.","attenuation.","the edge of the radar range."],ok:0,ex:"A sharp step from green to red shows strong vertical movement: strong convection and severe turbulence.",fig:"shapes"},
+ {q:"U-shaped cells, hooks, fingers or scalloped edges indicate:",
+  o:["strong windshear and turbulence.","hail only.","a cell that is weakening.","nothing significant."],ok:0,ex:"These shapes come from strong windshear in an active cell: expect turbulence. Fast-changing shapes and frequent lightning mean the same.",fig:"shapes"},
+ {q:"With the tilt 1° down, a cell first appears at 80 NM. Where is the top of the cell?",
+  o:["About 8 000 ft below the aircraft.","About 800 ft below the aircraft.","About 80 000 ft below the aircraft.","At the aircraft's level."],ok:0,ex:"Height (ft) = tilt (°) × distance (NM) × 100 = 1 × 80 × 100 = 8 000 ft.",fig:"tilt"},
+ {q:"With the tilt 2° down, the top of a cell appears at 50 NM. How far below the aircraft is it?",
+  o:["About 10 000 ft.","About 5 000 ft.","About 1 000 ft.","About 25 000 ft."],ok:0,ex:"2 × 50 × 100 = 10 000 ft.",fig:"tilt"},
+ {q:"For a cumulonimbus, the top found with the tilt is:",
+  o:["the radar top: the cloud itself goes higher.","the true cloud top.","the freezing level.","the base of the anvil."],ok:0,ex:"The radar sees the wet part of the cloud. Above it are ice crystals the radar hardly sees, so the real top is higher than the radar top.",fig:"tilt"},
+ {q:"Why is lateral avoidance preferred to vertical avoidance?",
+  o:["At high altitude buffet and performance margins are small, and cells may build faster than the aircraft can climb.","Vertical avoidance needs ATC approval and lateral does not.","The radar cannot see above the aircraft.","It uses less fuel."],ok:0,ex:"Climbing over a cell eats into buffet and performance margins, and a cell can grow faster than you can climb.",fig:"lateral"},
+ {q:"Which way should you deviate around a convective cloud, if possible?",
+  o:["Upwind.","Downwind.","Always to the right.","Always towards the departure airport."],ok:0,ex:"There is usually less turbulence and hail on the upwind side; the anvil and hail are carried downwind.",fig:"lateral"},
+ {q:"If possible, by how much should you avoid the area of greatest identified threat laterally?",
+  o:["At least 20 NM.","At least 5 NM.","At least 10 NM.","At least 50 NM."],ok:0,ex:"At least 20 NM, and more if the cells are very active.",fig:"lateral"},
+ {q:"When flying over a convective cloud, what vertical margin should you keep?",
+  o:["5 000 ft above the area of greatest threat.","1 000 ft.","2 000 ft.","10 000 ft."],ok:0,ex:"Keep 5 000 ft above the area of greatest identified threat.",fig:"vertical"},
+ {q:"Why should you avoid flying below a convective cloud, even in visual conditions?",
+  o:["Possible severe turbulence, windshear, microbursts, lightning and hail.","The radar cannot be used below a cloud.","It is always forbidden by ATC.","Icing is certain."],ok:0,ex:"The worst hazards are under the cloud: downdrafts, microbursts, windshear, hail and lightning, and they are not always visible.",fig:"vertical"},
+ {q:"A failure message on the ND is shown in red. What does that mean?",
+  o:["The ND shows no radar picture.","The picture is still valid.","Only the tilt is lost.","The radar is in test."],ok:0,ex:"Red messages (NO WXR, WXR RT, WXR ANT, WXR CTL, WXR RNG, WXR DU) mean no radar image. Amber ones (WXR WEAK, WXR ATT, WXR STAB, PRED W/S, NO AUTO TILT, WXR TEST) leave the picture unaffected.",fig:"nd"},
+ {q:"The tilt value is dashed and NO AUTO TILT shows in amber. What has happened and what do you do?",
+  o:["The MultiScan function is lost: set MULTISCAN to MAN and set the tilt by hand.","The antenna has failed: switch the radar off.","The radar is in test: wait.","Gain is manual: set GAIN to CAL."],ok:0,ex:"Loss of MultiScan dashes the tilt and shows NO AUTO TILT until the crew selects MULTISCAN MAN.",fig:"nd"},
+ {q:"In which ND mode is the weather radar picture NOT displayed?",
+  o:["PLAN","ARC","ROSE NAV","ROSE VOR"],ok:0,ex:"The radar picture shows in every ND mode except PLAN.",fig:"nd"},
+ {q:"What does the core threat assessment do in WX+T+HZD?",
+  o:["Raises a cell's colour by up to one level where lightning, hail or turbulence is likely, out to 320 NM.","Removes weak cells from the display.","Shows terrain behind cells.","Adds a yellow bar on the outer ring."],ok:0,ex:"Green can become yellow and yellow red, so the colour reflects the real threat in the core. It works out to 320 NM, with MULTISCAN in AUTO.",fig:"core"},
+ {q:"The predictive overflight function is active:",
+  o:["above 25 000 ft, out to 40 NM.","below 10 000 ft, out to 80 NM.","at all altitudes, out to 320 NM.","only on the ground."],ok:0,ex:"Above 25 000 ft an extra low-tilt beam looks out to 40 NM for cells growing fast below the aircraft. The icon is red dots in a red outline: avoid it.",fig:"overfly"},
+ {q:"On the ND, speckled magenta indicates:",
+  o:["potential moderate turbulence (WX+T+HZD only).","potential severe turbulence.","hail.","windshear."],ok:0,ex:"Plain magenta is potential severe turbulence (WX+T or WX+T+HZD); speckled magenta is moderate turbulence, shown only in WX+T+HZD. Turbulence shows within 40 NM.",fig:"turb"},
+ {q:"The ND shows W/S SET RNG 10 NM. What is it asking?",
+  o:["The PWS has detected windshear: set the ND range to 10 NM to see it.","Fly 10 NM away from the windshear.","The PWS has failed.","Climb 10 000 ft."],ok:0,ex:"With a windshear detected and the range above 10 NM, the ND asks for 10 NM so the red and black windshear area shows.",fig:"pws"},
+ {q:"The weather ahead function looks for red or yellow weather or turbulence:",
+  o:["3 min ahead, 2 NM either side of the track and 4 000 ft above and below.","10 NM ahead, 5 NM either side.","1 min ahead at the aircraft's level only.","Anywhere within 40 NM."],ok:0,ex:"The detection area is 3 min ahead, 2 NM each side and ±4 000 ft. The amber WEATHER AHEAD message shows above 1 500 ft; above 2 500 ft there is also an aural if no ND shows the radar.",fig:"ahead"},
+ {q:"When does PRED W/S OFF appear in amber?",
+  o:["In flight phases 3, 4, 5, 7, 8 and 9, or when T.O CONFIG is pressed in phase 2.","Only in phases 2 and 6.","Whenever the radar is on.","Only on the ground."],ok:0,ex:"With windshear set OFF on the radar panel, the memo is green in phases 2 and 6, amber in phases 3, 4, 5, 7, 8 and 9 and when T.O CONFIG is pressed in phase 2.",fig:"pws"},
+ {q:"What is the blind alley effect, and how do crews reduce it?",
+  o:["A gap that looks clear at short range is closed at a longer range; the two pilots use different ND ranges.","A cell hidden behind another; increase the gain.","The radar loses returns close to the aircraft; tilt up.","A gap appears only in MAP mode; select WX."],ok:0,ex:"A short range can show a gap that is closed further on. With one pilot on a short range and the other on a long range, both the near and far picture are seen.",fig:"blind"}
+].map((x,i)=>{const k=(i*3+1)%x.o.length; x.o=[...x.o.slice(k),...x.o.slice(0,k)]; x.ok=(x.o.length-k)%x.o.length;  // correct answer first in the data, then rotated so it moves around
+  return Object.assign(x,{id:"wxr"+String(i+1).padStart(2,"0"),s:"wxr",t:"Weather radar"});});
+Q.push(...WXR);
+Object.assign(XFIG, WXFIG);
+const WXR_EXTRA = WXR_LESSONS.map(([h,t,f],i)=>`<section class="fq"><div class="qn">Lesson ${i+1} · ${h}</div><p class="qt" style="font-size:15px">${t}</p><div class="ffig">${WXFIG[f]}</div></section>`).join("")+'<section class="fq"><div class="qn">Questions</div><p class="qt">Now test yourself.</p></section>';
+const EXAMS = {fls:FLS, sys:SYS, rvsm:RVSM, cold:COLD, uprt:UPRT, wxr:WXR};
 let flsPick = {}, flsPend = {};   // this visit's answers: id -> chosen options; flsPend: picks so far on a two-answer question
 const okList = x => [].concat(x.ok);
 const isRight = x => { const p=flsPick[x.id]; return p.length===okList(x).length && p.every(j=>okList(x).includes(j)); };
@@ -2805,6 +2951,7 @@ const SECTIONS = {
   sys:{key:"sys",hash:"systems-exam",title:"Systems exam questions",cls:"tech",desc:"Multiple choice: tap an answer. Correct lights green; a wrong answer gets a red X."},
   rvsm:{key:"rvsm",hash:"rvsm-exam",title:"RVSM exam questions (Reduced Vertical Separation Minimum)",cls:"tech",desc:"Multiple choice: tap an answer. Correct lights green; a wrong answer gets a red X."},
   cold:{key:"cold",hash:"cold-exam",title:"Cold weather operations exam questions",cls:"tech",desc:"Multiple choice: tap an answer. Correct lights green; a wrong answer gets a red X."},
+  wxr:{key:"wxr",hash:"weather-radar",title:"Weather radar",cls:"tech",desc:"The ND picture and messages, settings, threat displays, overflight, turbulence, windshear, weather ahead, PAC alert, cell shapes, tilt, avoidance and the blind alley: short lessons with drawings, then the questions.",extra:WXR_EXTRA},
   uprt:{key:"uprt",hash:"uprt-exam",title:"UPRT",cls:"tech",desc:"Upset Prevention and Recovery: training presentation, two videos and the exam. Multiple choice: correct lights green; a wrong answer gets a red X.",
     extra:'<section class="fq"><div class="qn">Presentation</div><p class="qt"><a href="https://claude.ai/artifact/CR2uqXnoRiXCQhvsexPg33" target="_blank" rel="noopener">Open the UPRT training presentation (32 slides)</a></p></section><section class="fq"><div class="qn">Video · recovery SOP</div><video controls preload="none" playsinline style="width:100%;border-radius:8px" src="videos/uprt-recovery-sop.mp4"></video></section><section class="fq"><div class="qn">Video · cockpit demonstration</div><video controls preload="none" playsinline style="width:100%;border-radius:8px" src="videos/uprt-cockpit-demo.mp4"></video></section>'},
   sf:{key:"sf",hash:"safety",title:"Safety First Flight",cls:"sf",desc:"Walk through one flight, gate to gate. Each stop is an Airbus Safety First case for that phase: read the briefing, then answer the questions."}
