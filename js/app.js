@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.80';
+  var VERSION = '0.7.81';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -422,7 +422,7 @@
     Object.assign(DR, JSON.parse(h.dr)); PSTATE = JSON.parse(h.ps); sdPage = h.sd; Object.assign(PN.LIVE, JSON.parse(h.live));
     DR.flash = 'Back one step.';
     if (guideT) { clearTimeout(guideT.id); guideT = null; }
-    stopChime(); if (masterLit()) chime(DR.f.level, JSON.stringify(DR.f.pre || []).indexOf('AP OFF') >= 0);
+    stopChime(); if (masterLit()) chime();
     PV = null; openPanel(guidePanel()); renderDrill(); refreshHome();
   }
   // › skips the step the drill is on (owner's request, 0.7.76): the trainer does it for the
@@ -566,7 +566,7 @@
     return ['AP1', 'AP2'].filter(function (n) { var i = apIdx(n); return PN.litBits((st[i] || {}).lit, PN.P.FCU.items[i]).lo; });
   }
   function seedAp() { (PSTATE.FCU || (PSTATE.FCU = {}))[apIdx('AP1')] = { lit: 'lo' }; }
-  function apOff() { if (DR) return; APOFF = true; PN.LIVE.clr = true; masters('W', true); chime(3, true); }
+  function apOff() { if (DR) return; APOFF = true; PN.LIVE.clr = true; masters('W', true); chime(); }
   seedAp();
   var DR = null;     // the running drill
   var BEST = {};
@@ -708,18 +708,8 @@
     });
   }
 
-  // Aural alerts: continuous repetitive chime (warnings) and single chime (cautions).
-  var audio = null, crcTimer = null, muted = false;
+  var audio = null, muted = false;
   try { muted = localStorage.getItem('ecam-mute') === '1'; } catch (e) { muted = false; }
-  function tone(f, t0, d) {
-    try {
-      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
-      var o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + t0;
-      o.frequency.value = f; o.type = 'sine'; o.connect(g); g.connect(audio.destination);
-      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      o.start(t); o.stop(t + d + 0.05);
-    } catch (e) { /* no audio */ }
-  }
   // Gear lever click (owner's request, 0.7.41): a short mechanical clack, two noise bursts
   // (pull out, then the detent), made in the browser; the mute setting applies.
   function leverClick() {
@@ -736,16 +726,16 @@
       });
     } catch (e) { /* no audio */ }
   }
-  // AUTO FLT AP OFF (owner's request, 0.7.21): the owner's recording, looped until MASTER WARN.
+  // The one aural alert: the owner's AUTO FLT AP OFF recording (0.7.21), looped until MASTER
+  // is pressed. Every warning and caution drill uses it (owner's request, 0.7.81: the old
+  // synthetic chime was deleted).
   var apOffSnd = null;
-  function chime(level, apOff) {
+  function chime() {
     stopChime();
     if (muted) return;
-    if (apOff) { try { apOffSnd = apOffSnd || new Audio('sounds/ap-off.mp3'); apOffSnd.loop = true; apOffSnd.currentTime = 0; var pr = apOffSnd.play(); if (pr) pr.catch(function () {}); } catch (e) { /* no audio */ } return; }
-    if (level === 3) { var ring = function () { tone(988, 0, 0.35); tone(784, 0.4, 0.45); }; ring(); crcTimer = setInterval(ring, 1100); }
-    else tone(880, 0, 0.9);
+    try { apOffSnd = apOffSnd || new Audio('sounds/ap-off.mp3'); apOffSnd.loop = true; apOffSnd.currentTime = 0; var pr = apOffSnd.play(); if (pr) pr.catch(function () {}); } catch (e) { /* no audio */ }
   }
-  function stopChime() { if (crcTimer) clearInterval(crcTimer); crcTimer = null; if (apOffSnd) apOffSnd.pause(); }
+  function stopChime() { if (apOffSnd) apOffSnd.pause(); }
 
   function fmtAct(item, val) {
     var base = '-' + item, dots = 29 - base.length - val.length;
@@ -821,7 +811,7 @@
     DR.s = cruiseState(); DR.i = 0; DR.skips = []; DR.done = {}; DR.mist = []; DR.right = 0; DR.asked = 0; DR.flash = null; DR.t0 = Date.now();
     if (f.setup) f.setup(DR.s);
     (f.lights || []).forEach(function (c) { setFault(c, true); });
-    if (f.level >= 2) { masters(f.level === 3 ? 'W' : 'C', true); chime(f.level, JSON.stringify(f.pre || []).indexOf('AP OFF') >= 0); }
+    if (f.level >= 2) { masters(f.level === 3 ? 'W' : 'C', true); chime(); }
     sdPage = f.sd || null; PN.LIVE.sdPage = sdPage; PN.LIVE.clr = f.level >= 2 && !!(f.pre && f.pre.length);
     DR.preClr = false;
     DR.phase = 'run';
