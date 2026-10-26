@@ -40,11 +40,11 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
   padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px));
   background: var(--night-2); border-bottom: 1px solid var(--line);
 }
-.appbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; padding-block: 10px; transition: transform .25s ease; }
+/* One slim bar on every view (0.7.8 on the flight deck, everywhere from 0.7.76) */
+.appbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; padding-block: 2px; gap: 2px; transition: transform .25s ease; }
 .appbar.away { transform: translateY(calc(-100% - env(safe-area-inset-top, 0px))); }
-.appbar.slim { padding-block: 2px; gap: 2px; }
-.appbar.slim .icon-btn { width: 28px; height: 28px; border-radius: 6px; }
-.appbar.slim .icon-btn svg { width: 16px; height: 16px; stroke-width: 2.4; }
+.appbar .icon-btn { width: 28px; height: 28px; border-radius: 6px; }
+.appbar .icon-btn svg { width: 16px; height: 16px; stroke-width: 2.4; }
 .appbar-title {
   flex: 1; min-width: 0; margin: 0; text-align: center;
   font: 500 clamp(18px, 4.6vw, 26px)/1.15 var(--font-head); letter-spacing: .01em;
@@ -202,7 +202,7 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 /* ---------------------------------------------------- expanded panel view */
 .pv { position: fixed; inset: 0; z-index: 45; background: var(--night); }
 .pv-card { height: 100%; overflow-y: auto; padding-bottom: env(safe-area-inset-bottom, 0px); }
-.pv-bar { position: sticky; top: 0; z-index: 2; padding-block: calc(env(safe-area-inset-top, 0px) + 10px) 10px; }
+.pv-bar { position: sticky; top: 0; z-index: 2; padding-block: calc(env(safe-area-inset-top, 0px) + 2px) 2px; }
 .pv-stage {
   padding-block: 18px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -501,18 +501,17 @@ button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent
 .hot:has(.fcukey:hover) .hot-ring { fill: rgba(51, 214, 242, 0); stroke: rgba(51, 214, 242, 0); }
 .ecp-glow { fill: rgba(150, 225, 255, .3); }
 .pv-screen { max-width: min(620px, 100%, 62vh); margin: 0 auto; }
-/* Expanded display (owner's request): a small back arrow in place of the title bar; on a
-   wide screen the description sits left of the display and the drill bar right of it. */
-.pv-back { background: rgba(10, 16, 26, .8); position: fixed; top: calc(env(safe-area-inset-top, 0px) + 8px); left: max(8px, env(safe-area-inset-left, 0px)); z-index: 3; }
+/* Expanded display: the app's slim bar on top (0.7.76); on a wide screen the description sits
+   left of the display and the drill bar right of it. */
 .pv-disp { position: relative; }
 .pv-disp .pv-info:empty { display: none; }
 .pv-disp .pv-ecp { max-width: min(620px, 100%); margin: 12px auto 0; }
-.pv-disp .pv-stage { padding-top: 48px; }
 @media (min-width: 900px) {
-  .pv-disp { display: grid; grid-template-columns: minmax(0, 1fr) min(620px, 62vh) minmax(0, 1fr); align-items: center; gap: 0 24px;
+  .pv-disp { display: grid; grid-template-columns: minmax(0, 1fr) min(620px, 62vh) minmax(0, 1fr); grid-template-rows: auto 1fr; align-items: center; gap: 0 24px;
     background: radial-gradient(ellipse at 50% 40%, #233149, var(--night) 75%); }
-  .pv-disp .pv-stage { grid-column: 2; grid-row: 1; padding: 18px 0; background: none; }
-  .pv-disp .pv-body { grid-column: 1; grid-row: 1; max-width: 420px; justify-self: end; padding: 18px 0 18px 16px; }
+  .pv-disp > .pv-bar { grid-column: 1 / -1; grid-row: 1; align-self: start; }
+  .pv-disp .pv-stage { grid-column: 2; grid-row: 2; padding: 18px 0; background: none; }
+  .pv-disp .pv-body { grid-column: 1; grid-row: 2; max-width: 420px; justify-self: end; padding: 18px 0 18px 16px; }
   body.pv-disp-open .drill { left: auto; right: 16px; top: 50%; bottom: auto; transform: translateY(-50%); width: min(420px, calc((100vw - min(620px, 62vh)) / 2 - 40px)); }
   body.drill-on .pv-disp { padding-bottom: 0; }
 }
@@ -564,6 +563,19 @@ body.drill-on .home, body.drill-on .pv-card { padding-bottom: 150px; }
 .m-h { margin: 14px 0 6px; font-size: 14px; color: var(--ink-2); }
 .m-list { margin: 0; padding-left: 18px; line-height: 1.45; font-size: 14px; }
 .m-list li { margin: 4px 0; } .m-list li.bad { color: #ff8f86; }
+.m-card.m-white { background: #fff; color: #1b1f24; border-color: #d9dde3; width: min(860px, 100%); }
+.m-white .eyebrow, .m-white .m-h { color: #5b6470; }
+.anc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 14px 0 4px; border-bottom: 2px solid #1b1f24; }
+.anc-col { padding: 0 14px 12px; text-align: center; }
+.anc-col + .anc-col { border-left: 2px solid #1b1f24; }
+.anc-h { margin: 0 0 6px; color: #2c5a92; font: 700 26px/1 "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif; font-stretch: condensed; letter-spacing: -.01em; }
+.anc-art { display: block; width: min(150px, 100%); margin: 0 auto 8px; fill: #2c5a92; }
+.anc-art .line { fill: none; stroke: #2c5a92; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.anc-art .thick { stroke-width: 3.4; }
+.anc-art .snow { fill: #fff; stroke: #2c5a92; stroke-width: 1.6; stroke-linejoin: round; }
+.anc-art text { fill: #2c5a92; font: 700 7px sans-serif; }
+.anc-col .m-list { text-align: left; }
+@media (max-width: 640px) { .anc { grid-template-columns: 1fr; } .anc-col + .anc-col { border-left: 0; border-top: 2px solid #1b1f24; padding-top: 10px; } }
 .m-btns { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .btn { min-height: 42px; padding: 8px 16px; border: 1px solid var(--line); border-radius: 10px; background: #1a2534; color: var(--ink); font: 600 14px var(--font-head); cursor: pointer; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #04121a; }
@@ -735,9 +747,6 @@ body:not(:has(.appbar.slim)) .drill-task { color: var(--ink); }
    a thin title bar; everything on one screen without scrolling; small text. --s is the
    screen size: half the middle width, or what the height leaves for a panel row.
    Below 1000 px wide the parts stack. */
-.pv-guide > .pv-bar { padding-block: calc(env(safe-area-inset-top, 0px) + 2px) 2px; min-height: 0; }
-.pv-guide > .pv-bar .appbar-title { font-size: 14px; }
-.pv-guide > .pv-bar .icon-btn { width: 30px; height: 30px; }
 .pv-guide > .drill .drill-task { font-size: 13px; }
 .pv-guide > .drill .drill-flash { font-size: 11.5px; }
 .pv-guide > .pv-body { background: #fff; color: #1b1f24; border-radius: 12px; padding: 14px 16px; margin: 12px 0 18px 16px; box-shadow: 0 8px 30px rgba(0, 0, 0, .35); }

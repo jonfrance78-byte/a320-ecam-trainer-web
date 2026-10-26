@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.76';
+  var VERSION = '0.7.77';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -84,6 +84,7 @@
     menu: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg>',
     search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L21 21"/></svg>',
     back: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+    next: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>',
     close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'
   };
 
@@ -94,14 +95,13 @@
 
   /* ----------------------------------------------------------------- home */
   var VIEW = 'start', DECK_MODE = null, QZ = null;
-  // The flight deck has no bar title and a slim bar (owner's request, 0.7.8: more room for the panels).
-  var BARTITLE = { start: 'A320 ECAM Trainer', normal: '', abnormal: '', quiz: 'ECAM drill quiz' };
+  // One slim bar with no title on every view (owner's requests, 0.7.8 and 0.7.76): back, menu, search.
+  // The 'slim' class marks the cockpit views (flight deck), which keep the dark look.
   function setView(v, mode) {
     VIEW = v; DECK_MODE = mode || null;
     var bar = document.querySelector('.appbar');
     bar.classList.remove('away');
     bar.classList.toggle('slim', v === 'deck');
-    bar.querySelector('.appbar-title').textContent = BARTITLE[v === 'deck' ? mode : v];
     bar.querySelector('[data-act=home]').hidden = v === 'start';
     bar.querySelector('[data-act=search]').hidden = v !== 'deck';
     window.scrollTo(0, 0);
@@ -425,6 +425,33 @@
     stopChime(); if (masterLit()) chime(DR.f.level, JSON.stringify(DR.f.pre || []).indexOf('AP OFF') >= 0);
     PV = null; openPanel(guidePanel()); renderDrill(); refreshHome();
   }
+  // › skips the step the drill is on (owner's request, 0.7.76): the trainer does it for the
+  // trainee and moves on. A skipped action earns no mark and is listed in the debrief.
+  function stepSkip() {
+    if (!guidedOn()) return;
+    if (MODAL.kind === 'card') return quizDone();
+    if (MODAL.kind === 'quiz') return quizSkip();
+    if (MODAL.kind) return;
+    var f = DR.f, st = DR.phase === 'run' ? f.steps[DR.i] : null, sg = DR.phase === 'seq' ? f.seq[DR.si] : null;
+    function doTask(t) {
+      var w = t.want;
+      if (w.sd && sdPage !== w.sd) setSd(w.sd);
+      if (w.ctl) setBits(w.ctl, { up: bits(w.ctl).up, lo: w.sel });
+      if (w.panel) openPanel(w.panel);
+      DR.skips.push(t.text);
+    }
+    if (st && st.k === 'master') pressMaster(f.level === 3 ? 'W' : 'C');
+    else if (st && preOpen()) pressClr();
+    else if (st && st.k === 'act') {
+      st.ctls.forEach(function (c) { if (st.press) ctlState(c).down = true; else setBits(c, { up: bits(c).up, lo: st.sel }); });
+      DR.skips.push(st.item + ' ' + st.val);
+    }
+    else if (st && st.k === 'task') doTask(st);
+    else if (sg && sg.task && !DR.stTask) doTask(sg.task);
+    else if (DR.phase === 'clr1' || DR.phase === 'clr2' || DR.phase === 'seq') pressClr();
+    drillCheck();
+    if (PV) renderStage();
+  }
   function guidedOn() { return DECK_MODE === 'abnormal' && !!(DR && DR.s) && DR.phase !== 'done'; }
   // The panel the current step is worked on: MASTER on the glareshield, an action's panel,
   // a task's panel; otherwise (CLR, STATUS, SD pages) the ECAM control panel (owner's request, 0.7.50).
@@ -463,14 +490,15 @@
     // An expanded display (PFD, ND, E/WD, SD; owner's request): no title bar, only a small
     // back arrow; the description goes left of the screen and the drill bar right of it.
     document.body.classList.toggle('pv-disp-open', !!PV.disp);
-    // A panel expanded during a drill (owner's request): a small title bar; below the panel,
-    // the information left, the mini E/WD in the middle and the drill bar right.
+    // The same slim bar as the app (owner's request, 0.7.76): back and menu at the left; at the
+    // right search, or in a drill ‹ one step back and › skip this step. Back leaves the drill.
     var drill = !PV.disp && !!(DR && DR.s), guide = drill && guidedOn();
     document.body.classList.toggle('pv-guide-open', guide);
     el.innerHTML = '<div class="pv-card' + (PV.disp ? ' pv-disp' : guide ? ' pv-guide' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(panelName(PV.id)) + ' panel">' +
-      (PV.disp ? '<button class="icon-btn sm pv-back" data-act="closePanel" aria-label="' + (guidedOn() ? 'One step back' : 'Back to flight deck') + '">' + ICON.back + '</button>' :
-      '<header class="pv-bar"><button class="icon-btn" data-act="closePanel" aria-label="' + (guidedOn() ? 'One step back' : 'Back to flight deck') + '">' + ICON.back + '</button>' +
-      '<h2 class="appbar-title">' + esc(panelName(PV.id)) + '</h2><span class="icon-btn-spacer"></span></header>') +
+      '<header class="pv-bar appbar"><button class="icon-btn" data-act="closePanel" aria-label="' + (guidedOn() ? 'Leave the drill' : 'Back to flight deck') + '">' + ICON.back + '</button>' +
+      '<button class="icon-btn" data-act="menu" aria-label="Open menu">' + ICON.menu + '</button><span class="appbar-title"></span>' +
+      (guidedOn() ? '<button class="icon-btn" data-act="stepBack" aria-label="One step back">' + ICON.back + '</button><button class="icon-btn" data-act="stepSkip" aria-label="Skip this step">' + ICON.next + '</button>' :
+        '<button class="icon-btn" data-act="search" aria-label="Search panels">' + ICON.search + '</button>') + '</header>' +
       '<div class="pv-stage" id="pv-stage"></div>' + (guide ? '<div class="pv-ecam" id="pv-ecam"></div>' : '') +
       (PHOTO && PHOTO.panels[PV.id] && PN.P[PV.id] && !DR ? '<div class="seg pv-switch" role="radiogroup" aria-label="View">' +
         '<button role="radio" aria-checked="' + !PV.photo + '" class="seg-btn' + (PV.photo ? '' : ' on') + '" data-act="pvmode" data-mode="draw">Drawing</button>' +
@@ -790,7 +818,7 @@
     if (JSON.stringify(f.pre || []).indexOf('AP OFF') < 0) seedAp();
     if (PV) closePanel();
     HIST = [];
-    DR.s = cruiseState(); DR.i = 0; DR.done = {}; DR.mist = []; DR.right = 0; DR.asked = 0; DR.flash = null; DR.t0 = Date.now();
+    DR.s = cruiseState(); DR.i = 0; DR.skips = []; DR.done = {}; DR.mist = []; DR.right = 0; DR.asked = 0; DR.flash = null; DR.t0 = Date.now();
     if (f.setup) f.setup(DR.s);
     (f.lights || []).forEach(function (c) { setFault(c, true); });
     if (f.level >= 2) { masters(f.level === 3 ? 'W' : 'C', true); chime(f.level, JSON.stringify(f.pre || []).indexOf('AP OFF') >= 0); }
@@ -923,7 +951,7 @@
   }
   function finish() {
     var f = DR.f, acts = f.steps.filter(function (s) { return s.k === 'act' || s.k === 'task'; }).length + (f.seq || []).filter(function (g) { return g.task; }).length;
-    var total = acts + DR.asked, score = acts - Math.min(acts, DR.mist.length) + DR.right;
+    var total = acts + DR.asked, score = acts - Math.min(acts, DR.mist.length + DR.skips.length) + DR.right;
     DR.pct = total ? Math.round(score / total * 100) : 100;
     DR.phase = 'done'; PN.LIVE.clr = false; stopChime();
     if (f.sts) { sdPage = null; PN.LIVE.sdPage = null; }
@@ -976,6 +1004,23 @@
 
   // Briefing, chooser, questions and debrief share one modal.
   var MODAL = { kind: null, data: null };
+  // Pictures for the ANC card: aircraft over mountains with the sun; a compass with three
+  // ways to go; a head with a headset, speaking.
+  var ANC_ART = {
+    Aviate: '<svg class="anc-art" viewBox="0 0 120 92" aria-hidden="true">' +
+      '<path d="M4 20 L8 13 L11 18 L30 18 Q37 19.5 30 22 L11 22 Z M17 21 L12 29 L15.5 29 L23 21 Z"/><circle cx="19" cy="25" r="1.2"/><circle cx="22" cy="25" r="1.2"/>' +
+      '<path d="M22 90 L52 26 L82 90 Z M62 90 L80 50 L104 90 Z"/><path d="M52 26 L43 45 L49 42 L54 47 L60 43 Z M80 50 L74 63 L79 61 L83 64 L86 62 Z" class="snow"/>' +
+      '<circle cx="98" cy="20" r="7" class="line"/><path d="M98 7v4M98 29v4M85 20h4M107 20h4M89 11l3 3M104 26l3 3M89 29l3-3M104 14l3-3" class="line"/></svg>',
+    Navigate: '<svg class="anc-art" viewBox="0 0 120 92" aria-hidden="true">' +
+      '<path d="M60 4v14M60 4l-4 4M60 4l4 4M48 12l6 6M48 12h5M48 12v5M72 12l-6 6M72 12h-5M72 12v5" class="line"/><circle cx="60" cy="24" r="6"/>' +
+      '<circle cx="60" cy="62" r="27" class="line"/><circle cx="60" cy="62" r="19" class="line"/><circle cx="60" cy="62" r="12" class="line"/>' +
+      '<path d="M69 53 L64 66 L51 71 L56 58 Z" class="line"/><circle cx="60" cy="62" r="2"/><text x="60" y="41.5" text-anchor="middle">N</text>' +
+      '<path d="M33 62h4M83 62h4M60 85v4" class="line"/></svg>',
+    Communicate: '<svg class="anc-art" viewBox="0 0 120 92" aria-hidden="true">' +
+      '<path d="M44 86 C44 74 30 66 32 46 C34 22 56 12 72 18 C86 23 90 36 88 44 L95 54 L89 57 L91 66 C91 72 86 73 80 72 L78 86" class="line thick"/>' +
+      '<path d="M46 50 C44 24 64 14 76 20" class="line thick"/><circle cx="50" cy="52" r="8" class="line thick"/><path d="M57 62 Q70 72 86 66" class="line"/>' +
+      '<path d="M98 54 Q102 60 98 66M104 50 Q110 60 104 70" class="line"/></svg>'
+  };
   function shuffle(n) { var a = []; for (var i = 0; i < n; i++) a.push(i); for (var j = n - 1; j > 0; j--) { var r = Math.floor(Math.random() * (j + 1)), t = a[j]; a[j] = a[r]; a[r] = t; } return a; }
   function showModal(kind, data) {
     MODAL.kind = kind; MODAL.data = data || null;
@@ -1006,20 +1051,26 @@
         (ans != null ? '<p class="m-explain"><b>' + (data.order[ans] === 0 ? 'Correct.' : 'Not quite.') + '</b> ' + esc(q.explain) + '</p><div class="m-btns"><button class="btn primary" data-act="quizDone">Continue</button></div>' : '');
     } else if (kind === 'card') {
       // A card read before going on, e.g. confirm the failure and ANC (closes like a question).
+      // Aviate, Navigate and Communicate sit side by side under their pictures, on white
+      // (owner's request, 0.7.76, after the owner's ANC illustration; drawn in our own style).
+      var list = function (sec) { return '<ul class="m-list">' + sec[1].map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'; };
+      var anc = data.c.sections.filter(function (sec) { return ANC_ART[sec[0]]; });
       h = '<p class="eyebrow">PF and PM · ' + esc(f.title) + '</p><h2 class="m-title">' + esc(data.c.title) + '</h2>' +
-        data.c.sections.map(function (sec) { return '<h3 class="m-h">' + esc(sec[0]) + '</h3><ul class="m-list">' + sec[1].map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'; }).join('') +
+        data.c.sections.filter(function (sec) { return !ANC_ART[sec[0]]; }).map(function (sec) { return '<h3 class="m-h">' + esc(sec[0]) + '</h3>' + list(sec); }).join('') +
+        (anc.length ? '<div class="anc">' + anc.map(function (sec) { return '<div class="anc-col"><h3 class="anc-h">' + esc(sec[0].toUpperCase()) + '</h3>' + ANC_ART[sec[0]] + list(sec) + '</div>'; }).join('') + '</div>' : '') +
         '<div class="m-btns"><button class="btn primary" data-act="quizDone">Continue</button></div>';
     } else if (kind === 'debrief') {
       var secs = Math.round((Date.now() - DR.t0) / 1000);
       h = '<p class="eyebrow">Debrief</p><h2 class="m-title">' + esc(f.title) + '</h2>' +
         '<p class="m-score">' + DR.pct + '%</p>' +
         '<ul class="m-list"><li>Questions: ' + DR.right + ' of ' + DR.asked + ' right</li>' +
-        '<li>' + (DR.mist.length ? 'Sequence errors: ' + DR.mist.length : f.level === 1 ? 'All tasks done' : 'Actions done in the ECAM order') + '</li>' +
+        (DR.mist.length || !DR.skips.length ? '<li>' + (DR.mist.length ? 'Sequence errors: ' + DR.mist.length : f.level === 1 ? 'All tasks done' : 'Actions done in the ECAM order') + '</li>' : '') +
         DR.mist.map(function (m) { return '<li class="bad">' + esc(m) + '</li>'; }).join('') +
+        (DR.skips.length ? '<li>Steps skipped: ' + DR.skips.length + '</li>' + DR.skips.map(function (m) { return '<li class="bad">Skipped: ' + esc(m) + '</li>'; }).join('') : '') +
         '<li>Time: ' + Math.floor(secs / 60) + ' min ' + (secs % 60) + ' s</li></ul>' +
         '<div class="m-btns"><button class="btn" data-act="stopDrill">Back to normal</button><button class="btn primary" data-act="againDrill">Run again</button></div>';
     }
-    el.innerHTML = '<div class="m-card" role="dialog" aria-modal="true">' + h + '</div>';
+    el.innerHTML = '<div class="m-card' + (kind === 'card' ? ' m-white' : '') + '" role="dialog" aria-modal="true">' + h + '</div>';
     el.hidden = false;
   }
   // Autobrake card (owner's request, 0.7.42-0.7.43), from the owner's FCOM page DSC-32-30-10:
@@ -1226,7 +1277,9 @@
       case 'search': searchOpen = true; renderSearch(); break;
       case 'closeSearch': searchOpen = false; renderSearch(); break;
       case 'open': openPanel(el.getAttribute('data-id'), null); break;
-      case 'closePanel': if (guidedOn()) stepBack(); else closePanel(); break;
+      case 'closePanel': if (guidedOn()) stopDrill(); else closePanel(); break;
+      case 'stepBack': stepBack(); break;
+      case 'stepSkip': stepSkip(); break;
       case 'entry': startEntry(FAIL.CATEGORIES[+el.getAttribute('data-c')][1][+el.getAttribute('data-e')]); break;
       case 'brief': brief(el.getAttribute('data-id')); break;
       case 'beginDrill': begin(); break;
@@ -1335,7 +1388,7 @@
       '<header class="appbar">' +
       '<button class="icon-btn" data-act="home" aria-label="Back to the start" hidden>' + ICON.back + '</button>' +
       '<button class="icon-btn" data-act="menu" aria-label="Open menu">' + ICON.menu + '</button>' +
-      '<h1 class="appbar-title">A320 ECAM Trainer</h1>' +
+      '<h1 class="appbar-title"></h1>' +
       '<button class="icon-btn" data-act="search" aria-label="Search panels" hidden>' + ICON.search + '</button>' +
       '</header>' +
       '<main id="view"></main>' +
