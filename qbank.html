@@ -2760,71 +2760,107 @@ Q.push(...UPRT);
 /* Weather radar chapter (owner's request, from the owner's training slides and FCOM DSC-34-SURV-30-30 pages; own words, own drawings, no airline names).
    WXFIG: drawings in the radar's own colours; lessons first, then the questions. */
 const WXFIG = (()=>{
-  const G="#2fd15a",Y="#f2e33a",R="#e8332b",BG="#0b0f14",W="#e8edf3";
-  const svg=(h,body,label)=>`<svg viewBox="0 0 360 ${h}" role="img" aria-label="${label}" style="background:${BG};border-radius:6px"><g font-family="sans-serif" font-size="11" fill="${W}">${body}</g></svg>`;
-  const arc=(r,dash,cx=180,cy=200,a=52)=>{a*=Math.PI/180;const x1=cx-r*Math.sin(a),y=cy-r*Math.cos(a),x2=cx+r*Math.sin(a);return `<path d="M${x1} ${y} A${r} ${r} 0 0 1 ${x2} ${y}" fill="none" stroke="${W}" stroke-width="${dash?1.2:2}" ${dash?'stroke-dasharray="4 4"':''}/>`;};
-  const ac=(x=180,y=200)=>`<path d="M${x-9} ${y-8} H${x+9} M${x} ${y-16} V${y} M${x-5} ${y-2} H${x+5}" stroke="${Y}" stroke-width="2.5"/>`;
-  const cell=(x,y,rx,ry,k=1)=>`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="${G}"/><ellipse cx="${x}" cy="${y}" rx="${rx*.62}" ry="${ry*.62}" fill="${Y}"/>${k?`<ellipse cx="${x}" cy="${y}" rx="${rx*.3}" ry="${ry*.3}" fill="${R}"/>`:""}`;
-  const nd=(o="")=>arc(175)+arc(115,1)+arc(58,1)+ac()+o;
-  const dots=(id,c)=>`<defs><pattern id="${id}" width="6" height="6" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1.3" fill="${c}"/></pattern></defs>`;
-  const tag=(x,y,n)=>`<circle cx="${x}" cy="${y}" r="9" fill="none" stroke="${W}"/><text x="${x}" y="${y+4}" text-anchor="middle">${n}</text>`;
+  // Drawn in our own style after the owner's slides and FCOM pictures: ragged cells, ND frames with ticks, numbered yellow callouts.
+  const G="#22c84a",Y="#f5e400",R="#ff2a1a",M="#d02bd0",A="#ff9a1a",C="#3fc8f0",W="#e8edf3",SL="#5b6b78",BK="#05070a",YL="#ffe14d";
+  const rnd=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+  const P=n=>Math.round(n*10)/10;
+  const smooth=pts=>{const n=pts.length;let d=`M${P(pts[0][0])} ${P(pts[0][1])}`;for(let i=0;i<n;i++){const p0=pts[(i-1+n)%n],p1=pts[i],p2=pts[(i+1)%n],p3=pts[(i+2)%n];
+    d+=`C${P(p1[0]+(p2[0]-p0[0])/6)} ${P(p1[1]+(p2[1]-p0[1])/6)} ${P(p2[0]-(p3[0]-p1[0])/6)} ${P(p2[1]-(p3[1]-p1[1])/6)} ${P(p2[0])} ${P(p2[1])}`;}return d+"Z";};
+  const blob=(cx,cy,rx,ry,seed,o={})=>{const r=rnd(seed),rough=o.rough??.28,rot=(o.rot||0)*Math.PI/180,n=o.n||28,a=[r()*6.3,r()*6.3,r()*6.3,r()*6.3],pts=[];
+    for(let i=0;i<n;i++){const t=i/n*6.283;let f=1+rough*(.5*Math.sin(2*t+a[0])+.3*Math.sin(3*t+a[1])+.2*Math.sin(5*t+a[2])+(o.scallop?.35*Math.sin(11*t+a[3]):0))+(r()-.5)*rough*.7;
+      const x=rx*f*Math.cos(t),y=ry*f*Math.sin(t);pts.push([cx+x*Math.cos(rot)-y*Math.sin(rot),cy+x*Math.sin(rot)+y*Math.cos(rot)]);}return smooth(pts);};
+  const storm=(cx,cy,rx,ry,seed,o={})=>{const r=rnd(seed+99),lv=o.lv??3,dx=(r()-.5)*rx*.25,dy=(r()-.5)*ry*.25;let s="";
+    for(let k=0;k<4;k++){const a=r()*6.3,d=1.05+r()*.25;s+=`<path d="${blob(cx+rx*d*Math.cos(a),cy+ry*d*Math.sin(a),rx*.16,ry*.16,seed+k+7,{rough:.4,n:12})}" fill="${G}"/>`;}
+    s+=`<path d="${blob(cx,cy,rx,ry,seed,o)}" fill="${G}"/>`;
+    if(lv>1)s+=`<path d="${blob(cx+dx,cy+dy,rx*.62,ry*.62,seed+1,{...o,rough:(o.rough??.28)+.08})}" fill="${Y}"/>`;
+    if(lv>2)s+=`<path d="${blob(cx+dx*1.3,cy+dy*1.3,rx*.32,ry*.32,seed+2,{...o,rough:(o.rough??.28)+.12})}" fill="${R}"/>`;return s;};
+  const arrow=(x0,y0,x1,y1,c=YL,w=2)=>{const a=Math.atan2(y1-y0,x1-x0),h=8;return `<path d="M${P(x0)} ${P(y0)} L${P(x1-h*.7*Math.cos(a))} ${P(y1-h*.7*Math.sin(a))}" stroke="${c}" stroke-width="${w}"/><path d="M${P(x1)} ${P(y1)} L${P(x1-h*Math.cos(a-.4))} ${P(y1-h*Math.sin(a-.4))} L${P(x1-h*Math.cos(a+.4))} ${P(y1-h*Math.sin(a+.4))}Z" fill="${c}"/>`;};
+  const call=(n,x0,y0,x1,y1)=>`<circle cx="${x0}" cy="${y0}" r="9" fill="${SL}" stroke="${YL}" stroke-width="2"/><text x="${x0}" y="${y0+4}" text-anchor="middle" fill="${YL}" font-weight="700">${n}</text>`+arrow(x0+(x1-x0)*9/Math.hypot(x1-x0,y1-y0),y0+(y1-y0)*9/Math.hypot(x1-x0,y1-y0),x1,y1);
+  const sym=(x,y)=>`<path d="M${x-10} ${y-9} H${x+10} M${x} ${y-18} V${y} M${x-5} ${y-2} H${x+5}" stroke="${Y}" stroke-width="2.5"/>`;
+  const pt=(cx,cy,r,deg)=>[cx+r*Math.sin(deg*Math.PI/180),cy-r*Math.cos(deg*Math.PI/180)];
+  const arcP=(cx,cy,r,a0,a1)=>{const [x0,y0]=pt(cx,cy,r,a0),[x1,y1]=pt(cx,cy,r,a1);return `M${P(x0)} ${P(y0)} A${r} ${r} 0 0 1 ${P(x1)} ${P(y1)}`;};
+  const ndArc=(cx,cy,r,o={})=>{const a=o.a||50;let s=`<path d="${arcP(cx,cy,r,-a,a)}" fill="none" stroke="${W}" stroke-width="2"/>`;
+    for(let d=-a;d<=a;d+=5){const [x0,y0]=pt(cx,cy,r,d),[x1,y1]=pt(cx,cy,r+(d%10?5:9),d);s+=`<path d="M${P(x0)} ${P(y0)} L${P(x1)} ${P(y1)}" stroke="${W}" stroke-width="1.5"/>`;
+      if(o.hdg!=null&&d%10===0&&Math.abs(d)<a){const [x,y]=pt(cx,cy,r+18,d);s+=`<text x="${P(x)}" y="${P(y+4)}" text-anchor="middle" font-size="${d?10:12}" transform="rotate(${d} ${P(x)} ${P(y)})">${(o.hdg+d/10+36)%36}</text>`;}}
+    (o.rings||[]).forEach((f,i)=>{s+=`<path d="${arcP(cx,cy,r*f,-a,a)}" fill="none" stroke="${W}" stroke-width="1.6" stroke-dasharray="5 4"/>`;
+      if(o.ringLbl){const [x,y]=pt(cx,cy,r*f,a-4);s+=`<text x="${P(x)}" y="${P(y)}" fill="${C}" font-size="10">${o.ringLbl[i]}</text>`;}});
+    return s+(o.nosym?"":sym(cx,cy));};
+  const dots=(id,c=R,g=6,r=1.4)=>`<pattern id="${id}" width="${g}" height="${g}" patternUnits="userSpaceOnUse"><circle cx="${g/2}" cy="${g/2}" r="${r}" fill="${c}"/></pattern>`;
+  const wrap=(h,body,label,defs="")=>`<svg viewBox="0 0 360 ${h}" role="img" aria-label="${label}"><defs>${defs}</defs><rect width="360" height="${h}" rx="6" fill="${SL}"/><g font-family="sans-serif" font-size="11" fill="${W}">${body}</g></svg>`;
+  const scr=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${BK}"/>`;
+  const plane=(x,y,s=1,f="#f2f4f5")=>`<path transform="translate(${x} ${y}) scale(${s})" d="M0 0 C6 -4 30 -4 44 -3 L50 -1 L44 2 L6 2 C2 2 0 1 0 0Z M2 -1 L-2 -12 L4 -12 L12 -2Z M18 1 L28 7 L32 7 L28 1Z" fill="${f}"/>`;
+  const sky=id=>`<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f5d9e"/><stop offset="1" stop-color="#6aa6dc"/></linearGradient>`;
+  const cb=(x,base,top,w)=>`<path d="M${x-w*.45} ${base} Q${x-w*.55} ${base-(base-top)*.5} ${x-w*.3} ${top+18} Q${x-w*.8} ${top+6} ${x-w*.7} ${top} H${x+w*.75} Q${x+w*.85} ${top+8} ${x+w*.35} ${top+18} Q${x+w*.6} ${base-(base-top)*.5} ${x+w*.45} ${base}Z" fill="#a9c6e2"/><path d="M${x-w*.2} ${base} Q${x-w*.35} ${top+40} ${x} ${top+22} Q${x+w*.3} ${top+40} ${x+w*.3} ${base}Z" fill="#d9e8f5" opacity=".7"/>`;
+  const rain=(x0,x1,y0,y1)=>{let s="";for(let x=x0;x<x1;x+=6)s+=`<path d="M${x} ${y0} l-6 ${y1-y0}" stroke="#d9e8f5" stroke-width="1" opacity=".7"/>`;return s;};
   return {
-  panel: svg(170,`<rect x="8" y="8" width="344" height="154" rx="6" fill="#2b3036" stroke="#555"/>
+  panel: `<svg viewBox="0 0 360 170" role="img" aria-label="Weather radar control panel: GAIN CAL, MULTISCAN AUTO, MODE WX+T"><g font-family="sans-serif" font-size="11" fill="${W}"><rect x="2" y="2" width="356" height="166" rx="8" fill="#2b3036" stroke="#555"/>
     <circle cx="70" cy="92" r="24" fill="#15181c" stroke="#777"/><line x1="70" y1="92" x2="70" y2="70" stroke="${W}" stroke-width="3"/>
-    <text x="70" y="44" text-anchor="middle" font-weight="700">GAIN</text><text x="70" y="62" text-anchor="middle" font-size="9">CAL</text><circle cx="70" cy="59" r="11" fill="none" stroke="#f0a83c" stroke-width="2"/>
+    <text x="70" y="44" text-anchor="middle" font-weight="700">GAIN</text><text x="70" y="62" text-anchor="middle" font-size="9">CAL</text><circle cx="70" cy="59" r="11" fill="none" stroke="#fff" stroke-width="2"/>
     <text x="34" y="96" font-size="9">MIN</text><text x="96" y="96" font-size="9">MAX</text>
-    <text x="165" y="30" text-anchor="middle" font-weight="700">MULTISCAN</text><text x="138" y="50" font-size="9">MAN</text><text x="178" y="50" font-size="9">AUTO</text><circle cx="189" cy="47" r="14" fill="none" stroke="#f0a83c" stroke-width="2"/><rect x="160" y="40" width="10" height="14" rx="3" fill="#888"/>
+    <text x="165" y="30" text-anchor="middle" font-weight="700">MULTISCAN</text><text x="138" y="50" font-size="9">MAN</text><text x="178" y="50" font-size="9">AUTO</text><circle cx="189" cy="47" r="14" fill="none" stroke="#fff" stroke-width="2"/><rect x="160" y="40" width="10" height="14" rx="3" fill="#888"/>
     <text x="250" y="30" text-anchor="middle" font-weight="700">GCS</text><text x="226" y="50" font-size="9">OFF</text><text x="262" y="50" font-size="9">ON</text><rect x="245" y="40" width="10" height="14" rx="3" fill="#888"/>
     <circle cx="180" cy="112" r="22" fill="#15181c" stroke="#777"/><line x1="180" y1="112" x2="163" y2="98" stroke="${W}" stroke-width="3"/>
-    <text x="180" y="78" text-anchor="middle" font-weight="700">MODE</text><text x="132" y="96" font-size="9">WX+T</text><circle cx="145" cy="93" r="16" fill="none" stroke="#f0a83c" stroke-width="2"/><text x="140" y="128" font-size="9">WX</text><text x="186" y="88" font-size="9">TURB</text><text x="206" y="104" font-size="9">MAP</text>
+    <text x="180" y="78" text-anchor="middle" font-weight="700">MODE</text><text x="132" y="96" font-size="9">WX+T</text><circle cx="145" cy="93" r="16" fill="none" stroke="#fff" stroke-width="2"/><text x="140" y="128" font-size="9">WX</text><text x="186" y="88" font-size="9">TURB</text><text x="206" y="104" font-size="9">MAP</text>
     <circle cx="305" cy="92" r="24" fill="#15181c" stroke="#777"/><line x1="305" y1="92" x2="305" y2="70" stroke="${W}" stroke-width="3"/><text x="305" y="58" text-anchor="middle" font-weight="700">TILT</text><text x="336" y="84" font-size="9">UP</text><text x="334" y="106" font-size="9">DN</text>
-    <text x="90" y="152" text-anchor="middle" font-size="9">SYS 1 · OFF · 2</text><text x="270" y="152" text-anchor="middle" font-size="9">PWS OFF · AUTO</text>`,"Weather radar control panel: GAIN CAL, MULTISCAN AUTO, MODE WX+T"),
-  ata: svg(210,dots("wxr",R)+nd(`${cell(105,140,58,26,1)}<ellipse cx="90" cy="140" rx="36" ry="18" fill="url(#wxr)"/>
-    <path d="M226 44 L292 34 L318 120 L252 130 Z" fill="url(#wxr)"/>${cell(300,82,22,58,1)}
-    ${tag(60,108,1)}${tag(222,36,2)}<text x="10" y="205" font-size="10">red dots · 1: lightning and icing · 2: above a storm cell</text>`),"Associated threat areas shown as dots"),
-  pac: svg(210,nd(`<path d="M171 128 L120 52 L82 62 L156 128 Z" fill="#000" opacity=".55"/>
-    ${cell(165,140,26,16,1)}<path d="M${180-175*Math.sin(.62)} ${200-175*Math.cos(.62)} A175 175 0 0 1 ${180-175*Math.sin(.42)} ${200-175*Math.cos(.42)}" fill="none" stroke="${Y}" stroke-width="6"/>
-    <text x="40" y="22" fill="${Y}" font-weight="700">PAC alert bar</text><text x="62" y="98" font-size="10">radar shadow:</text><text x="62" y="110" font-size="10">cells here may</text><text x="62" y="122" font-size="10">not be shown</text>${cell(270,90,14,9,0)}`),"PAC alert bar over an attenuated area behind a cell"),
-  shapes: svg(180,`<text x="45" y="16" text-anchor="middle">Distorted</text><path d="M18 90 Q10 50 45 45 Q70 30 80 60 Q95 90 70 110 Q40 125 18 90Z" fill="${G}"/><ellipse cx="48" cy="80" rx="20" ry="18" fill="${Y}"/><ellipse cx="48" cy="80" rx="10" ry="9" fill="${R}"/><path d="M50 74 L70 40 M54 78 L92 62" stroke="#4aa3ff" stroke-width="2"/>
-    <text x="135" y="16" text-anchor="middle">Steep gradient</text><ellipse cx="135" cy="80" rx="36" ry="32" fill="${G}"/><ellipse cx="128" cy="80" rx="28" ry="26" fill="${Y}"/><ellipse cx="118" cy="80" rx="17" ry="18" fill="${R}"/><path d="M92 120 L104 104" stroke="${Y}" stroke-width="2"/>
-    <text x="225" y="16" text-anchor="middle">U-shape</text><path d="M200 50 Q195 110 225 112 Q255 110 252 50" fill="none" stroke="${G}" stroke-width="26"/><path d="M200 52 Q196 108 225 110 Q254 108 252 52" fill="none" stroke="${Y}" stroke-width="13"/><path d="M200 55 V80 M252 55 V82" stroke="${R}" stroke-width="6"/>
-    <text x="315" y="16" text-anchor="middle">Hook / finger</text><path d="M330 110 Q340 50 305 45 Q280 48 290 75 Q298 88 310 78" fill="none" stroke="${G}" stroke-width="22"/><path d="M330 108 Q338 52 305 47 Q284 50 292 74" fill="none" stroke="${Y}" stroke-width="10"/><path d="M332 100 Q336 70 322 58" stroke="${R}" stroke-width="5" fill="none"/>
-    <text x="180" y="150" text-anchor="middle" font-size="10">All signal strong convection, windshear and turbulence.</text><text x="180" y="166" text-anchor="middle" font-size="10">So do shapes that change quickly and frequent lightning.</text>`,"Cell shapes that signal turbulence"),
-  tilt: svg(180,`<rect x="0" y="0" width="360" height="150" fill="#16324f"/><rect x="0" y="150" width="360" height="30" fill="#3a3f2a"/>
-    <path d="M18 40 L44 40 L48 36 M28 40 L22 34" stroke="${W}" stroke-width="3" fill="none"/><path d="M48 40 L300 40" stroke="${W}" stroke-dasharray="4 4"/>
-    <path d="M48 41 L300 88 L300 80 Z" fill="${Y}" opacity=".85"/><path d="M262 150 Q250 120 270 104 Q275 86 300 86 Q330 80 340 100 Q358 110 352 150Z" fill="#7fa6c8"/>
-    <path d="M300 40 V86" stroke="${W}"/><text x="306" y="66">8 000 ft</text><text x="150" y="34" text-anchor="middle">80 NM</text><text x="95" y="62">1° down</text>
-    <text x="180" y="172" text-anchor="middle" fill="${W}">Height (ft) = tilt (°) × distance (NM) × 100</text>`,"Tilt: 1 degree down, cell top at 80 NM is 8000 ft below"),
-  lateral: svg(210,`${cell(215,95,40,30,1)}<circle cx="215" cy="95" r="62" fill="none" stroke="${R}" stroke-dasharray="5 4"/><text x="282" y="56" fill="${R}">20 NM</text>
-    <path d="M30 30 H90" stroke="#4aa3ff" stroke-width="3"/><path d="M90 30 l-8 -5 v10 z" fill="#4aa3ff"/><text x="30" y="22" fill="#4aa3ff">wind</text>
-    <path d="M210 200 V20" stroke="#777" stroke-dasharray="4 4"/><path d="M210 200 L210 175 Q130 150 140 95 Q145 40 210 20" fill="none" stroke="${G}" stroke-width="2.5"/>${ac(210,200)}
-    <text x="60" y="130" fill="${G}">deviate upwind</text><text x="60" y="144" fill="${G}">≥ 20 NM from the</text><text x="60" y="158" fill="${G}">greatest threat</text>`,"Lateral avoidance: upwind and at least 20 NM"),
-  vertical: svg(190,`<path d="M110 170 V110 Q100 80 130 70 Q140 40 180 45 Q215 40 225 70 Q255 80 245 110 V170Z" fill="#7fa6c8"/><path d="M70 60 Q180 30 300 58 L250 70 Q180 55 110 70Z" fill="#a9c4dc"/>
-    <path d="M150 18 h40 l4 -4" stroke="${W}" stroke-width="3" fill="none"/><path d="M200 22 V48" stroke="${G}" stroke-width="1.5"/><text x="206" y="38" fill="${G}">5 000 ft margin</text>
-    <path d="M150 184 h40" stroke="${W}" stroke-width="3"/><path d="M160 176 l20 16 M180 176 l-20 16" stroke="${R}" stroke-width="3"/><text x="200" y="186" fill="${R}">never below the cloud</text>`,"Vertical avoidance"),
-  nd: svg(200,nd(`${cell(120,110,30,18,1)}${cell(250,90,20,12,0)}<path d="M240 140 q10 -8 22 -2 q8 6 16 -2" stroke="#e36bdc" stroke-width="7" fill="none"/>
-    <text x="8" y="160" fill="#3fc8f0" font-size="10">MAN GAIN</text><text x="8" y="174" fill="${G}" font-size="10">WX+T</text><text x="8" y="188" fill="${G}" font-size="10">+1.25</text>
-    <text x="296" y="174" fill="${R}" font-size="10">WXR RT</text><text x="282" y="188" fill="#f0a83c" font-size="10">WXR WEAK</text>`),"ND weather radar picture and the four rows of indications"),
-  core: svg(150,`${cell(90,70,40,50,0)}<text x="90" y="140" text-anchor="middle">WX or WX+T</text><path d="M160 70 h36" stroke="${Y}" stroke-width="5"/><path d="M196 62 l12 8 l-12 8z" fill="${Y}"/>
-    <ellipse cx="270" cy="70" rx="40" ry="50" fill="${Y}"/><ellipse cx="270" cy="70" rx="22" ry="28" fill="${R}"/><text x="270" y="140" text-anchor="middle">WX+T+HZD: one colour up</text>`,"Core threat assessment raises the colour one level"),
-  overfly: svg(190,dots("wxo",R)+arc(150,0,180,185)+arc(95,1,180,185)+ac(180,185)+`<path d="M140 92 L205 80 L215 125 L150 135 Z" fill="url(#wxo)" stroke="${R}" stroke-width="2"/>
-    <text x="10" y="20" font-size="10">Above 25 000 ft, up to 40 NM: a cell growing</text><text x="10" y="34" font-size="10">fast below you. Avoid it.</text>`,"Predictive overflight icon: red dots in a red outline"),
-  turb: svg(170,arc(160,0,180,190)+arc(100,1,180,190)+ac(180,190)+cell(110,95,40,26,0)+`<path d="M235 70 q20 -14 36 4 q10 20 -10 32 q-24 8 -30 -12z" fill="#e36bdc"/>
-    ${[...Array(28)].map((_,i)=>`<circle cx="${70+((i*37)%70)}" cy="${125+((i*23)%30)}" r="1.8" fill="#e36bdc"/>`).join("")}
-    <text x="232" y="122" fill="#e36bdc" font-size="10">plain: severe</text><text x="40" y="168" fill="#e36bdc" font-size="10">speckle: moderate (WX+T+HZD only)</text>`,"Turbulence shown in magenta: plain severe, speckle moderate"),
-  pws: svg(190,arc(160,0,180,180)+arc(80,1,180,180)+ac(180,180)+`<path d="M180 180 L218 60 M180 180 L250 72" stroke="${Y}" stroke-width="2"/>
-    <path d="M${180+95*Math.sin(.34)} ${180-95*Math.cos(.34)} A95 95 0 0 1 ${180+95*Math.sin(.54)} ${180-95*Math.cos(.54)}" stroke="${R}" stroke-width="12" fill="none" stroke-dasharray="6 3"/>
-    <text x="60" y="40" fill="#f0a83c" font-weight="700">W/S SET RNG 10 NM</text><text x="290" y="180" fill="${G}" font-size="10">PWS SCAN</text>
-    <text x="10" y="180" fill="#f0a83c" font-size="10">PFD: W/S AHEAD</text>`,"Predictive windshear area on the ND"),
-  ahead: svg(170,`<path d="M60 150 V60 L100 30 L140 60 V150Z" fill="#26303a"/><path d="M100 150 V30" stroke="${W}" stroke-dasharray="3 3"/><path d="M92 158 h16 M100 150 v14" stroke="${W}" stroke-width="2"/>
-    <text x="100" y="18" text-anchor="middle" font-size="10">2 NM each side</text><text x="30" y="100" font-size="10">3 min</text>
-    <path d="M200 92 H340" stroke="${W}" stroke-dasharray="3 3"/><rect x="250" y="52" width="90" height="80" fill="#26303a"/><path d="M200 92 h28 l4 -4" stroke="${W}" stroke-width="3" fill="none"/>
-    <text x="256" y="48" font-size="10">±4 000 ft</text><text x="260" y="148" font-size="10">3 min ahead</text>
-    <rect x="186" y="155" width="130" height="14" fill="none" stroke="${W}"/><text x="251" y="166" text-anchor="middle" fill="#f0a83c" font-size="10">WEATHER AHEAD</text>`,"Weather ahead detection area"),
-  blind: `<svg viewBox="0 0 360 200" role="img" aria-label="Blind alley at 40 and 80 NM range" style="background:${BG};border-radius:6px"><g font-family="sans-serif" font-size="11" fill="${W}">
-    <g transform="translate(-44,-22) scale(.75)">${arc(150,0,180,200,48)}${arc(75,1,180,200,48)}${ac()}<path d="M180 200 V140 L220 60" stroke="${G}" stroke-width="2" fill="none"/>${cell(165,62,16,11)}${cell(250,72,16,11)}${cell(205,98,10,8)}</g>
-    <g transform="translate(136,-22) scale(.75)">${arc(150,0,180,200,48)}${arc(75,1,180,200,48)}${ac()}<path d="M180 200 V170 L235 80" stroke="${G}" stroke-width="2" fill="none"/>${cell(140,80,14,9)}${cell(200,148,8,6)}${cell(218,128,9,7)}${cell(245,96,22,12)}${cell(230,120,9,7)}${cell(262,120,9,7)}</g>
-    <text x="90" y="195" text-anchor="middle" fill="${Y}">40 NM: gap looks clear</text><text x="270" y="195" text-anchor="middle" fill="${Y}">80 NM: the gap is closed</text></g></svg>`
+    <text x="90" y="152" text-anchor="middle" font-size="9">SYS 1 · OFF · 2</text><text x="270" y="152" text-anchor="middle" font-size="9">PWS OFF · AUTO</text></g></svg>`,
+  nd: wrap(230,scr(8,8,344,214)+storm(110,150,48,26,3)+storm(255,110,32,20,7,{lv:2})+storm(170,85,22,14,9,{lv:2})+`<path d="${blob(250,165,16,10,13,{rough:.5})}" fill="${M}"/>`+ndArc(180,212,165,{rings:[.36,.7],hdg:27})+
+    `<text x="14" y="180" fill="${C}" font-size="10">MAN GAIN</text><text x="14" y="194" fill="${G}" font-size="10">WX+T</text><text x="14" y="208" fill="${G}" font-size="10">+1.25</text>
+    <text x="346" y="194" text-anchor="end" fill="${R}" font-size="10">WXR RT</text><text x="346" y="208" text-anchor="end" fill="${A}" font-size="10">WXR WEAK</text>`,"ND weather radar picture and the four rows of indications"),
+  core: wrap(175,(()=>{const spots=[[0,-24,7,5],[-10,4,9,7],[8,22,6,8],[12,-6,5,4]],seed=11;const left=(cx,up)=>`<path d="${blob(cx,72,36,54,seed,{rough:.38})}" fill="${G}"/>`+spots.map(([dx,dy,rx,ry],i)=>`<path d="${blob(cx+dx,72+dy,rx*(up?1.7:1),ry*(up?1.7:1),seed+i+3,{rough:.5,n:14})}" fill="${Y}"/>`+(up?`<path d="${blob(cx+dx,72+dy,rx*.6,ry*.6,seed+i+9,{rough:.5,n:12})}" fill="${R}"/>`:"")).join("");
+    return scr(26,10,128,124)+left(90,0)+scr(206,10,128,124)+left(270,1)+`<path d="M160 64 h22 v-10 l18 18 l-18 18 v-10 h-22z" fill="${YL}" stroke="#333"/>
+    <text x="90" y="152" text-anchor="middle">WX or WX+T</text><text x="90" y="166" text-anchor="middle" font-size="10">(basic reflectivity)</text><text x="270" y="152" text-anchor="middle">WX+T+HZD</text><text x="270" y="166" text-anchor="middle" font-size="10">(with hazard function)</text>`;})(),"Core threat assessment raises the colour one level"),
+  ata: wrap(240,scr(8,30,344,202)+storm(150,190,90,26,21,{rough:.22})+`<path d="${blob(128,190,50,20,22,{rough:.25})}" fill="url(#wxdA)"/><path d="${blob(250,118,20,62,32,{rot:-38,rough:.15})}" fill="url(#wxdA)"/>`+storm(282,98,15,62,31,{rot:-38,rough:.18})+
+    storm(95,92,18,12,41,{lv:2})+storm(160,82,16,11,42,{lv:2})+ndArc(180,222,175,{rings:[.4,.72],a:46})+call(1,120,18,138,180)+call(2,232,18,250,112),"Associated threat areas shown as red dots",dots("wxdA")),
+  overfly: wrap(270,`<rect x="8" y="8" width="196" height="150" fill="#7f93a6"/><rect x="8" y="146" width="196" height="12" fill="#a0702a"/>`+plane(22,46,.9)+
+    `<path d="M64 46 L204 34 L204 60Z M64 47 L204 82 L204 108Z M64 48 L140 158 L172 158Z" fill="${A}" opacity=".75"/>`+storm(98,118,13,32,51,{rough:.2})+
+    `<path d="M80 74 Q100 50 120 74" fill="none" stroke="#222" stroke-dasharray="3 3"/>${arrow(100,76,100,58,"#222",1.5)}<text x="120" y="26" font-size="9">main MultiScan beams</text><text x="128" y="132" font-size="9">auxiliary beam</text>
+    ${scr(214,8,138,150)}${ndArc(283,150,110,{rings:[.45,.8],a:42})}<path d="M258 92 L292 84 L300 112 L268 120Z" fill="url(#wxdO)" stroke="${R}" stroke-width="2"/>
+    ${[18,138,258].map((x,i)=>scr(x,172,84,74)+`<text x="${x+42}" y="262" text-anchor="middle" font-size="9">${["far below","reaching your level","threat over"][i]}</text>`).join("")}
+    ${[[60,1,0],[180,1,1],[300,0,1]].map(([x,ic,cl])=>(cl?`<path d="${blob(x+4,210,18,16,61,{rough:.45})}" fill="${G}"/>`:"")+(ic?`<path d="M${x-22} 190 L${x+20} 186 L${x+16} 230 L${x-18} 232Z" fill="url(#wxdO)" stroke="${R}" stroke-width="2"/>`:"")).join("")}
+    ${arrow(104,209,134,209)}${arrow(224,209,254,209)}`,"Predictive overflight: auxiliary beam, the icon, and how it changes",dots("wxdO",R,7,1.5)),
+  turb: wrap(240,`<clipPath id="wxcT"><path d="M180 222 L${pt(180,222,175,-48).join(" ")} ${arcP(180,222,175,-48,48).replace(/^M[^A]*/,"")} Z"/></clipPath>`+scr(8,30,344,202)+`<g clip-path="url(#wxcT)"><rect x="8" y="30" width="344" height="202" fill="${Y}"/>`+
+    [[90,120,40,26,1],[170,92,34,16,2],[300,150,24,40,3],[140,200,20,14,4],[230,75,30,12,5],[60,190,24,30,6]].map(([x,y,rx,ry,s])=>`<path d="${blob(x,y,rx,ry,70+s,{rough:.45})}" fill="#1f8a2e"/>`).join("")+
+    `<path d="${blob(120,60,18,10,81,{rough:.35})}" fill="${R}"/><path d="${blob(250,160,20,26,83,{rough:.6,scallop:1})}" fill="${M}"/>`+
+    (()=>{const r=rnd(5);let s="";for(let i=0;i<70;i++)s+=`<rect x="${P(150+r()*80)}" y="${P(150+r()*65)}" width="${P(1.5+r()*3)}" height="${P(1+r()*2)}" fill="${M}"/>`;return s;})()+`</g>`+
+    ndArc(180,222,175,{rings:[.42,.72],a:48})+call(2,120,16,180,170)+call(1,262,16,252,140),"Turbulence in magenta: 1 plain is severe, 2 speckled is moderate"),
+  pws: wrap(220,`<rect x="12" y="30" width="134" height="160" fill="#2a3540"/><clipPath id="wxcP"><circle cx="79" cy="106" r="60"/></clipPath><g clip-path="url(#wxcP)"><rect x="12" y="30" width="134" height="76" fill="#2f7fd3"/><rect x="12" y="106" width="134" height="84" fill="#8a5a2b"/></g>
+    <path d="M30 106 h128" stroke="${W}"/><path d="M42 102 h20 v8 M96 102 h20 M96 102 v8" stroke="${Y}" stroke-width="4" fill="none"/><text x="79" y="96" text-anchor="middle" fill="${A}" font-weight="700" font-size="11">W/S AHEAD</text>
+    ${scr(156,10,196,200)}${ndArc(254,196,125,{rings:[.35,.68],a:46})}<path d="M254 196 L${pt(254,196,125,12).join(" ")} M254 196 L${pt(254,196,125,32).join(" ")}" stroke="${Y}" stroke-width="2"/>
+    ${[78,83,88].map(r=>`<path d="${arcP(254,196,r,14,30)}" fill="none" stroke="${R}" stroke-width="3"/>`).join("")}
+    <text x="210" y="58" fill="${A}" font-weight="700" font-size="10">W/S SET RNG 10 NM</text><text x="346" y="204" text-anchor="end" fill="${G}" font-size="9">PWS SCAN</text>
+    <text x="79" y="22" text-anchor="middle" fill="${YL}" font-size="10">PFD message</text><text x="254" y="24" text-anchor="middle" fill="${YL}" font-size="10">ND: predicted windshear area</text>`,"Predictive windshear on the PFD and ND"),
+  ahead: wrap(200,`<path d="M50 34 H140 V140 L95 165 L50 140Z" fill="#2c343c"/><path d="M95 30 V180" stroke="${W}" stroke-dasharray="3 3"/><path d="M95 172 l-14 10 h28z M95 168 v20 M89 188 h12" stroke="#f2f4f5" stroke-width="3" fill="#f2f4f5"/>
+    ${arrow(40,100,40,36)}${arrow(40,100,40,162)}<text x="4" y="96" fill="${YL}" font-size="10">3 min</text>${arrow(118,24,95,24)}${arrow(118,24,140,24)}<text x="118" y="18" text-anchor="middle" fill="${YL}">2 NM</text>
+    <path d="M262 36 H348 V146 H262 L250 91Z" fill="#2c343c"/><path d="M190 91 H350" stroke="${W}" stroke-dasharray="4 3"/>${plane(196,91,.95)}
+    ${arrow(222,64,222,36)}${arrow(222,64,222,90)}${arrow(222,118,222,92)}${arrow(222,118,222,146)}<text x="228" y="66" fill="${YL}" font-size="10">4 000 ft</text><text x="228" y="122" fill="${YL}" font-size="10">4 000 ft</text>
+    ${arrow(300,164,250,164)}${arrow(300,164,348,164)}<text x="300" y="182" text-anchor="middle" fill="${YL}">3 min</text>`,"Weather ahead detection area"),
+  pac: wrap(240,scr(8,30,344,202)+`<path d="M${pt(180,222,98,-20).join(" ")} L${pt(180,222,172,-24).join(" ")} ${arcP(180,222,172,-24,-6).replace(/^M[^A]*/,"")} L${pt(180,222,98,-4).join(" ")} Z" fill="none" stroke="${W}" stroke-width="2"/>`+
+    storm(155,140,15,11,91)+[[230,150],[245,125],[262,100],[285,80],[300,62],[225,170]].map(([x,y],i)=>`<path d="${blob(x,y,9,6,95+i,{rough:.35,n:14})}" fill="${Y}"/><path d="${blob(x+1,y,5,3,120+i,{rough:.3,n:12})}" fill="${A}"/>`).join("")+
+    ndArc(180,222,175,{rings:[.45,.75],a:48,hdg:10})+`<path d="${arcP(180,222,175,-24,-8)}" fill="none" stroke="${Y}" stroke-width="6"/>`+
+    arrow(70,120,92,70,W)+`<text x="30" y="136" font-weight="700">PAC alert bar</text>`+arrow(300,180,170,110,W)+`<text x="228" y="196" font-weight="700">Area of attenuation</text><text x="244" y="210" font-weight="700">(radar shadow)</text>`,"PAC alert bar over an area of attenuation behind a cell"),
+  shapes: wrap(254,[[14,10],[186,10],[14,134],[186,134]].map(([x,y])=>scr(x,y,160,106)).join("")+
+    storm(84,66,46,34,61,{rough:.42})+[[-60],[-30],[0],[25]].map(([d],i)=>arrow(80,64,80+52*Math.sin((d+20)*Math.PI/180),64-52*Math.cos((d+20)*Math.PI/180),"#4aa3ff",2.5)).join("")+
+    `<path d="${blob(266,64,58,34,71,{rough:.3})}" fill="${G}"/><path d="${blob(254,70,40,22,72,{rough:.25})}" fill="${Y}"/><path d="${blob(244,76,23,13,73,{rough:.25})}" fill="${R}"/><path d="M196 110 Q205 60 240 26" fill="none" stroke="${W}" stroke-width="1.5" stroke-dasharray="5 4"/>${arrow(206,104,226,90)}`+
+    `<path d="${blob(90,200,58,18,74,{rough:.25})}" fill="${G}"/>`+storm(58,174,22,30,75,{rot:-10})+storm(122,176,26,24,76)+`<path d="${blob(90,182,9,14,77,{rough:.2})}" fill="${BK}"/><path d="M24 226 Q90 196 166 224" fill="none" stroke="${W}" stroke-dasharray="5 4"/>${arrow(96,226,90,200)}`+
+    storm(262,182,56,36,81,{scallop:1,rough:.32})+storm(326,176,14,20,82)+arrow(196,140,212,152)+
+    [["distorted",94,128],["steep gradient",266,128],["U-shape",94,244],["fingers, scalloped",266,244]].map(([t,x,y])=>`<text x="${x}" y="${y-2}" text-anchor="middle" font-size="9" font-weight="700" fill="${W}">${t}</text>`).join(""),"Cell shapes that signal turbulence"),
+  tilt: `<svg viewBox="0 0 360 200" role="img" aria-label="Tilt: 1 degree down, cell top at 80 NM is 8000 ft below"><defs>${sky("wxsT")}</defs><g font-family="sans-serif" font-size="11" fill="${W}">
+    <rect width="360" height="200" rx="6" fill="url(#wxsT)"/><path d="M0 168 Q90 160 180 170 T360 166 V200 H0Z" fill="#3e5a2a"/>${cb(290,158,60,80)}${rain(266,316,158,172)}
+    ${plane(14,40,1)}<path d="M64 40 H350" stroke="#7fe08a" stroke-width="1.5"/><path d="M64 41 L286 84 L286 94Z" fill="${Y}"/><path d="M150 40 V58" stroke="${W}"/><text x="156" y="54" font-weight="700">1°</text>
+    <path d="M62 44 V88 M56 44 h12 M56 88 h12" stroke="${W}"/><text x="10" y="70" font-weight="700">8 000 ft</text><path d="M66 88 H286" stroke="${W}" stroke-width="1"/><text x="170" y="104" text-anchor="middle" font-weight="700">80 NM</text>
+    <path d="M250 89 H356 M250 128 H356" stroke="#1d2b3a" stroke-dasharray="6 3"/><rect x="292" y="74" width="62" height="14" rx="3" fill="#1d2b3a"/><text x="350" y="85" text-anchor="end" fill="#ffd27a" font-size="10" font-weight="700">radar top</text><text x="352" y="100" text-anchor="end" fill="#1d2b3a" font-size="10">-40°C</text><text x="352" y="124" text-anchor="end" fill="#1d2b3a" font-size="10">0°C</text>
+    <text x="180" y="190" text-anchor="middle" font-weight="700">Height (ft) = tilt (°) × distance (NM) × 100</text></g></svg>`,
+  lateral: wrap(220,scr(8,8,344,204)+storm(215,100,40,30,101)+`<circle cx="215" cy="100" r="64" fill="none" stroke="${R}" stroke-width="1.5" stroke-dasharray="5 4"/><text x="285" y="52" fill="${R}">20 NM</text>`+
+    arrow(26,30,92,30,"#4aa3ff",3)+`<text x="26" y="22" fill="#4aa3ff">wind</text><path d="M210 200 V20" stroke="#777" stroke-dasharray="4 4"/><path d="M210 200 L210 178 Q128 160 136 100 Q142 34 210 18" fill="none" stroke="${G}" stroke-width="2.5"/>`+
+    ndArc(210,200,10,{a:1,nosym:1}).replace(/<path[^>]*>/g,"")+sym(210,206)+`<text x="40" y="132" fill="${G}">deviate upwind</text><text x="40" y="146" fill="${G}">≥ 20 NM from the</text><text x="40" y="160" fill="${G}">greatest threat</text>`,"Lateral avoidance: upwind and at least 20 NM"),
+  vertical: `<svg viewBox="0 0 360 200" role="img" aria-label="Vertical avoidance"><defs>${sky("wxsV")}</defs><g font-family="sans-serif" font-size="11" fill="${W}">
+    <rect width="360" height="200" rx="6" fill="url(#wxsV)"/><path d="M0 186 Q180 176 360 184 V200 H0Z" fill="#3e5a2a"/>${cb(190,150,64,170)}${rain(150,240,150,184)}
+    <path d="M168 150 l-10 16 h10 l-12 18" stroke="${Y}" stroke-width="2.5" fill="none"/>${plane(150,26,1)}<path d="M240 30 V62" stroke="#7fe08a" stroke-width="2"/><path d="M234 30 h12 M234 62 h12" stroke="#7fe08a" stroke-width="2"/><text x="252" y="50" fill="#7fe08a" font-weight="700">5 000 ft</text>
+    ${plane(40,168,.9)}<path d="M50 156 l26 20 M76 156 l-26 20" stroke="${R}" stroke-width="3.5"/><text x="20" y="150" fill="#fff" font-weight="700">never below:</text><text x="20" y="196" fill="#fff" font-size="10">windshear, microburst, hail, lightning</text></g></svg>`,
+  blind: wrap(200,[[10,180,"20","30",40,1],[184,354,"40","60",80,2]].map(([x0,x1,a,b,rng,k])=>{const cx=(x0+x1)/2,cy=160;let s=scr(x0,8,x1-x0-4,162)+ndArc(cx-2,cy,118,{rings:[.42,.72],ringLbl:[a,b],a:40});
+      if(k===1)s+=`<path d="M${cx-2} ${cy} V112 L${cx+28} 48" stroke="${G}" stroke-width="2" fill="none"/>`+storm(cx-24,52,16,11,111)+storm(cx+50,62,15,11,112)+storm(cx+16,92,10,8,113);
+      else s+=`<path d="M${cx-2} ${cy} V132 L${cx+44} 50" stroke="${G}" stroke-width="2" fill="none"/>`+storm(cx-50,66,15,9,121)+[[cx+40,70,20,10],[cx+16,96,9,7],[cx+52,100,9,7],[cx+30,118,8,6],[cx+4,130,7,5],[cx+62,82,9,7]].map(([x,y,rx,ry],i)=>storm(x,y,rx,ry,130+i)).join("");
+      return s+`<text x="${cx}" y="190" text-anchor="middle" fill="${YL}" font-weight="700">ND Range = ${rng} NM</text>`;}).join(""),"Blind alley: clear at 40 NM, blocked at 80 NM")
   };
 })();
 const WXR_LESSONS = [
