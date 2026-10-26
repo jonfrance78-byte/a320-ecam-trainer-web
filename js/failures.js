@@ -67,6 +67,14 @@
   var FAC1 = ['FLTCTL1', 'FAC 1', 1], FAC2 = ['FLTCTL2', 'FAC 2', 1], THR1 = ['THR', 'Thrust lever 1', 1], THR2 = ['THR', 'Thrust lever 2', 1], GPWS_TERR = ['GPWS', 'TERR', 1];
   var AUDIO_SW = ['AUDIOSW', 'AUDIO SWITCHING', 1], GPWS_SYS = ['GPWS', 'SYS', 1];
   var PRESS_MODE = ['CABPRESS', 'MODE SEL', 1], ASKID = ['AUTOBRK', 'A/SKID & N/W STRG', 1], PARK_BRK = ['PARKBRK', 'PARKING BRK', 1];
+  var ELAC1 = ['FLTCTL1', 'ELAC 1', 1], SEC1 = ['FLTCTL1', 'SEC 1', 1], ELAC2 = ['FLTCTL2', 'ELAC 2', 1], SEC2 = ['FLTCTL2', 'SEC 2', 1], SEC3 = ['FLTCTL2', 'SEC 3', 1];
+  // A computer's reset lines: -X....OFF THEN ON, .IF UNSUCCESSFUL :, -X....OFF (the reset fails in the drill).
+  function RESET_OFF(name, ctl, side, offWhy) {
+    var hint = 'Overhead FLT CTL panel (' + side + ' side): ' + name + ' OFF, then ON again.';
+    return [A(name, 'OFF THEN ON', ctl, { reset: true, sel: false, hint: hint, why: 'Reset tried: the FAULT light stays on.' }),
+      N('.IF UNSUCCESSFUL :', 'w'),
+      A(name, 'OFF', ctl, { clears: true, hint: 'Overhead FLT CTL panel (' + side + ' side): ' + name + ' OFF.', why: offWhy })];
+  }
   var ALTN_LAW = [{ parts: [{ s: 'F/CTL', u: true, c: 'a' }, { s: ' ALTN LAW', c: 'a' }] }, { text: '     (PROT LOST)', cls: 'a' }];
   function ATHR_OFF(why) {
     return [Object.assign(TITLE('AUTO FLT', 'A/THR OFF'), { top: true }),
@@ -427,7 +435,7 @@
     },
 
     'afl-dual-fmgc': {
-      title: 'NAV GPWS TERR DET FAULT', sysWord: 'NAV', level: 3, tc: 'a', sd: null, phase: 'Cruise · FL350',
+      title: 'NAV GPWS TERR DET FAULT', name: 'DUAL FMGC FAILURE', sysWord: 'NAV', level: 3, tc: 'a', sd: null, phase: 'Cruise · FL350',
       brief: 'Dual FMGC failure in cruise. The autopilot and autothrust drop out, and the terrain functions that use the FMGC position are lost. There is no "FMGC" ECAM title: the E/WD shows what follows from it.',
       learn: ['The two FMGCs give the autopilot, flight directors, autothrust and the flight plan. With both lost, the aircraft is flown by hand with raw data.',
         'The terrain awareness (TERR) mode uses the FMGC position, so it is switched off.',
@@ -538,6 +546,97 @@
           q: Q('Why AVOID ICING CONDITIONS?', 'The wing anti-ice is lost', ['The engine anti-ice is lost', 'The probes are no longer heated', 'The windshield heat is lost'],
             'WING A.ICE is on the INOP list. If ice builds up anyway, fly at least VLS + 10 kt or green dot and manoeuvre with care.') }
       ]
+    },
+
+    // F/CTL: E/WD lines and STATUS from ReadECAM's slides (displays only; questions and notes
+    // are our own). The single SEC STATUS pictures could not be read, so those drills end after CLR. 0.7.89.
+    'fctl-elac1': {
+      title: 'F/CTL ELAC 1 FAULT', sysWord: 'F/CTL', level: 2, sd: 'F/CTL', phase: 'Cruise · FL350',
+      brief: 'In cruise, ELAC 1 fails. ELAC 2 takes over pitch and roll; the aircraft stays in normal law.',
+      learn: ['The two ELACs (Elevator Aileron Computers) give normal law for pitch and roll. ELAC 1 is normally active for the elevators, ailerons and the stabilizer; ELAC 2 takes over when it fails.',
+        'A reset is OFF then ON. Do not reset an ELAC if the aircraft made uncommanded manoeuvres.'],
+      setup: function (s) { s.fctl.elac[0] = 'fault'; },
+      lights: [ELAC1],
+      memo: [],
+      steps: [MASTER].concat(RESET_OFF('ELAC 1', ELAC1, 'Captain', 'The reset did not work: ELAC 1 is left off and ELAC 2 does everything.'), [
+        Q('When must an ELAC not be reset?', 'After uncommanded manoeuvres', ['Above FL 250', 'With the autopilot engaged', 'Within 10 minutes of take-off'],
+          'If the ELAC moved the controls on its own, a reset could bring the fault back. Leave it off.'),
+        Q('With ELAC 1 off, which law applies?', 'Normal law, with ELAC 2', ['Alternate law', 'Direct law', 'Mechanical backup'],
+          'One ELAC is enough for normal law. Only with both lost does the aircraft go to alternate law.')
+      ]),
+      sts: { left: [], inop: ['ELAC 1'] },
+      statusQ: Q('What does the STATUS show after ELAC 1 FAULT?', 'Only ELAC 1 under INOP SYS', ['ALTN LAW : PROT LOST', 'MAX SPEED 320 KT', 'LDG DIST PROC APPLY'],
+        'Nothing else is lost: ELAC 2 does the job, and all the protections remain.')
+    },
+
+    'fctl-elac12': {
+      title: 'F/CTL ELAC 1 FAULT', name: 'F/CTL ELAC 1+2 FAULT', sysWord: 'F/CTL', level: 3, tc: 'a', sd: 'F/CTL', phase: 'Cruise · FL350',
+      brief: 'In cruise, both ELACs fail. The autopilot drops out, pitch goes to alternate law through the SECs, and roll is on the spoilers only: both ailerons are lost.',
+      learn: ['With both ELACs lost, the SECs control the elevators and stabilizer (alternate law) and roll is done by the spoilers alone; the ailerons go to their neutral position.',
+        'Protections are lost; the maximum speed is 320 kt. The landing is made with FLAP 3, at VREF + 10 kt, in direct law once the gear is down.'],
+      pre: AP_OFF,
+      setup: function (s) { s.fctl.elac = ['fault', 'fault']; s.fctl.law = 'ALTN'; s.fctl.ail = false; },
+      lights: [ELAC1, ELAC2],
+      memo: [],
+      steps: [MASTER].concat(RESET_OFF('ELAC 1', ELAC1, 'Captain', 'ELAC 1 left off.'), [
+        N('ELAC 2 FAULT', 'a')
+      ], RESET_OFF('ELAC 2', ELAC2, 'F/O', 'ELAC 2 left off: the SECs fly the aircraft in alternate law.'), [
+        Q('With both ELACs lost, what gives roll control?', 'The spoilers only', ['The ailerons through the SECs', 'The rudder only', 'The ailerons in direct law'],
+          'Both ailerons are lost. The SECs use the roll spoilers, so roll is a little less crisp.')
+      ]),
+      seq: [
+        { lines: [N('F/CTL ALTN LAW', 'a', { word: 'F/CTL', boxed: true }), N('     (PROT LOST)', 'a'), N('MAX SPEED........320 KT')], memo: [], sd: 'F/CTL',
+          text: 'F/CTL ALTN LAW: the F/CTL page shows both ELACs and both ailerons lost.', note: 'ELAC faults cleared. The next alert is F/CTL ALTN LAW.',
+          q: Q('Why is the maximum speed 320 kt?', 'The high-speed protection is lost in alternate law', ['The ailerons are lost', 'The stabilizer is jammed', 'The autothrust is lost'],
+            'Without protection, staying well below VMO keeps the aircraft away from an overspeed it can no longer prevent on its own.') },
+        { lines: [], memo: [], sd: 'STS',
+          sts: { left: [['MAX SPEED........320 KT', 'c'], ['APPR PROC:', 'w'], [' -FOR LDG.......USE FLAP 3', 'c'], ['APPR SPD: VREF + 10 KT', 'c'], ['LDG DIST PROC......APPLY', 'c'],
+            ['ALTN LAW : PROT LOST', 'a'], ['WHEN L/G DN : DIRECT LAW', 'a'], ['CAT 1 ONLY', 'g']], inop: ['F/CTL PROT', 'L+R AIL', 'ELAC 1+2', 'AP 1+2'] },
+          text: 'STATUS is shown. Review it with the other pilot.', note: 'STATUS is shown.',
+          q: Q('Why FLAP 3 for landing?', 'With the ailerons lost, roll control is reduced, so the landing is made in CONF 3', ['FLAP FULL is lost with the ELACs', 'To keep the speed below 320 kt', 'To save fuel on the go-around'],
+            'CONF 3 keeps more margin in roll and pitch for a direct-law landing. The approach speed is VREF + 10 kt.') }
+      ]
+    },
+
+    'fctl-sec1': {
+      title: 'F/CTL SEC 1 FAULT', sysWord: 'F/CTL', level: 2, sd: 'F/CTL', phase: 'Cruise · FL350',
+      brief: 'In cruise, SEC 1 fails. The spoilers it drives are lost, and the speed brakes must not be used.',
+      learn: ['The three SECs (Spoiler Elevator Computers) drive the spoilers and are the standby for the elevators and stabilizer.',
+        'SEC 1 also sends the speed brake position to the FACs: with it lost, VLS would not be corrected for extended speed brakes, so they are not used.'],
+      setup: function (s) { s.fctl.sec[0] = 'fault'; },
+      lights: [SEC1],
+      memo: [],
+      steps: [MASTER].concat(RESET_OFF('SEC 1', SEC1, 'Captain', 'SEC 1 left off.'), [
+        N('-SPD BRK.........DO NOT USE'),
+        Q('Why DO NOT USE the speed brakes after SEC 1 FAULT?', 'VLS would not be corrected for extended speed brakes', ['The speed brake lever is jammed', 'The spoilers would extend only on one wing', 'The ELACs would go to alternate law'],
+          'The speed brake position reaches the FACs through SEC 1. Without it the PFD VLS would be too low with speed brakes out.')
+      ])
+    },
+
+    'fctl-sec2': {
+      title: 'F/CTL SEC 2 FAULT', sysWord: 'F/CTL', level: 2, sd: 'F/CTL', phase: 'Cruise · FL350',
+      brief: 'In cruise, SEC 2 fails. The spoilers it drives are lost; the others still work.',
+      learn: ['Each SEC drives some of the spoilers. A single SEC fault costs only its own spoiler pairs; roll, speed brakes and ground spoilers still work with the others.'],
+      setup: function (s) { s.fctl.sec[1] = 'fault'; },
+      lights: [SEC2],
+      memo: [],
+      steps: [MASTER].concat(RESET_OFF('SEC 2', SEC2, 'F/O', 'SEC 2 left off.'), [
+        Q('Why is a SEC reset worth trying?', 'A passing fault can clear, giving back its spoilers', ['It moves the ELACs to normal law', 'It is required before landing', 'It tests the FAULT light'],
+          'If the FAULT light stays after the reset, the SEC is left off.')
+      ])
+    },
+
+    'fctl-sec3': {
+      title: 'F/CTL SEC 3 FAULT', sysWord: 'F/CTL', level: 2, sd: 'F/CTL', phase: 'Cruise · FL350',
+      brief: 'In cruise, SEC 3 fails. The spoilers it drives are lost; the others still work.',
+      learn: ['Each SEC drives some of the spoilers. A single SEC fault costs only its own spoiler pairs.'],
+      setup: function (s) { s.fctl.sec[2] = 'fault'; },
+      lights: [SEC3],
+      memo: [],
+      steps: [MASTER].concat(RESET_OFF('SEC 3', SEC3, 'F/O', 'SEC 3 left off.'), [
+        Q('Where is SEC 3 on the overhead?', 'On the F/O side FLT CTL panel, with ELAC 2 and SEC 2', ['On the Captain side, with ELAC 1', 'On the pedestal', 'On the maintenance panel'],
+          'ELAC 1, SEC 1 and FAC 1 are on the Captain side; ELAC 2, SEC 2, SEC 3 and FAC 2 on the F/O side.')
+      ])
     }
   };
   Object.keys(DRILLS).forEach(function (id) { DRILLS[id].id = id; addAnc(DRILLS[id]); });
@@ -555,7 +654,7 @@
     ['ELEC', [E('ELECTRICAL SYSTEM OVERVIEW', 'w'), E('C/B TRIPPED', 'a'), E('DC ESS BUS FAULT', 'a', 'elec-dc-ess'), E('ELEC EMER CONFIG', 'r')]],
     ['ENG', [E('ABN/NON-STD ENG START', 'a'), E('ENGINE MALFUNCTIONS', 'a'), E('ALL ENG FAIL', 'r'), E('ENG FAIL IN CRUISE', 'a'), E('ENG FAIL AFTER V1', 'a'),
       E('OEI APP AND LANDING', 'a'), E('OEI GO AROUND', 'a'), E('OEI BLEED MANAGEMENT', 'a'), E('TAILPIPE FIRE', 'a'), E('THRUST LOCKED', 'a'), E('TOGA LK', 'a'), E('THR LEVERS MANAGEMENT', 'a')]],
-    ['F/CTL', [E('F/CTL LAWS OVERVIEW', 'w'), E('ELAC FAULTS', 'a'), E('ELEVATOR FAULTS', 'a'), E('RUDDER JAM', 'a'), E('SEC FAULTS', 'a'), E('SLATS OR FLAPS JAMMED', 'a'), E('STABILISER JAM', 'a'), E('TAKEOVER PB', 'w')]],
+    ['F/CTL', [E('F/CTL LAWS OVERVIEW', 'w'), E('ELAC FAULTS', 'a', ['fctl-elac1', 'fctl-elac12']), E('ELEVATOR FAULTS', 'a'), E('RUDDER JAM', 'a'), E('SEC FAULTS', 'a', ['fctl-sec1', 'fctl-sec2', 'fctl-sec3']), E('SLATS OR FLAPS JAMMED', 'a'), E('STABILISER JAM', 'a'), E('TAKEOVER PB', 'w')]],
     ['FUEL', [E('FUEL IMBALANCE', 'a'), E('FUEL LEAK', 'a'), E('FUEL OVERREAD', 'a'), E('FUEL TEMPERATURE', 'a'), E('GRAVITY FUEL FEEDING', 'a')]],
     ['HYD', [E('HYD SYSTEM OVERVIEW', 'w', 'hyd-overview'), E('HYD SINGLE FAILURES', 'a', ['hyd-g-rsvr', 'hyd-b-lopr', 'hyd-y-pump']),
       E('HYD B+Y', 'r', 'hyd-by'), E('HYD G+B', 'r', 'hyd-gb'), E('HYD G+Y', 'r', 'hyd-gy')]],

@@ -486,13 +486,15 @@
     o += ln(56, 50, 148, 30, 'sw', 1) + ln(172, 30, 264, 50, 'sw', 1) + ln(80, 76, 142, 64, 'sw', 1) + ln(178, 64, 240, 76, 'sw', 1);
     for (var k = 0; k < 5; k++) { var y = 54 + k * 3; o += spoiler(132 - k * 18, y, k, ok, s.spdBrk) + spoiler(188 + k * 18, y, k, ok, s.spdBrk); }
     o += t(160, 76, 'SPD BRK', 'w', 9, 'middle');
-    function surf(x, y0, y1, ay, side) {
+    function surf(x, y0, y1, ay, side, lost) {
       var r = ln(x, y0, x, y1, 'sw', 1);
       for (var yy = y0; yy <= y1; yy += (y1 - y0) / 4) r += circ(x, yy, 1.4, 'sw', 1);
-      return r + '<path d="M' + (x + 4 * side) + ' ' + ay + ' l' + (6 * side) + ' -4 v8 z" class="fg"/>';
+      return r + (lost ? '' : '<path d="M' + (x + 4 * side) + ' ' + ay + ' l' + (6 * side) + ' -4 v8 z" class="fg"/>');
     }
-    o += t(36, 114, 'L', 'w', 10, 'middle') + t(36, 126, 'AIL', 'w', 10, 'middle') + surf(60, 100, 160, 130, 1) + letters(82, 176, ['B', 'G']);
-    o += t(286, 84, 'R', 'w', 10, 'middle') + t(286, 96, 'AIL', 'w', 10, 'middle') + surf(262, 80, 140, 110, -1) + letters(228, 150, ['G', 'B']);
+    // ail false: both ailerons lost (ELAC 1+2 FAULT): amber titles, no position index
+    var ail = s.fctl.ail === false, ac = ail ? 'a' : 'w';
+    o += t(36, 114, 'L', ac, 10, 'middle') + t(36, 126, 'AIL', ac, 10, 'middle') + surf(60, 100, 160, 130, 1, ail) + letters(82, 176, ['B', 'G']);
+    o += t(286, 84, 'R', ac, 10, 'middle') + t(286, 96, 'AIL', ac, 10, 'middle') + surf(262, 80, 140, 110, -1, ail) + letters(228, 150, ['G', 'B']);
     o += t(108, 118, 'ELAC', 'w', 10) + ln(104, 122, 142, 122, 'sw', 1) + ln(114, 134, 150, 134, 'sw', 1);
     s.fctl.elac.forEach(function (st, idx) { o += t(146 + idx * 8, 120 + idx * 12, String(idx + 1), st === 'ok' ? 'g' : 'a', 11, 'middle'); });
     o += t(186, 110, 'SEC', 'w', 10) + ln(182, 114, 212, 114, 'sw', 1) + ln(192, 126, 222, 126, 'sw', 1) + ln(202, 138, 232, 138, 'sw', 1);

@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.88';
+  var VERSION = '0.7.89';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -999,7 +999,7 @@
     snapStep();
     var f = DR.f, acts = f.steps.filter(function (s) { return s.k === 'act' || s.k === 'task' || s.k === 'master'; }).length + (f.pre ? 1 : 0);
     var done = f.steps.filter(function (s, i) { return DR.done[i] && (s.k === 'act' || s.k === 'task' || s.k === 'master'); }).length + (f.pre && DR.preClr ? 1 : 0);
-    el.innerHTML = '<div class="drill-top"><span class="dot dot-' + ['w', 'w', 'a', 'r'][f.level] + '"></span><b class="drill-title">' + esc(f.title) + '</b>' +
+    el.innerHTML = '<div class="drill-top"><span class="dot dot-' + ['w', 'w', 'a', 'r'][f.level] + '"></span><b class="drill-title">' + esc(f.name || f.title) + '</b>' +
       '<span class="drill-prog">' + done + '/' + acts + '</span>' +
       '<button class="icon-btn sm" data-act="mute" aria-label="' + (muted ? 'Unmute' : 'Mute') + ' aural alerts">' + (muted ? '🔇' : '🔊') + '</button>' +
       '<button class="icon-btn sm" data-act="stopDrill" aria-label="Stop the drill">' + ICON.close + '</button></div>' +
@@ -1035,11 +1035,11 @@
     if (kind === 'choose') {
       h = '<p class="eyebrow">Choose a failure</p><h2 class="m-title">' + esc(data.entry.title) + '</h2><ul class="plist">' + data.ids.map(function (id) {
         var d = FAIL.DRILLS[id];
-        return '<li><button class="plink" data-act="brief" data-id="' + id + '"><span><span class="dot dot-' + ['w', 'w', 'a', 'r'][d.level] + '"></span> ' + esc(d.title) + '</span><small>' + esc(d.brief) + '</small></button></li>';
+        return '<li><button class="plink" data-act="brief" data-id="' + id + '"><span><span class="dot dot-' + ['w', 'w', 'a', 'r'][d.level] + '"></span> ' + esc(d.name || d.title) + '</span><small>' + esc(d.brief) + '</small></button></li>';
       }).join('') + '</ul><div class="m-btns"><button class="btn" data-act="closeModal">Cancel</button></div>';
     } else if (kind === 'brief') {
       h = '<p class="eyebrow">' + (f.level === 1 ? 'Lesson' : f.level === 3 ? 'Warning · level 3' : 'Caution · level 2') + ' · ' + esc(f.phase || '') + '</p>' +
-        '<h2 class="m-title">' + esc(f.title) + '</h2><p>' + esc(f.brief) + '</p>' +
+        '<h2 class="m-title">' + esc(f.name || f.title) + '</h2><p>' + esc(f.brief) + '</p>' +
         '<h3 class="m-h">Background</h3><ul class="m-list">' + f.learn.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>' +
         '<p class="small">' + (f.level === 1 ? 'Follow the tasks in the bar at the bottom of the screen.' : 'The failure appears on the flight deck. Work it as the PM: acknowledge the master light, read the procedure on the E/WD, do each action on the real panel, then clear with CLR on the ECAM control panel.') + ' Simplified for training; follow the FCOM and your operator\'s procedures.</p>' +
         (BEST[f.id] != null ? '<p class="small">Your best: ' + BEST[f.id] + '%</p>' : '') +
@@ -1051,7 +1051,7 @@
       // A small x skips the questions (owner's request, 0.7.30): this one and any that follow
       // it before the next action. The drill goes on; skipped questions are not scored.
       h = '<button class="icon-btn sm m-x" data-act="quizSkip" aria-label="Skip the questions">' + ICON.close + '</button>' +
-        '<p class="eyebrow">Question · ' + esc(f.title) + '</p><h2 class="m-title q">' + esc(q.q) + '</h2><div class="m-opts">' + data.order.map(function (oi, k) {
+        '<p class="eyebrow">Question · ' + esc(f.name || f.title) + '</p><h2 class="m-title q">' + esc(q.q) + '</h2><div class="m-opts">' + data.order.map(function (oi, k) {
         var c = ans == null ? '' : oi === 0 ? ' right' : k === ans ? ' wrong' : ' dim';
         return '<button class="opt' + c + '" data-act="answer" data-k="' + k + '"' + (ans != null ? ' disabled' : '') + '>' + esc(q.options[oi]) + '</button>';
       }).join('') + '</div>' +
@@ -1062,13 +1062,13 @@
       // (owner's request, 0.7.76, after the owner's ANC illustration; drawn in our own style).
       var list = function (sec) { return '<ul class="m-list">' + sec[1].map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>'; };
       var anc = data.c.sections.filter(function (sec) { return ANC_ART[sec[0]]; });
-      h = '<p class="eyebrow">PF and PM · ' + esc(f.title) + '</p><h2 class="m-title">' + esc(data.c.title) + '</h2>' +
+      h = '<p class="eyebrow">PF and PM · ' + esc(f.name || f.title) + '</p><h2 class="m-title">' + esc(data.c.title) + '</h2>' +
         data.c.sections.filter(function (sec) { return !ANC_ART[sec[0]]; }).map(function (sec) { return '<h3 class="m-h">' + esc(sec[0]) + '</h3>' + list(sec); }).join('') +
         (anc.length ? '<div class="anc">' + anc.map(function (sec) { return '<div class="anc-col"><h3 class="anc-h">' + esc(sec[0].toUpperCase()) + '</h3>' + ANC_ART[sec[0]] + list(sec) + '</div>'; }).join('') + '</div>' : '') +
         '<div class="m-btns"><button class="btn primary" data-act="quizDone">Continue</button></div>';
     } else if (kind === 'debrief') {
       var secs = Math.round((Date.now() - DR.t0) / 1000);
-      h = '<p class="eyebrow">Debrief</p><h2 class="m-title">' + esc(f.title) + '</h2>' +
+      h = '<p class="eyebrow">Debrief</p><h2 class="m-title">' + esc(f.name || f.title) + '</h2>' +
         '<p class="m-score">' + DR.pct + '%</p>' +
         '<ul class="m-list"><li>Questions: ' + DR.right + ' of ' + DR.asked + ' right</li>' +
         (DR.mist.length || !DR.skips.length ? '<li>' + (DR.mist.length ? 'Sequence errors: ' + DR.mist.length : f.level === 1 ? 'All tasks done' : 'Actions done in the ECAM order') + '</li>' : '') +
