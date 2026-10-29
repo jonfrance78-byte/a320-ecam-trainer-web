@@ -402,15 +402,18 @@
   // hydraulic system is lost (1 and 5 green, 2 and 4 yellow, 3 blue).
   var SPL_SYS = ['G', 'Y', 'B', 'Y', 'G'];
   function hydOk(s) { var h = s.hyd; return { G: h.G.p >= 1450, B: h.B.p >= 1450, Y: h.Y.p >= 1450 }; }
-  function spoiler(x, y, k, ok, ext) {
-    if (!ok[SPL_SYS[k]]) return t(x, y + 3, String(k + 1), 'a', 10, 'middle') + ln(x - 4, y + 5, x + 4, y + 5, 'sa', 1);
+  // Spoilers lost with their SEC (SEC 1: 3 and 4, SEC 2: 5, SEC 3: 1 and 2), as on the STATUS pages.
+  function splrLost(s) { var by = [[3, 4], [5], [1, 2]], out = []; s.fctl.sec.forEach(function (st, i) { if (st !== 'ok') out = out.concat(by[i]); }); return out; }
+  function spoiler(x, y, k, ok, ext, lost) {
+    if (!ok[SPL_SYS[k]] || lost && lost.indexOf(k + 1) >= 0) return t(x, y + 3, String(k + 1), 'a', 10, 'middle') + ln(x - 4, y + 5, x + 4, y + 5, 'sa', 1);
     return ext ? '<path d="M' + (x - 5) + ' ' + y + ' l5 -8 l5 8 z" class="fg"/>' : ln(x - 7, y, x + 7, y, 'sg', 2.6);
   }
   function sysBox(x, y, L, ok) { return fillRect(x - 5, y - 9, 10, 11, 'fb') + t(x, y, L, ok ? 'g' : 'a', 9, 'middle'); }
   function pageWHEEL(s) {
     var o = ul(10, 78, 'WHEEL', 'w', 12), ok = hydOk(s);
-    [[50, 54], [74, 50], [98, 46], [122, 42], [146, 38]].forEach(function (q, i) { o += spoiler(q[0], q[1], 4 - i, ok); });
-    [[174, 38], [198, 42], [222, 46], [246, 50], [270, 54]].forEach(function (q, i) { o += spoiler(q[0], q[1], i, ok); });
+    var lost = splrLost(s);
+    [[50, 54], [74, 50], [98, 46], [122, 42], [146, 38]].forEach(function (q, i) { o += spoiler(q[0], q[1], 4 - i, ok, false, lost); });
+    [[174, 38], [198, 42], [222, 46], [246, 50], [270, 54]].forEach(function (q, i) { o += spoiler(q[0], q[1], i, ok, false, lost); });
     // Centre column, from the FCOM WHEEL page (DSC-32-20-20, DSC-32-30-20): each line only when
     // it applies. N/W STEERING (amber, Y box green or amber) when steering is lost: yellow
     // low pressure or A/SKID & N/W STRG OFF. ANTI SKID amber when it is lost (switch OFF, or
@@ -484,7 +487,8 @@
     }
     o += letters(149, 20, ['G', 'B', 'Y']);
     o += ln(56, 50, 148, 30, 'sw', 1) + ln(172, 30, 264, 50, 'sw', 1) + ln(80, 76, 142, 64, 'sw', 1) + ln(178, 64, 240, 76, 'sw', 1);
-    for (var k = 0; k < 5; k++) { var y = 54 + k * 3; o += spoiler(132 - k * 18, y, k, ok, s.spdBrk) + spoiler(188 + k * 18, y, k, ok, s.spdBrk); }
+    var lost = splrLost(s);
+    for (var k = 0; k < 5; k++) { var y = 54 + k * 3; o += spoiler(132 - k * 18, y, k, ok, s.spdBrk, lost) + spoiler(188 + k * 18, y, k, ok, s.spdBrk, lost); }
     o += t(160, 76, 'SPD BRK', 'w', 9, 'middle');
     function surf(x, y0, y1, ay, side, lost) {
       var r = ln(x, y0, x, y1, 'sw', 1);
@@ -530,6 +534,7 @@
 
   function renderSD(s, page, sts) {
     if (page === 'STATUS' || page === 'STS') return svg(pageSTATUS(s, sts));
+    if (page === 'OFF') return svg('');
     return svg((PAGES[page] || pageCRUISE)(s));
   }
 

@@ -1394,5 +1394,5 @@
   }
 
   var MK = { legend: legend, pb: pb, gpb: gpb, ann: ann, sel: sel, knob: knob, tog: tog, disp: disp, ln: ln, lb: lb, box: box, vt: vt, rnd: rnd, ogpb: ogpb, dec: dec, text: text, polar: polar, esc: esc };
-  window.ECAM_PANELS = { rmpWin: rmpWin, MK: MK, LIVE: LIVE, P: P, render: render, press: press, pressPanel: pressPanel, pressItems: pressItems, litBits: litBits, legend: legend, kindOf: kindOf, statusLegends: statusLegends, ctlName: ctlName, defs: defs, screw: screw };
+  window.ECAM_PANELS = { rmpWin: rmpWin, MK: MK, LIVE: LIVE, P: P, render: render, press: press, pressPanel: pressPanel, pressItems: pressItems, litBits: litBits, legend: legend, kindOf: kindOf, statusLegends: statusLegends, selLegend: selLegend, ctlName: ctlName, defs: defs, screw: screw };
 })();

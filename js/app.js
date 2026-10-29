@@ -6,7 +6,7 @@
   'use strict';
 
   // Shown in the menu; the APK build takes its version name from here too.
-  var VERSION = '0.7.90';
+  var VERSION = '0.7.91';
   var DISP = window.ECAM_DISPLAYS, DECK = window.ECAM_DECK, PN = window.ECAM_PANELS, PHOTO = window.ECAM_PHOTO_PANELS, FMGC = window.ECAM_FMGC;
   var esc = DISP.esc;
 
@@ -49,6 +49,8 @@
   function sdSvg() {
     var sts = DR && DR.s && (DR.phase === 'stsq' || DR.phase === 'clr2' || DR.phase === 'done') ? DR.f.sts : null;
     if (DR && DR.phase === 'seq' && DR.f.seq[DR.si].sts) sts = DR.f.seq[DR.si].sts;
+    // sdOff: single ECAM display (ELEC EMER CONFIG): the SD is blank, except for STATUS.
+    if (DR && DR.s && DR.f.sdOff && !sts) return DISP.renderSD(liveState(), 'OFF');
     return DISP.renderSD(liveState(), sdPage || 'CRUISE', sts);
   }
   function setSd(key) {
@@ -444,7 +446,8 @@
     if (st && st.k === 'master') pressMaster(f.level === 3 ? 'W' : 'C');
     else if (st && (preOpen() || st.k === 'clr')) pressClr();
     else if (st && st.k === 'act') {
-      st.ctls.forEach(function (c) { if (st.press) ctlState(c).down = true; else if (st.move) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].cur + 1; else if (st.pos) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].pos.indexOf([].concat(st.pos)[0]); else setBits(c, { up: bits(c).up, lo: st.sel }); if (st.reset) DR.off[st.item + c.join()] = true; });
+      st.ctls.forEach(function (c) { if (st.press) ctlState(c).down = true; else if (st.move) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].cur + 1; else if (st.pos) ctlState(c).cur = PN.P[c[0]].items[ctlIndex(c)].pos.indexOf([].concat(st.pos)[0]); else setBits(c, { up: bits(c).up, lo: st.sel }); if (st.reset) DR.off[DR.i + ':' + c.join()] = true; });
+      if (st.opdes) { var ai = PN.P.FCU.items.findIndex(function (it) { return it.fcu === 'alt'; }), fs = PSTATE.FCU || (PSTATE.FCU = {}); fs[ai] = Object.assign(fs[ai] || {}, { n: 10000, how: 'pull', seq: Date.now() }); }
       DR.skips.push(st.item + ' ' + st.val);
     }
     else if (st && st.k === 'task') doTask(st);
@@ -857,12 +860,16 @@
     if ((st.k === 'act' || st.k === 'task') && preOpen()) return false;
     if (st.k === 'master') return !masterLit();
     // reset: OFF THEN ON, done once the control has been seen OFF and is back ON.
+    // opdes: DESCENT INITIATE, the FCU ALT knob turned down and pulled (OP DES on the FMA).
+    if (st.k === 'act' && st.opdes) return fcuPfd(DR.s).vert === 'OP DES';
     if (st.k === 'act') return st.ctls.every(function (c) {
       if (st.pos) return [].concat(st.pos).indexOf(posName(c)) >= 0;
-      if (st.reset) { var k = st.item + c.join(); if (isOff(c)) DR.off[k] = true; return !!DR.off[k] && !isOff(c); }
+      if (st.reset) { var k = DR.i + ':' + c.join(); if (isOff(c)) DR.off[k] = true; return !!DR.off[k] && !isOff(c); }
       // move: a lever moved out of the detent it started in (THR LEVERS....MOVE).
       if (st.move) { var cur = ctlState(c).cur; return cur != null && cur !== PN.P[c[0]].items[ctlIndex(c)].cur; }
-      return st.press ? !!ctlState(c).down : bits(c).lo === st.sel;
+      // the selection legend may be the upper one (APU START: ON above AVAIL)
+      var it = PN.P[c[0]].items[ctlIndex(c)], b = bits(c);
+      return st.press ? !!ctlState(c).down : (PN.selLegend(it) === 'up' ? b.up : b.lo) === st.sel;
     });
     if (st.k === 'task') {
       var w = st.want;

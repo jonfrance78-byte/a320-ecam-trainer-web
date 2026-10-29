@@ -66,6 +66,9 @@
   // AUTO FLT controls: the FACs (overhead FLT CTL panels), the thrust levers, GPWS TERR
   var FAC1 = ['FLTCTL1', 'FAC 1', 1], FAC2 = ['FLTCTL2', 'FAC 2', 1], THR1 = ['THR', 'Thrust lever 1', 1], THR2 = ['THR', 'Thrust lever 2', 1], GPWS_TERR = ['GPWS', 'TERR', 1];
   var AUDIO_SW = ['AUDIOSW', 'AUDIO SWITCHING', 1], GPWS_SYS = ['GPWS', 'SYS', 1];
+  var GEN1 = ['ELEC', 'GEN 1', 1], GEN2 = ['ELEC', 'GEN 2', 1], BUS_TIE = ['ELEC', 'BUS\nTIE', 1], ENG_MODE = ['ENGPED', 'MODE', 1];
+  var APU_MASTER = ['LOWER', 'MASTER SW', 1], APU_START = ['LOWER', 'START', 1], BLOWER = ['VENT', 'BLOWER', 1], EXTRACT = ['VENT', 'EXTRACT', 1];
+  var FCU_ALT = ['FCU', 'ALT knob', 1], SPD_BRK = ['SPDBRK', 'SPEED BRAKE', 1], MASK_MAN = ['OXY', 'MASK\nMAN ON', 1];
   var PRESS_MODE = ['CABPRESS', 'MODE SEL', 1], ASKID = ['AUTOBRK', 'A/SKID & N/W STRG', 1], PARK_BRK = ['PARKBRK', 'PARKING BRK', 1];
   var ELAC1 = ['FLTCTL1', 'ELAC 1', 1], SEC1 = ['FLTCTL1', 'SEC 1', 1], ELAC2 = ['FLTCTL2', 'ELAC 2', 1], SEC2 = ['FLTCTL2', 'SEC 2', 1], SEC3 = ['FLTCTL2', 'SEC 3', 1];
   // A computer's reset lines: -X....OFF THEN ON, .IF UNSUCCESSFUL :, -X....OFF (the reset fails in the drill).
@@ -368,8 +371,8 @@
         N('.IF UNSUCCESSFUL :', 'w'),
         A('FAC 1', 'OFF', FAC1, { clears: true, why: 'The reset did not work, so FAC 1 is left off. FAC 2 does all its work.' })
       ],
-      // The STATUS INOP SYS column could not be read on ReadECAM's picture: own knowledge.
-      sts: { left: [['BOTH PFD ON SAME FAC', 'g'], ['CAT 3 SINGLE ONLY', 'g']], inop: ['FAC 1', 'CAT 3 DUAL'] },
+      // STATUS from the owner's screenshot (0.7.91).
+      sts: { left: [['BOTH PFD ON SAME FAC', 'g'], ['CAT 3 SINGLE ONLY', 'g']], inop: ['CAT 3 DUAL', 'FAC 1'] },
       statusQ: Q('What does BOTH PFD ON SAME FAC tell the crew?', 'Both PFDs show speeds computed by FAC 2 alone', ['Both PFDs have lost their speed scales', 'The F/O must fly the approach', 'FAC 1 still feeds the Captain\'s PFD'],
         'With one FAC the two PFDs no longer cross-check each other\'s speeds: an error in FAC 2 would show on both sides.')
     },
@@ -415,7 +418,10 @@
         N('-BARO REF.............CHECK'),
         Q('Why check the BARO REF after an FCU channel fault?', 'The baro settings pass through the FCU, so they may no longer agree with the PFDs', ['The standby altimeter has failed', 'The altitude alert is lost', 'The autopilot uses QNH only'],
           'Compare the setting on each EFIS panel with both PFDs and the standby altimeter.')
-      ]
+      ],
+      sts: { left: [], inop: ['FCU 1'] },
+      statusQ: Q('With FCU 1 lost, are the autopilot and flight directors still available?', 'Yes: the FCU works on its other channel', ['No: both are lost', 'Only AP 2', 'Only the flight directors'],
+        'Only one channel is lost, so INOP SYS shows FCU 1 and nothing else.')
     },
 
     'afl-fcu12': {
@@ -431,7 +437,10 @@
         N('-PFD BARO REF: STD ONLY'),
         Q('With both FCU channels lost, how is QNH flown on the approach?', 'On the standby altimeter, set to QNH', ['On the PFDs, set to QNH on the EFIS panel', 'On the radio altimeter only', 'Through the MCDU PERF page'],
           'The PFDs stay on STD. The PM makes the "hundred above" and "minimum" callouts from the standby altimeter, so no MDA is entered in the MCDU.')
-      ]
+      ],
+      sts: { left: [['PFD BARO REF : STD ONLY', 'g'], ['CAT 1 ONLY', 'g']], inop: ['FCU 1+2', 'AP 1+2', 'A/THR', 'GPWS TERR'] },
+      statusQ: Q('Why CAT 1 ONLY after FCU 1+2 FAULT?', 'Both autopilots and the autothrust are lost, so the approach is flown by hand', ['The ILS receivers are lost', 'The radio altimeters are lost', 'The PFDs are on STD'],
+        'CAT 2 and 3 need the autopilot. GPWS TERR is also lost.')
     },
 
     'afl-dual-fmgc': {
@@ -451,7 +460,10 @@
         A('THR LEVERS', 'MOVE', [THR1, THR2], { move: true, hint: 'Pedestal, thrust levers: move them out of the CL detent to the thrust needed.', why: 'Thrust is now set by hand.' }),
         Q('After the ECAM, how can the FMGCs be recovered?', 'From the MCDU MENU on each MCDU (QRH)', ['By pulling the FAC circuit breakers', 'With the FCU AP pushbuttons', 'They cannot be recovered in flight'],
           'The QRH reset is done from the MCDU MENU page, on both MCDUs for a dual failure.')
-      ]
+      ],
+      sts: { left: [], inop: ['AP 1+2', 'A/THR', 'CAT 2', 'GPWS TERR'] },
+      statusQ: Q('With both FMGCs lost, what landing capability is left?', 'CAT 1: both autopilots and the autothrust are lost', ['CAT 3 SINGLE', 'CAT 2', 'None: an ILS cannot be flown'],
+        'CAT 2 is on the INOP list. The approach is flown by hand with raw data.')
     },
 
     // BRAKES and CAB PRESS: E/WD lines from ReadECAM's slides (displays only; questions and
@@ -475,7 +487,11 @@
         T('A/SKID & N/W STRG back ON: the BSCU is reset.', { ctl: ASKID, pos: 'ON' }, 'The BSCU restarts. If the fault comes back, it stays with channel 2.'),
         Q('Why is the BSCU reset done only with the aircraft stopped and the parking brake on?', 'Steering and anti-skid are lost while the switch is OFF', ['The engines must be shut down for it', 'The parking brake powers the BSCU', 'It needs the autobrake set to MAX'],
           'Without nose wheel steering the aircraft could not be steered, and the brakes would work without anti-skid.')
-      ]
+      ],
+      memoDone: [{ t: 'PARK BRK', c: 'g' }],
+      sts: { left: [], inop: ['BRK SYS 1'] },
+      statusQ: Q('If the reset does not work, can the aircraft still be dispatched with BRK SYS 1 inoperative?', 'Check the MEL: the other channel still gives normal braking', ['Never', 'Always, with no check', 'Only with the autobrake set to MAX'],
+        'After a successful reset normal operation resumes; if not, the MEL decides.')
     },
 
     'press-sys12': {
@@ -496,7 +512,12 @@
         N('-MAN V/S CTL........AS RQRD'),
         Q('Holding MAN V/S CTL to DN does what to the cabin?', 'Closes the outflow valve, so the cabin descends', ['Opens the outflow valve, so the cabin descends', 'Closes the valve, so the cabin climbs', 'Lowers the landing elevation'],
           'Less air out means more pressure: the cabin altitude goes down. UP opens the valve and the cabin climbs. The valve is slow in MAN, so small inputs and patience.')
-      ]
+      ],
+      sts: { left: [['MAN CAB PR CTL', 'a'], ['TGT V/S:CLIMB 500 FT/MIN', 'c'], ['        DESC 300 FT/MIN', 'c'], ['A/C FL        CAB ALT TGT', 'w'],
+        ['  390           8000', 'c'], ['  350           7000', 'c'], ['  300           5500', 'c'], ['  250           3000', 'c'], [' <200              0', 'c'],
+        ['  DURING FINAL APPR:', 'w'], ['-MAN V/S CTL....FULL UP', 'c']], inop: ['CAB PR 1+2'] },
+      statusQ: Q('Why MAN V/S CTL FULL UP during the final approach?', 'To open the outflow valve fully, so the cabin is depressurised for landing', ['To pressurise the cabin for the go-around', 'To cool the avionics', 'To switch the controllers back on'],
+        'The differential pressure must be zero at touchdown, or the doors could not be opened.')
     },
 
     // ELEC: E/WD, secondary pages and STATUS from ReadECAM's slides (displays only; questions
@@ -610,7 +631,10 @@
         N('-SPD BRK.........DO NOT USE'),
         Q('Why DO NOT USE the speed brakes after SEC 1 FAULT?', 'VLS would not be corrected for extended speed brakes', ['The speed brake lever is jammed', 'The spoilers would extend only on one wing', 'The ELACs would go to alternate law'],
           'The speed brake position reaches the FACs through SEC 1. Without it the PFD VLS would be too low with speed brakes out.')
-      ])
+      ]),
+      sts: { left: [['SPD BRK........DO NOT USE', 'c'], ['LDG DIST PROC......APPLY', 'c']], inop: ['SPLR 3+4', 'SEC 1'] },
+      statusQ: Q('Which spoilers are lost with SEC 1?', 'Spoilers 3 and 4', ['Spoiler 5', 'Spoilers 1 and 2', 'All of them'],
+        'SEC 1 drives spoilers 3 and 4, SEC 2 spoiler 5, SEC 3 spoilers 1 and 2. Fewer ground spoilers: apply the landing distance procedure.')
     },
 
     'fctl-sec2': {
@@ -623,7 +647,10 @@
       steps: [MASTER].concat(RESET_OFF('SEC 2', SEC2, 'F/O', 'SEC 2 left off.'), [
         Q('Why is a SEC reset worth trying?', 'A passing fault can clear, giving back its spoilers', ['It moves the ELACs to normal law', 'It is required before landing', 'It tests the FAULT light'],
           'If the FAULT light stays after the reset, the SEC is left off.')
-      ])
+      ]),
+      sts: { left: [], inop: ['SPLR 5', 'SEC 2'] },
+      statusQ: Q('Which spoiler is lost with SEC 2?', 'Spoiler 5', ['Spoilers 3 and 4', 'Spoilers 1 and 2', 'Spoiler 3'],
+        'Losing only spoiler 5 has little effect, so there is no landing distance line on this STATUS.')
     },
 
     'fctl-sec3': {
@@ -636,7 +663,138 @@
       steps: [MASTER].concat(RESET_OFF('SEC 3', SEC3, 'F/O', 'SEC 3 left off.'), [
         Q('Where is SEC 3 on the overhead?', 'On the F/O side FLT CTL panel, with ELAC 2 and SEC 2', ['On the Captain side, with ELAC 1', 'On the pedestal', 'On the maintenance panel'],
           'ELAC 1, SEC 1 and FAC 1 are on the Captain side; ELAC 2, SEC 2, SEC 3 and FAC 2 on the F/O side.')
-      ])
+      ]),
+      sts: { left: [['LDG DIST PROC......APPLY', 'c']], inop: ['SPLR 1+2', 'SEC 3'] },
+      statusQ: Q('Which spoilers are lost with SEC 3?', 'Spoilers 1 and 2', ['Spoilers 3 and 4', 'Spoiler 5', 'None'],
+        'Two ground spoiler pairs less: the landing distance procedure applies.')
+    },
+
+    // ELEC EMER CONFIG and CAB PR EXCESS CAB ALT: E/WD order, memo and STATUS from the owner's
+    // screenshots of ReadECAM (0.7.91); questions and notes are our own.
+    'elec-emer': {
+      title: 'ELEC EMER CONFIG', sysWord: 'ELEC', level: 3, sd: null, sdOff: true, phase: 'Cruise · FL350',
+      brief: 'In cruise, both main AC buses are lost. The RAT deploys and the emergency generator powers the essential buses. The F/O loses their displays and the ECAM works on one screen: the SD is blank.',
+      learn: ['ELEC EMER CONFIG: AC BUS 1 and 2 lost. The RAT drives the blue system and, through it, the emergency generator, which feeds AC ESS and DC ESS. Keep at least 140 kt so the RAT keeps working.',
+        'The Captain flies (the F/O has no screens). Only the upper ECAM display works: a system page or STATUS is seen by pressing and holding its key on the ECAM control panel.',
+        'Manual flight, alternate law, gravity fuel feeding, and a much longer landing distance: no reversers, two spoilers per wing, no anti-skid.'],
+      pre: AP_OFF,
+      setup: function (s) { s.elec.ac = [false, false]; s.elec.rat = true; s.fctl.law = 'ALTN'; },
+      lights: [GEN1, GEN2],
+      memo: [{ t: 'LAND ASAP', c: 'r' }, { t: 'F/CTL', c: 'a' }, { t: 'AUTO FLT', c: 'a' }],
+      steps: [
+        MASTER,
+        N('MIN RAT SPEED.......140 KT'),
+        A('GEN 1+2', 'OFF THEN ON', [GEN1, GEN2], { reset: true, sel: false, hint: 'Overhead ELEC panel: GEN 1 and GEN 2 OFF, then ON again.', why: 'Reset tried: both generators stay off line.' }),
+        Q('Why MIN RAT SPEED 140 KT?', 'Below it the RAT may not turn fast enough to power the emergency generator', ['It is the maximum speed with the RAT out', 'The slats lock below it', 'It is the best glide speed'],
+          'The RAT drives the blue system, and the emergency generator runs off blue. Too slow and the aircraft goes onto batteries.'),
+        N('.IF UNSUCCESSFUL :', 'w'),
+        A('BUS TIE', 'OFF', BUS_TIE, { hint: 'Overhead ELEC panel: BUS TIE OFF.', why: 'Each side separated, so each generator can try to come back on its own bus.' }),
+        A('GEN 1+2', 'OFF THEN ON', [GEN1, GEN2], { reset: true, sel: false, hint: 'Overhead ELEC panel: GEN 1 and GEN 2 OFF, then ON again.', why: 'The second reset does not work either.' }),
+        A('ENG MODE SEL', 'IGN', ENG_MODE, { pos: 'IGN', hint: 'Pedestal: ENG MODE selector to IGN/START.', why: 'Continuous ignition: the engines are now on gravity fuel feeding.' }),
+        N('-VHF1/ATC1..........USE'),
+        N('FUEL GRVTY FEED'),
+        N('PROC:GRVTY FUEL FEEDING', 'w'),
+        A('FAC 1', 'OFF THEN ON', FAC1, { reset: true, sel: false, hint: 'Overhead FLT CTL panel (Captain side): FAC 1 OFF, then ON again.', why: 'The FAC 1 reset gives back the rudder trim.' }),
+        A('BUS TIE', 'ON', BUS_TIE, { sel: false, hint: 'Overhead ELEC panel: BUS TIE back to AUTO (OFF light out).', why: 'With the bus tie in AUTO the APU generator can take an available channel.' }),
+        A('APU (IF AVAIL)', 'START', [APU_MASTER, APU_START], { hint: 'Overhead APU panel: MASTER SW ON, then START.', why: 'The APU starts after 45 s (it waits so as not to upset the emergency generator); on batteries only below FL 250.' }),
+        A('BLOWER + EXTRACT', 'OVRD', [BLOWER, EXTRACT], { hint: 'Overhead VENTILATION panel: BLOWER and EXTRACT to OVRD.', why: 'The avionics are now cooled by air from the air conditioning, exhausted overboard.' }),
+        Q('Why ENG MODE SEL IGN?', 'The engines are on gravity fuel feeding, so continuous ignition guards against a flame-out', ['To start the APU', 'To reset the generators', 'Because the FADECs are lost'],
+          'With the fuel pumps lost, fuel reaches the engines by gravity and suction. Ignition is kept on as a safeguard.'),
+        Object.assign(TITLE('F/CTL', 'ALTN LAW'), { clr: true }),
+        N('     (PROT LOST)', 'a'),
+        N('MAX SPEED........320 KT'),
+        TITLE('AUTO FLT', 'A/THR OFF'),
+        A('THR LEVERS', 'MOVE', [THR1, THR2], { move: true, hint: 'Pedestal, thrust levers: note the N1, then move them out of the CL detent to the thrust needed.', why: 'Thrust is now set by hand.' })
+      ],
+      seq: [
+        { lines: [], memo: [{ t: 'LAND ASAP', c: 'r' }, { t: 'RAT OUT', c: 'g' }, { t: 'EMER GEN', c: 'g' }, { t: 'IGNITION', c: 'g' }, { t: 'ENG A.ICE', c: 'g' }], sd: 'STS',
+          sts: { left: [['MIN RAT SPEED.....140 KT', 'c'], ['MAX SPEED.........320 KT', 'c'], ['MAX BRK PR........1000PSI', 'c'], ['FUEL GRVTY FEED', 'c'], ['AVOID NEGATIVE G FACTOR', 'c'], ['', 'c'],
+            ['APPR PROC:', 'w'], [' -FOR LDG.....USE FLAP 3', 'c'], ['', 'c'], ['APPR SPD : VREF+10/140KT', 'c'], ['LDG DIST PROC......APPLY', 'c'], ['', 'c'],
+            ['ALTN LAW : PROT LOST', 'g'], ['WHEN L/G DN : DIRECT LAW', 'g'], ['SLATS/FLAPS SLOW', 'g']],
+            inop: ['F/CTL PROT', 'REVERSER 1+2', 'ADR 2+3', 'IR 2', 'RA 1+2', 'SPLR 1+2+5', 'ELAC 2', 'SEC 2+3', 'A/CALL OUT', 'AP 1+2', 'A/THR', 'FUEL PUMPS', 'ANTI SKID', 'N/W STRG', 'CAT 2'] },
+          text: 'STATUS: in single-display operation it shows only while STS is held on the ECAM control panel. Review it with the other pilot.', note: 'All alerts cleared. STATUS is shown.',
+          q: Q('Why AVOID NEGATIVE G FACTOR?', 'The engines are on gravity feeding, and negative g could stop the fuel reaching them', ['The RAT could stall', 'The emergency generator would trip', 'The slats could retract'],
+            'Gravity feeding relies on fuel lying over the pump outlets. Pushing over can uncover them.') }
+      ]
+    },
+
+    'press-excess-alt': {
+      title: 'CAB PR EXCESS CAB ALT', sysWord: 'CAB PR', level: 3, sd: 'PRESS', phase: 'Cruise · FL350',
+      brief: 'In cruise at FL350 the cabin altitude climbs fast and passes 9 550 ft: the cabin is depressurising. Oxygen masks on, then an emergency descent to FL 100 or the minimum safe altitude.',
+      learn: ['CAB PR EXCESS CAB ALT comes on with the cabin altitude above 9 550 ft. Rely on the warning even if the PRESS page does not show it: another sensor may have triggered it.',
+        'Memory items first: crew oxygen masks on, then the emergency descent (ALT knob turned down and pulled, HDG turned and pulled, speed brakes full). The PF then calls for the ECAM actions.',
+        'The passenger masks drop by themselves at 14 000 ft cabin altitude; MASK MAN ON drops them if they have not.'],
+      setup: function (s) { s.press.cabAlt = 15400; s.press.vs = 6350; s.press.dp = 3.6; },
+      memo: [],
+      memoDone: [{ t: 'SPEED BRK', c: 'g' }, { t: 'OXY PAX ON', c: 'g' }, { t: 'IGNITION', c: 'g' }],
+      steps: [
+        MASTER,
+        N('-CREW OXY MASKS.......USE'),
+        N('.EMER DESCENT:', 'w'),
+        A('DESCENT', 'INITIATE', FCU_ALT, { opdes: true, hint: 'FCU: turn the ALT knob left to a lower altitude (FL 100 or MEA), then pull it (OP DES).',
+          why: 'OP DES: the aircraft descends at idle thrust toward the selected altitude.' }),
+        A('SPD BRK', 'FULL', SPD_BRK, { pos: 'FULL', hint: 'Pedestal: speed brake lever to FULL.', why: 'Full speed brakes give a descent of about 7 000 ft/min.' }),
+        Q('At high altitude, why watch the speed while extending the speed brakes?', 'They raise VLS, and near it the AOA protection would retract them and disconnect the AP', ['They lower VMO', 'They lock the thrust', 'They raise the cabin altitude'],
+          'Extend them smoothly and keep the speed well above VLS.'),
+        N('SPD.....MAX/APPROPRIATE'),
+        A('ENG MODE SEL', 'IGN', ENG_MODE, { pos: 'IGN', hint: 'Pedestal: ENG MODE selector to IGN/START.', why: 'Continuous ignition for the descent at idle.' }),
+        N('-ATC.............NOTIFY'),
+        N('-EMER DES (PA)...ANNOUNCE'),
+        N('-XPDR 7700.......CONSIDER'),
+        N('MAX FL.....100/MEA-MORA'),
+        N('.IF CAB ALT>14000FT:', 'w'),
+        A('PAX OXY MASKS', 'MAN ON', MASK_MAN, { press: true, hint: 'Overhead OXYGEN panel: MASK MAN ON (guarded: lift the guard, then press).',
+          why: 'The passenger masks drop, in case they did not at 14 000 ft.' }),
+        Q('How low does the emergency descent go?', 'FL 100, or the minimum safe altitude (MEA or MORA) if higher', ['FL 140', 'FL 200', '3 000 ft above the airport'],
+          'At FL 100 everyone can breathe without oxygen. Over high ground the descent stops at the safe altitude.'),
+        Object.assign(TITLE('CAB PR', 'LO DIFF PR'), { clr: true }),
+        N('-EXPECT HI CAB RATE')
+      ],
+      sts: { left: [['MAX FL : 100/MEA-MORA', 'c']], inop: [] },
+      statusQ: Q('What does CAB PR LO DIFF PR warn of?', 'The cabin and outside pressures are close, so the cabin will climb or descend fast with the aircraft', ['The outflow valve is fully closed', 'The packs have failed', 'The masks have run out of oxygen'],
+        'With almost no pressure difference, the cabin rate follows the aircraft rate: expect a high cabin rate in the descent.')
+    },
+
+    // SEC 1+2 and SEC 1+3: E/WD and STATUS from the owner's simulator photos (0.7.91). For SEC 1+2
+    // ReadECAM also lists AUTO BRK under INOP SYS; the owner's photo does not, and is followed.
+    'fctl-sec12': {
+      title: 'F/CTL SEC 1 FAULT', name: 'F/CTL SEC 1+2 FAULT', sysWord: 'F/CTL', level: 2, sd: 'F/CTL', phase: 'Cruise · FL350',
+      brief: 'In cruise, SEC 1 and then SEC 2 fail. Spoilers 3, 4 and 5 are lost, the speed brakes must not be used, and reverser 1 is lost.',
+      learn: ['Each SEC drives its own spoilers: SEC 1 spoilers 3 and 4, SEC 2 spoiler 5, SEC 3 spoilers 1 and 2.',
+        'A reverser needs a thrust lever signal from at least one SEC: reverser 1 from SEC 1 or 2, so with both lost reverser 1 is lost.'],
+      setup: function (s) { s.fctl.sec[0] = 'fault'; s.fctl.sec[1] = 'fault'; },
+      lights: [SEC1, SEC2],
+      memo: [],
+      steps: [MASTER].concat(RESET_OFF('SEC 1', SEC1, 'Captain', 'SEC 1 left off.'), [
+        N('-SPD BRK.........DO NOT USE'),
+        TITLE('F/CTL', 'SEC 2 FAULT')
+      ], RESET_OFF('SEC 2', SEC2, 'F/O', 'SEC 2 left off.'), [
+        Q('Why is reverser 1 lost with SEC 1 and SEC 2?', 'It needs a thrust lever signal from SEC 1 or SEC 2', ['It is powered by the blue system', 'SEC 3 locks it', 'The ELACs inhibit it'],
+          'Reverser 2 takes its signal from SEC 1 or SEC 3, so it still works.')
+      ]),
+      sts: { left: [['SPD BRK........DO NOT USE', 'c'], ['LDG DIST PROC......APPLY', 'c']], inop: ['SPLR 3+4+5', 'SEC 1+2', 'REVERSER 1'] },
+      statusQ: Q('Why LDG DIST PROC APPLY?', 'Three spoiler pairs and reverser 1 are lost, so the landing roll is longer', ['The normal brakes are lost', 'The flaps are slow', 'The approach is flown in direct law'],
+        'Only spoilers 1 and 2 and reverser 2 help the brakes stop the aircraft.')
+    },
+
+    'fctl-sec13': {
+      title: 'F/CTL SEC 1 FAULT', name: 'F/CTL SEC 1+3 FAULT', sysWord: 'F/CTL', level: 2, sd: 'F/CTL', phase: 'Cruise · FL350',
+      brief: 'In cruise, SEC 1 and then SEC 3 fail. Spoilers 1 to 4 are lost, the speed brakes are lost, and reverser 2 is lost.',
+      learn: ['SEC 1 drives spoilers 3 and 4, SEC 3 spoilers 1 and 2: with both lost only spoiler 5 is left on each wing.',
+        'Reverser 2 needs a thrust lever signal from SEC 1 or SEC 3, so with both lost reverser 2 is lost.'],
+      setup: function (s) { s.fctl.sec[0] = 'fault'; s.fctl.sec[2] = 'fault'; },
+      lights: [SEC1, SEC3],
+      memo: [],
+      steps: [MASTER].concat(RESET_OFF('SEC 1', SEC1, 'Captain', 'SEC 1 left off.'), [
+        N('-SPD BRK.........DO NOT USE'),
+        TITLE('F/CTL', 'SEC 3 FAULT')
+      ], RESET_OFF('SEC 3', SEC3, 'F/O', 'SEC 3 left off.'), [
+        Q('Which reverser is lost with SEC 1 and SEC 3?', 'Reverser 2', ['Reverser 1', 'Both', 'Neither'],
+          'Reverser 2 takes its signal from SEC 1 or SEC 3. Reverser 1 still has SEC 2.')
+      ]),
+      sts: { left: [['SPD BRK........DO NOT USE', 'c'], ['LDG DIST PROC......APPLY', 'c']], inop: ['SPLR 1+2+3+4', 'SPD BRK', 'SEC 1+3', 'REVERSER 2'] },
+      statusQ: Q('Which spoiler is left on each wing?', 'Spoiler 5', ['Spoiler 1', 'Spoilers 3 and 4', 'None'],
+        'Only SEC 2 is left, and it drives spoiler 5. The speed brake function is lost (SPD BRK under INOP SYS).')
     }
   };
   // Each underlined alert on the E/WD is cleared with CLR, called by the PF and confirmed by
@@ -651,11 +809,12 @@
       return false;
     }
     function isTitle(st) { return st.k === 'note' && !st.top && (st.word || st.alert); }
+    // clr: an alert with no actions of its own that still needs its CLR (F/CTL ALTN LAW in EMER CONFIG)
     steps.forEach(function (st, i) {
       if (st.top && st.k === 'note' && st.word) name = st.word;
       else if (!main && !st.top && name && ['master', 'card', 'quiz'].indexOf(st.k) < 0) { out.push({ k: 'clr', name: name }); main = true; name = d.sysWord; }
       if (!main && !st.top && ['master', 'card', 'quiz'].indexOf(st.k) < 0) { main = true; name = d.sysWord; }
-      if (isTitle(st) && hasAct(i)) { out.push({ k: 'clr', name: name }); name = st.word || d.sysWord; }
+      if (isTitle(st) && (hasAct(i) || st.clr)) { out.push({ k: 'clr', name: name }); name = st.word || d.sysWord; }
       out.push(st);
     });
     d.steps = out; d.lastAlert = name || d.sysWord;
@@ -671,11 +830,11 @@
     ['AIR', [E('BLEED 1+2 FAULT', 'a'), E('PACK 1+2 FAULT', 'a')]],
     ['AUTO FLT', [E('FMGC SYSTEM OVERVIEW', 'w'), E('FAC FAULTS', 'a', ['afl-fac1', 'afl-fac12']), E('FCU FAULTS', 'a', ['afl-fcu1', 'afl-fcu12']), E('FMGC SINGLE FAULT', 'a'), E('DUAL FMGC FAILURE', 'a', 'afl-dual-fmgc')]],
     ['BRAKES', [E('BRAKES SYS OVERVIEW', 'w'), E('BRAKES SYS 1(2) FAULT', 'a', 'brk-sys1'), E('LOSS OF BRAKING [MEM]', 'r')]],
-    ['CAB PRESS', [E('EXCESSIVE CAB ALT', 'r'), E('CPC FAULTS', 'a', 'press-sys12')]],
-    ['ELEC', [E('ELECTRICAL SYSTEM OVERVIEW', 'w'), E('C/B TRIPPED', 'a'), E('DC ESS BUS FAULT', 'a', 'elec-dc-ess'), E('ELEC EMER CONFIG', 'r')]],
+    ['CAB PRESS', [E('EXCESSIVE CAB ALT', 'r', 'press-excess-alt'), E('CPC FAULTS', 'a', 'press-sys12')]],
+    ['ELEC', [E('ELECTRICAL SYSTEM OVERVIEW', 'w'), E('C/B TRIPPED', 'a'), E('DC ESS BUS FAULT', 'a', 'elec-dc-ess'), E('ELEC EMER CONFIG', 'r', 'elec-emer')]],
     ['ENG', [E('ABN/NON-STD ENG START', 'a'), E('ENGINE MALFUNCTIONS', 'a'), E('ALL ENG FAIL', 'r'), E('ENG FAIL IN CRUISE', 'a'), E('ENG FAIL AFTER V1', 'a'),
       E('OEI APP AND LANDING', 'a'), E('OEI GO AROUND', 'a'), E('OEI BLEED MANAGEMENT', 'a'), E('TAILPIPE FIRE', 'a'), E('THRUST LOCKED', 'a'), E('TOGA LK', 'a'), E('THR LEVERS MANAGEMENT', 'a')]],
-    ['F/CTL', [E('F/CTL LAWS OVERVIEW', 'w'), E('ELAC FAULTS', 'a', ['fctl-elac1', 'fctl-elac12']), E('ELEVATOR FAULTS', 'a'), E('RUDDER JAM', 'a'), E('SEC FAULTS', 'a', ['fctl-sec1', 'fctl-sec2', 'fctl-sec3']), E('SLATS OR FLAPS JAMMED', 'a'), E('STABILISER JAM', 'a'), E('TAKEOVER PB', 'w')]],
+    ['F/CTL', [E('F/CTL LAWS OVERVIEW', 'w'), E('ELAC FAULTS', 'a', ['fctl-elac1', 'fctl-elac12']), E('ELEVATOR FAULTS', 'a'), E('RUDDER JAM', 'a'), E('SEC FAULTS', 'a', ['fctl-sec1', 'fctl-sec2', 'fctl-sec3', 'fctl-sec12', 'fctl-sec13']), E('SLATS OR FLAPS JAMMED', 'a'), E('STABILISER JAM', 'a'), E('TAKEOVER PB', 'w')]],
     ['FUEL', [E('FUEL IMBALANCE', 'a'), E('FUEL LEAK', 'a'), E('FUEL OVERREAD', 'a'), E('FUEL TEMPERATURE', 'a'), E('GRAVITY FUEL FEEDING', 'a')]],
     ['HYD', [E('HYD SYSTEM OVERVIEW', 'w', 'hyd-overview'), E('HYD SINGLE FAILURES', 'a', ['hyd-g-rsvr', 'hyd-b-lopr', 'hyd-y-pump']),
       E('HYD B+Y', 'r', 'hyd-by'), E('HYD G+B', 'r', 'hyd-gb'), E('HYD G+Y', 'r', 'hyd-gy')]],
