@@ -326,7 +326,17 @@
   /* ------------------------------------------------------------ pedestal */
   var MENU = [['MCDU MENU', 'w', 1], ['', 'w'], ['<FMGC', 'w'], ['', 'w'], ['<ATSU', 'w'], ['', 'w'], ['<AIDS', 'w'], ['', 'w'], ['<CFDS', 'w'], ['', 'w'], ['', 'w'], ['INITIALIZE WEIGHT/CG', 'a', 1]];
   function mcduScreen(x, y, w, h) {
-    var o = rect(x - 1.5, y - 1.5, w + 3, h + 3, 'scr-bezel', 1.5) + rect(x, y, w, h, 'dk-screen', 1);
+    var o = rect(x - 1.5, y - 1.5, w + 3, h + 3, 'scr-bezel', 1.5) + rect(x, y, w, h, 'dk-screen', 1), pg = PN.LIVE.mcduPage;
+    // A page set by the Normal Procedures flows: 14 rows (title, six label and data pairs, scratchpad); a cell is [text, colour, L | R | C | 0..1 across, small label].
+    if (pg) {
+      pg.forEach(function (row, i) {
+        (row || []).forEach(function (c) {
+          var f = typeof c[2] === 'number' ? c[2] : 0, an = c[2] === 'R' ? 'end' : c[2] === 'C' ? 'middle' : 'start', ax = c[2] === 'R' ? x + w - 2.5 : c[2] === 'C' ? x + w / 2 : x + 2.5 + f * (w - 5);
+          o += text(ax, y + 4.3 + i * 4.15, c[0], 'mcdu-' + c[1], c[3] ? 3.1 : 4.2, an);
+        });
+      });
+      return o;
+    }
     MENU.forEach(function (L, i) { if (L[0]) o += text(L[2] ? x + w / 2 : x + 3, y + 6 + i * 4.6, L[0], 'mcdu-' + L[1], 3.5, L[2] ? 'middle' : 'start'); });
     o += text(x + w - 3, y + 10.6, 'SELECT', 'mcdu-w', 2.8, 'end') + text(x + w - 3, y + 14.6, 'NAV B/UP>', 'mcdu-w', 3.2, 'end');
     return o;

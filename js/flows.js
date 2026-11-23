@@ -328,30 +328,33 @@
    * descent preparation, below FL100 with the landing lights on. */
   var IN_APPR = [T('LOWER/L', 'ON'), T('LOWER/R', 'ON')];
   var CONFIG = [
-    S('FLAPS/FLAPS', '1', 'FLAPS 1', '', { who: 'PM', sim: { alt: 2250, dme: 7.0, cas: 180, vls: 143 } }),
-    S('FLAPS/FLAPS', '2', 'FLAPS 2', '', { who: 'PM', sim: { alt: 2000, dme: 6.3, cas: 160, vls: 133 } }),
-    S('LGLEVER/Landing gear lever', 'DOWN', 'GEAR DOWN', 'Then GND SPLRS ARM.', { who: 'PM', sim: { alt: 1800, dme: 5.7, cas: 155 } }),
-    S('FLAPS/FLAPS', '3', 'FLAPS 3', '', { who: 'PM', sim: { alt: 1600, dme: 5.0, cas: 145, vls: 128 } }),
-    S('FLAPS/FLAPS', 'FULL', 'FLAPS FULL', 'Landing checklist.', { who: 'PM', sim: { alt: 1450, dme: 4.6, cas: 135, vls: 123 } })
+    S('FLAPS/FLAPS', '1', 'FLAPS 1', 'Check the speed is below VFE for the new configuration (230 kt) before selecting. The amber = on the speed tape is VFE next.', { who: 'PM', sim: { alt: 2250, dme: 7.0, cas: 180, vls: 143, vmax: 230, vfen: 200 } }),
+    S('FLAPS/FLAPS', '2', 'FLAPS 2', 'Speed below VFE for flaps 2 (200 kt) before selecting.', { who: 'PM', sim: { alt: 2000, dme: 6.3, cas: 160, vls: 133, vmax: 200, vfen: 185 } }),
+    S('LGLEVER/Landing gear lever', 'DOWN', 'GEAR DOWN', 'Speed below VLO (250 kt) before selecting. Then GND SPLRS ARM.', { who: 'PM', sim: { alt: 1800, dme: 5.7, cas: 155, vmax: 200, vfen: 185 } }),
+    S('FLAPS/FLAPS', '3', 'FLAPS 3', 'Speed below VFE for flaps 3 (185 kt) before selecting.', { who: 'PM', sim: { alt: 1600, dme: 5.0, cas: 145, vls: 128, vmax: 185, vfen: 177 } }),
+    S('FLAPS/FLAPS', 'FULL', 'FLAPS FULL', 'Speed below VFE for flaps full (177 kt) before selecting. Landing checklist.', { who: 'PM', sim: { alt: 1450, dme: 4.6, cas: 135, vls: 123, vmax: 177, vfen: null } })
   ];
   var RETARD = S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '', { who: 'PF', sim: { alt: 20, dme: 0, cas: 130, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] });
 
   var PRACTICE = [
     {
       id: 'p-ils', from: 'appr', pre: IN_APPR, title: 'ILS CAT I — practise', phase: 'Approach',
-      // sim0 and each step's sim: what the PFD and ND beside the panels show (js/np.js). RWY 14L, course 143°, level at 2500 ft on a 113° intercept heading.
-      sim0: { type: 'ILS', alt: 2500, dme: 7.9, cas: 200, vls: 155, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 2500, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
+      // sim0 and each step's sim: what the PFD and ND beside the panels show (js/np.js). RWY 14L, course 143°, level at 3000 ft (FCU altitude 3000) on a 113° intercept heading.
+      sim0: { type: 'ILS', alt: 3000, dme: 9.4, cas: 200, vls: 155, vfen: 230, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
       steps: [
         S('EFISL/LS', true, 'LS — ON', 'Both pilots: ILS scales on the PFD.', { sim: { ls: true } }),
         S('EFISL/ND MODE', 'LS', 'ROSE LS', 'The ND shows the ILS course and the localiser deviation bar.', { sim: { nd: true } }),
-        S('MCDU1/RAD\nNAV', 'press', 'RAD NAV — ILS checked', 'ILS frequency, ident and course match the chart. Identify on the PFD.'),
-        S('MCDU1/PERF', 'press', 'ACTIVATE APPR PHASE', '', { who: 'PM' }),
+        S('MCDU1/RAD\nNAV', 'press', 'RAD NAV — ILS page', 'The RADIO NAV page shows the ILS ident, frequency and course.', { mcdu: 'RADNAV' }),
+        C('ILS ident, frequency and course — checked', 'They match the chart. Identify the ILS on the PFD.', { panel: 'MCDU1' }),
+        S('MCDU1/PERF', 'press', 'PERF — DES page', 'The prompt to activate the approach phase is at the bottom of the page, in blue.', { who: 'PM', mcdu: 'PERFDES' }),
+        S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The PERF APPR page follows.', { who: 'PM', mcdu: 'PERFAPPR' }),
+        C('PERF APPR page — checked', 'QNH, temperature, wind, VAPP and VLS.', { who: 'PM', panel: 'MCDU1' }),
         S('FCU/APPR', true, 'APPR', 'On an intercept heading with the approach clearance. FMA: G/S and LOC blue, CAT 1 (or better).', { who: 'PF', sim: { arm: 'G/S', armLat: 'LOC', cap: 'CAT 1' } }),
-        C('LOC* — localiser capture', 'PF reads the FMA change, PM confirms ("Checked"). The deviation diamond is moving to the centre of the scale.', { sim: { lat: 'LOC*', armLat: '', hdgSel: false, hdgNow: 132, loc: 0.4, dme: 8.0 } }),
-        C('LOC — localiser tracking', 'The aircraft is on the final approach course.', { sim: { lat: 'LOC', loc: 0, hdgNow: 143 } }),
-        C('G/S* — glideslope capture', 'The glideslope diamond comes down to the centre as the aircraft meets the beam.', { sim: { vert: 'G/S*', arm: '', gs: 0.3, alt: 2480, dme: 7.8, vs: -500 } }),
-        C('G/S — glideslope tracking', 'Descending on the beam at about 700 ft/min. FMA: G/S, LOC green.', { sim: { vert: 'G/S', gs: 0, alt: 2420, dme: 7.6, vs: -700 } }),
-        S('FCU/ALT knob', 'press', 'Go-around altitude — set', 'Once G/S is captured: set the missed approach altitude on the FCU.', { who: 'PF', sim: { fcuAlt: 3000, alt: 2400, dme: 7.5 } })
+        C('LOC* — localiser capture', 'PF reads the FMA change, PM confirms ("Checked"). The deviation diamond is moving to the centre of the scale.', { sim: { lat: 'LOC*', armLat: '', hdgSel: false, hdgNow: 132, loc: 0.4, dme: 9.5 }, auto: 2000 }),
+        C('LOC — localiser tracking', 'The aircraft is on the final approach course.', { sim: { lat: 'LOC', loc: 0, hdgNow: 143 }, auto: 2000 }),
+        C('G/S* — glideslope capture', 'The glideslope diamond comes down to the centre as the aircraft meets the beam.', { sim: { vert: 'G/S*', arm: '', gs: 0.3, alt: 2980, dme: 9.4, vs: -500 }, auto: 2000 }),
+        C('G/S — glideslope tracking', 'Descending on the beam at about 700 ft/min. FMA: G/S, LOC green.', { sim: { vert: 'G/S', gs: 0, alt: 2900, dme: 9.1, vs: -700 }, auto: 2000 }),
+        S('FCU/ALT knob', 'press', 'Go-around altitude — set', 'Once G/S is captured: set the missed approach altitude on the FCU.', { who: 'PF', sim: { fcuAlt: 3000, alt: 2800, dme: 8.8 } })
       ].concat(CONFIG, [
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 210, dme: 0.7 } }),
@@ -398,19 +401,21 @@
     {
       id: 'p-fls', from: 'appr', pre: IN_APPR, title: 'FLS — practise', phase: 'Approach',
       // Display after Safety first #40 (July 2025): F-APP in the FMA once LS is pressed, F-G/S and F-LOC armed then engaged, double diamonds, RWY / slope / course on the PFD.
-      sim0: { type: 'FLS', alt: 2500, dme: 7.9, cas: 200, vls: 155, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 2500, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
+      sim0: { type: 'FLS', alt: 3000, dme: 9.4, cas: 200, vls: 155, vfen: 230, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
       steps: [
         S('EFISL/LS', true, 'LS — ON (FLS)', 'For an FLS approach the LS pushbutton shows the FLS beam: F-LOC and F-G/S scales with double diamonds, and F-APP in the FMA.', { sim: { ls: true, cap: 'F-APP' } }),
         S('EFISR/LS', true, 'LS — ON'),
         S('EFISL/ND MODE', 'LS', 'ROSE LS', 'The ND shows the FLS course and the deviation bar.', { sim: { nd: true } }),
         C('FLS data on the PFD vs chart', 'FLS ident, course and slope. Course ±1°, overlay ±3°, slope ±0.1°: outside these, the FLS must not be used.'),
         C('Capability: F-APP / F-APP + RAW / RAW ONLY', 'F-APP + RAW: show the raw data needles. RAW ONLY: the FLS must not be used.'),
-        S('MCDU1/PERF', 'press', 'PERF APPR — BARO minimum', '', { sim: { min: 'BARO 410' } }),
+        S('MCDU1/PERF', 'press', 'PERF — DES page', 'The prompt to activate the approach phase is at the bottom of the page, in blue.', { who: 'PM', mcdu: 'PERFDES' }),
+        S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The PERF APPR page follows.', { who: 'PM', mcdu: 'PERFAPPR_FLS' }),
+        C('PERF APPR — BARO minimum', 'QNH and temperature (the FLS corrects the glideslope for cold) and the BARO minimum.', { who: 'PM', panel: 'MCDU1', sim: { min: 'BARO 410' } }),
         S('FCU/APPR', true, 'APPR', 'FMA: F-G/S and F-LOC blue (LOC and F-G/S for a localiser approach).', { who: 'PF', sim: { arm: 'F-G/S', armLat: 'F-LOC' } }),
-        C('F-LOC* — capture', 'The double diamond is moving to the centre of the scale.', { sim: { lat: 'F-LOC*', armLat: '', hdgSel: false, hdgNow: 132, loc: 0.4, dme: 8.0 } }),
-        C('F-LOC — tracking', 'The aircraft is on the final approach course.', { sim: { lat: 'F-LOC', loc: 0, hdgNow: 143 } }),
-        C('F-G/S* — capture', '', { sim: { vert: 'F-G/S*', arm: '', gs: 0.3, alt: 2480, dme: 7.8, vs: -500 } }),
-        C('F-G/S — tracking', 'FMA: F-G/S, F-LOC green.', { sim: { vert: 'F-G/S', gs: 0, alt: 2420, dme: 7.6, vs: -700 } })
+        C('F-LOC* — capture', 'The double diamond is moving to the centre of the scale.', { sim: { lat: 'F-LOC*', armLat: '', hdgSel: false, hdgNow: 132, loc: 0.4, dme: 9.5 }, auto: 2000 }),
+        C('F-LOC — tracking', 'The aircraft is on the final approach course.', { sim: { lat: 'F-LOC', loc: 0, hdgNow: 143 }, auto: 2000 }),
+        C('F-G/S* — capture', '', { sim: { vert: 'F-G/S*', arm: '', gs: 0.3, alt: 2980, dme: 9.4, vs: -500 }, auto: 2000 }),
+        C('F-G/S — tracking', 'FMA: F-G/S, F-LOC green.', { sim: { vert: 'F-G/S', gs: 0, alt: 2900, dme: 9.1, vs: -700 }, auto: 2000 })
       ].concat(CONFIG, [
         S('FCU/ALT knob', 'press', 'Go-around altitude — set', '', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 410, dme: 1.3 } }),
@@ -443,5 +448,25 @@
   FUEL.forEach(function (f) { LABELS[f[0]] = f[1]; });
   LABELS['THR/Thrust lever 1'] = 'Thrust levers';
 
-  window.NP_FLOWS = { INITIAL: INITIAL, FLOWS: FLOWS, PRACTICE: PRACTICE, LABELS: LABELS };
+  /* MCDU pages shown by the flows' steps (mcdu: key). 14 rows: title, six label and data pairs, scratchpad.
+   * Cell: [text, colour, L | R | C | position across 0..1, small label]. Layout of the APPR page after Safety first #40;
+   * the DES and RADIO NAV pages are drawn from general knowledge: to be checked against the FCOM. */
+  var APPR_ROWS = function (fls, min) {
+    return [[['APPR', 'g', 'C']], [['QNH', 'w', 'L', 1]].concat(fls ? [['FLS/FINAL APP*', 'c', 'R']] : []), [['1013', 'c', 'L']],
+      [['TEMP', 'w', 'L', 1], [fls ? 'BARO' : 'RADIO', 'w', 'R', 1]], [['10°', 'c', 'L'], [min, 'c', 'R']],
+      [['MAG WIND', 'w', 'L', 1]], [['020°/20', 'c', 'L']], [['TRANS ALT', 'w', 'L', 1]], [['4000', 'c', 'L']],
+      [['VAPP', 'w', 'L', 1], ['VLS', 'w', 0.3, 1], ['LDG CONF', 'w', 'R', 1]], [['135', 'c', 'L'], ['123', 'g', 0.3], ['FULL/CONF3*', 'c', 'R']],
+      [['PREV', 'w', 'L', 1], ['NEXT', 'w', 'R', 1]], [['<PHASE', 'w', 'L'], ['PHASE>', 'w', 'R']], []];
+  };
+  var MCDU = {
+    RADNAV: [[['RADIO NAV', 'w', 'C']], [['VOR1/FREQ', 'w', 'L', 1], ['FREQ/VOR2', 'w', 'R', 1]], [['[ ]/[   ]', 'c', 'L'], ['[   ]/[ ]', 'c', 'R']],
+      [['CRS', 'w', 'L', 1], ['CRS', 'w', 'R', 1]], [['[ ]', 'c', 'L'], ['[ ]', 'c', 'R']],
+      [['ILS /FREQ', 'w', 'L', 1], ['CRS', 'w', 'R', 1]], [['IBX/109.50', 'm', 'L'], ['143', 'm', 'R']],
+      [['ADF1/FREQ', 'w', 'L', 1], ['FREQ/ADF2', 'w', 'R', 1]], [['[ ]/[   ]', 'c', 'L'], ['[   ]/[ ]', 'c', 'R']], [], [], [], [], []],
+    PERFDES: [[['DESCENT', 'g', 'C']], [['CI', 'w', 'L', 1], ['MANAGED', 'w', 'R', 1]], [['35', 'c', 'L'], ['.78/300', 'm', 'R']], [], [], [], [], [], [], [], [], [], [['<ACTIVATE APPR PHASE', 'c', 'L']], []],
+    PERFAPPR: APPR_ROWS(false, '[   ]'),
+    PERFAPPR_FLS: APPR_ROWS(true, '410')
+  };
+
+  window.NP_FLOWS = { INITIAL: INITIAL, FLOWS: FLOWS, PRACTICE: PRACTICE, LABELS: LABELS, MCDU: MCDU };
 })();

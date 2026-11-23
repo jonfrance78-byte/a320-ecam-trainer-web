@@ -607,6 +607,9 @@
       for (var b2 = 40; b2 < 64; b2 += 4) o += '<rect x="46" y="' + b2 + '" width="3" height="2" class="fr"/>';
       o += '<rect x="46" y="130" width="3" height="20" class="fa"/>' + circ(50, 118, 2, 'sg', 1.2);
     }
+    // VMAX (red and black strip down from the top) and VFE next (amber =), from the configuration
+    if (f.vmax) { var yv2 = cy - (f.vmax - spd) * 1.6; for (var b3 = 42; b3 < Math.min(yv2, 150); b3 += 4) o += '<rect x="46" y="' + b3 + '" width="3" height="2" class="fr"/>'; }
+    if (f.vfen) { var yn = cy - (f.vfen - spd) * 1.6; if (yn > 42 && yn < 150) o += t(49, yn + 4.5, '=', 'a', 13, 'start'); }
     o += ln(14, cy, 54, cy, 'sy', 1.6) + '<path d="M54 ' + cy + ' l6 -4 v8 z" class="fy"/>';
     // speed target: managed magenta at the current speed, selected blue (its value above or below the tape when off it)
     if (f.spdSel && f.spd != null) {
@@ -624,7 +627,7 @@
       if (a2 % 500 === 0 && a2 !== alt) o += t(164, ya + 3, String(a2 / 100), 'w', 7.5, 'middle');
     }
     o += ln(138, cy, 152, cy, 'sy', 1.6);
-    o += '<rect x="150" y="' + (cy - 8) + '" width="32" height="16" class="screen sy" stroke-width="1.2"/>' + t(170, cy + 4, String(Math.floor(alt / 100)), 'g', 11, 'end') + t(181, cy + 3, ('0' + Math.round((alt % 100) / 20) * 20).slice(-2), 'g', 7, 'end');
+    o += '<rect x="150" y="' + (cy - 8) + '" width="32" height="16" class="screen sy" stroke-width="1.2"/>' + t(170, cy + 4, String(Math.floor(alt / 100)), 'g', 11, 'end') + t(181, cy + 3, ('0' + Math.floor((alt % 100) / 20) * 20).slice(-2), 'g', 7, 'end');
     // FCU altitude: blue, above or below the tape (on it when within 600 ft), magenta dot when managed is not shown
     var fa = f.fcuAlt, yf = cy - (fa - alt) * 0.4;
     if (fa > alt + 600) o += t(164, 36, String(fa), 'c', 8, 'middle'); else if (fa < alt - 600) o += t(164, 162, String(fa), 'c', 8, 'middle');

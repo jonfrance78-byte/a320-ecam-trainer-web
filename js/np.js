@@ -46,7 +46,7 @@
   }
 
   /* ---------------------------------------------------------------- home */
-  var VIEW = 'home', R = null, APV = null;
+  var VIEW = 'home', R = null, APV = null, AUTO_T = 0;
   function renderHome() {
     var groups = [];
     D.FLOWS.forEach(function (f, i) {
@@ -119,15 +119,23 @@
   /* ---------------------------------------------------------- flow runner */
   function startFlow(id, chain) {
     var f = flowById(id);
-    R = { f: f, k: 0, states: NP.stateAt(D, f, 0), errors: 0, reveal: false, note: null, ticks: {}, chain: !!chain, panel: null, t0: Date.now(), pre: false };
+    R = { f: f, k: 0, states: presets(f, NP.stateAt(D, f, 0)), errors: 0, reveal: false, note: null, ticks: {}, chain: !!chain, panel: null, t0: Date.now(), pre: false };
     VIEW = 'run';
     enterStep();
+  }
+  // An approach practice starts level at 3000 ft: the FCU altitude window shows it (the panel's own default is 35000).
+  function presets(f, states) {
+    if (!f.sim0) return states;
+    var i = PN.P.FCU.items.findIndex(function (x) { return x.k === 'win' && x.fcu === 'alt'; });
+    states.FCU = states.FCU || {}; states.FCU[i] = Object.assign({}, states.FCU[i], { val: String(f.sim0.fcuAlt) });
+    return states;
   }
   function step() { return R.f.steps[R.k]; }
   // Before the step: remember whether its target is already met (then it is a check).
   function enterStep() {
     var st = step();
     R.reveal = false; R.ticks = {};
+    clearTimeout(AUTO_T);
     if (st) {
       R.pre = st.k === 'set' && NP.met(R.states, st);
       if (st.k === 'set') R.panel = NP.resolve(st.ref).panel;
@@ -139,9 +147,11 @@
       }
     }
     render();
+    // A step with auto has nothing for the user to do: the next item follows after that many ms.
+    if (st && st.auto) { var kk = R.k, rr = R; AUTO_T = setTimeout(function () { if (R === rr && R.k === kk && VIEW === 'run') complete('Checked.'); }, st.auto); }
   }
   function jumpTo(k) {
-    R.k = k; R.states = NP.stateAt(D, R.f, k); R.note = null;
+    R.k = k; R.states = presets(R.f, NP.stateAt(D, R.f, k)); R.note = null;
     enterStep();
   }
   function complete(msg) {
@@ -190,7 +200,8 @@
     }
     if (R.note) h += '<p class="np-note' + (R.note.ok ? ' ok' : ' bad') + '">' + esc(R.note.s) + '</p>';
     h += '<div class="np-btns">';
-    if (st.k === 'check') h += '<button class="btn primary" data-act="checked" id="np-go">Checked</button>';
+    if (st.k === 'check' && st.auto) h += '<span class="np-why">Nothing to do: the next item follows in a moment.</span>';
+    else if (st.k === 'check') h += '<button class="btn primary" data-act="checked" id="np-go">Checked</button>';
     if (st.k === 'list') {
       var all = st.items.every(function (it, j) { return !it[1] || R.ticks[j]; });
       h += '<button class="btn primary" data-act="listdone" id="np-go"' + (all ? '' : ' disabled') + '>' + esc(st.name) + ' checklist complete</button>';
@@ -226,8 +237,15 @@
   function flyLabel(a) { return 'Fly the approach' + (flowById(a.practise).sim0 ? ' with PFD and ND' : ''); }
   function apprFor(pid) { for (var i = 0; i < AP.APPROACHES.length; i++) if (AP.APPROACHES[i].practise === pid) return AP.APPROACHES[i].id; return ''; }
 
+  // The MCDU page the last step that sets one has put on the screen (mcdu: in js/flows.js).
+  function mcduPageAt(f, k) {
+    var pg = null;
+    for (var i = 0; i < k && i < f.steps.length; i++) if (f.steps[i].mcdu) pg = D.MCDU[f.steps[i].mcdu];
+    return pg;
+  }
   function stageSvg() {
     var id = R.panel || 'LOWER', p = PN.P[id], st = step();
+    PN.LIVE.mcduPage = mcduPageAt(R.f, R.k);
     var target = st && st.k === 'set' && !(MODE === 'recall' && !R.reveal) ? NP.resolve(st.ref).i : null;
     var aspect = p.w / p.h;
     return '<div class="np-stage' + (aspect > 2.2 ? ' wide' : '') + '"><p class="np-stage-l">' + esc(panelName(id)) + '</p>' +
@@ -274,7 +292,7 @@
     var m = simAt(f, R.k), fls = m.type === 'FLS', dme = m.dme.toFixed(1) + 'NM';
     var lsTxt = fls ? ['RWY14L', '3.0°', '143°', dme] : ['IBX', '109.50', dme];
     var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, min: m.min,
-      ap: m.ap, fd: true, cas: m.cas, tgt: m.cas, vls: m.vls, fcuAlt: m.fcuAlt, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
+      ap: m.ap, fd: true, cas: m.cas, tgt: m.cas, vls: m.vls, vmax: m.vmax, vfen: m.vfen, fcuAlt: m.fcuAlt, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
       baro: '1013', ls: m.ls, dev: m.ls ? { loc: m.loc, gs: m.gs, dbl: fls } : null, lsTxt: m.ls ? lsTxt : null, fls: fls && m.ls, ra: m.alt < 2500 ? m.alt : null });
     var nd = DS.renderND({ alt: m.alt }, { mode: m.nd ? 'LS' : 'ARC', range: 10, cstr: false, opt: null, n1: 'OFF', n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(m.cas), tas: String(m.cas + 4),
       loc: m.ls ? m.loc : null, lsTxt: [fls ? 'FLS RWY14L' : 'ILS1 109.50', 'CRS 143°'] });
