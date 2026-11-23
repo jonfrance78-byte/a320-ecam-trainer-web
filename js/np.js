@@ -91,7 +91,7 @@
           '<span class="np-acard-t">' + esc(a.title) + '</span>' +
           '<span class="np-acard-d">' + esc(a.short) + '</span>' +
           '<span class="np-tags">' + a.tags.map(function (t) { return '<span class="np-tag">' + esc(t) + '</span>'; }).join('') + '</span>' +
-          (a.practise ? '<span class="np-acard-p">Practise on the panels<span aria-hidden="true">\u2192</span></span>' : '') +
+          (a.practise ? '<span class="np-acard-p">' + flyLabel(a) + '<span aria-hidden="true">\u2192</span></span>' : '') +
           '</button></li>';
       }).join('') + '</ul>' +
       '</section>' +
@@ -222,6 +222,8 @@
       '<button class="btn" data-act="flow" data-id="' + f.id + '">Fly it again</button>' +
       '<button class="btn" data-act="home">All procedures</button></div></div>';
   }
+  // The practice link on an approach: "Fly the approach", with the PFD and ND where the flow has them.
+  function flyLabel(a) { return 'Fly the approach' + (flowById(a.practise).sim0 ? ' with PFD and ND' : ''); }
   function apprFor(pid) { for (var i = 0; i < AP.APPROACHES.length; i++) if (AP.APPROACHES[i].practise === pid) return AP.APPROACHES[i].id; return ''; }
 
   function stageSvg() {
@@ -310,7 +312,7 @@
       '<div class="np-tabs" role="tablist" aria-label="' + esc(a.title) + '">' + a.tabs.map(function (x, i) {
         return '<button role="tab" id="tab-' + i + '" aria-selected="' + (i === APV.tab) + '" aria-controls="tabp" class="np-tab' + (i === APV.tab ? ' on' : '') + '" data-act="tab" data-i="' + i + '">' + esc(x.t) + '</button>';
       }).join('') +
-      (a.practise ? '<button class="np-tab np-tab-p" data-act="flow" data-id="' + a.practise + '">Practise on the panels</button>' : '') + '</div>' +
+      (a.practise ? '<button class="np-tab np-tab-p" data-act="flow" data-id="' + a.practise + '">' + flyLabel(a) + '</button>' : '') + '</div>' +
       '<section id="tabp" role="tabpanel" aria-labelledby="tab-' + APV.tab + '" class="np-tabp">' + t.blocks.map(block).join('') + '</section>' +
       '<p class="np-foot"><span class="op">◆</span> Operator-dependent: check the Jet2 OM. Training aid only.</p>' +
       '</main>';
