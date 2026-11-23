@@ -347,7 +347,8 @@
         S('EFISL/ND MODE', 'LS', 'ROSE LS', 'The ND shows the ILS course and the localiser deviation bar.', { sim: { nd: true } }),
         S('MCDU1/RAD\nNAV', 'press', 'RAD NAV — ILS ident, frequency and course checked', 'The RADIO NAV page shows them. They match the chart. Identify the ILS on the PFD.', { mcdu: 'RADNAV' }),
         S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_PRE' }),
-        S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR' }),
+        S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR_ILS' }),
+        C('PERF APPR — BARO minimum', 'Enter the BARO minimum (the DA from the chart, 210 ft here). It must be set to get the "Minimum" call.', { who: 'PM', panel: 'MCDU1', mcdu: 'PERFAPPR_ILS', sim: { min: 'BARO 210' } }),
         S('FCU/APPR', true, 'APPR', 'On an intercept heading with the approach clearance. FMA: G/S and LOC blue, CAT 1 (or better).', { who: 'PF', sim: { arm: 'G/S', armLat: 'LOC', cap: 'CAT 1' } }),
         C('LOC* — localiser capture', 'PF reads the FMA change, PM confirms ("Checked"). The deviation diamond is moving to the centre of the scale.', { sim: { lat: 'LOC*', armLat: '', hdgSel: false, hdgNow: 132, loc: 0.4, dme: 9.5 }, auto: 4000 }),
         C('LOC — localiser tracking', 'The aircraft is on the final approach course.', { sim: { lat: 'LOC', loc: 0, hdgNow: 143 }, auto: 4000 }),
@@ -364,21 +365,35 @@
     },
     {
       id: 'p-lvo', from: 'appr', pre: IN_APPR, title: 'CAT III autoland — practise', phase: 'Approach',
+      // As the ILS flow (RWY 14L, course 143°, level at 3000 ft), with CAT 3 SINGLE then DUAL, a radio DH of 50 ft, LAND at 400 ft, FLARE and ROLL OUT.
+      sim0: { type: 'ILS', alt: 3000, dme: 9.4, cas: 200, vls: 155, vfen: 230, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
       steps: [
-        S('EFISL/LS', true, 'LS — ON'),
+        S('EFISL/LS', true, 'LS — ON', 'Both pilots: ILS scales on the PFD.', { sim: { ls: true } }),
         S('EFISR/LS', true, 'LS — ON'),
-        S('MCDU1/PERF', 'press', 'PERF APPR — RADIO DH', 'Enter the RADIO minimum (DH from the chart, or NO for no DH).'),
-        S('FCU/APPR', true, 'APPR', '', { who: 'PF' }),
-        S('FCU/AP2', true, 'AP2 — ON', 'Second autopilot: available once APPR is armed. FMA shows CAT 3 DUAL with both APs and A/THR.', { who: 'PF' }),
-        C('FMA: CAT 3 DUAL, DH (or NO DH) — checked', 'PF announces the capability and minimum; PM crosschecks against the briefing.')
+        S('EFISL/ND MODE', 'LS', 'ROSE LS', 'The ND shows the ILS course and the localiser deviation bar.', { sim: { nd: true } }),
+        S('MCDU1/RAD\nNAV', 'press', 'RAD NAV — ILS ident, frequency and course checked', 'The RADIO NAV page shows them. They match the chart. Identify the ILS on the PFD.', { mcdu: 'RADNAV' }),
+        S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_PRE' }),
+        S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR_CAT3' }),
+        C('PERF APPR — RADIO minimum', 'Enter the RADIO minimum: the DH from the chart (50 ft here), or NO DH.', { who: 'PM', panel: 'MCDU1', mcdu: 'PERFAPPR_CAT3', sim: { min: 'DH 50' } }),
+        S('FCU/APPR', true, 'APPR', 'On an intercept heading with the approach clearance. FMA: G/S and LOC blue; CAT 3 SINGLE with one autopilot.', { who: 'PF', sim: { arm: 'G/S', armLat: 'LOC', cap: 'CAT 3', cap2: 'SINGLE' } }),
+        S('FCU/AP2', true, 'AP2 — ON', 'Second autopilot: available once APPR is armed. FMA shows CAT 3 DUAL with both APs and A/THR.', { who: 'PF', sim: { ap: ['AP1', 'AP2'], cap2: 'DUAL' } }),
+        C('FMA: CAT 3 DUAL, DH (or NO DH) — checked', 'PF announces the capability and minimum; PM crosschecks against the briefing.'),
+        C('LOC* — localiser capture', 'The deviation diamond is moving to the centre of the scale.', { sim: { lat: 'LOC*', armLat: '', hdgSel: false, hdgNow: 132, loc: 0.4, dme: 9.5 }, auto: 4000 }),
+        C('LOC — localiser tracking', 'The aircraft is on the final approach course.', { sim: { lat: 'LOC', loc: 0, hdgNow: 143 }, auto: 4000 }),
+        C('G/S* — glideslope capture', 'The glideslope diamond comes down to the centre as the aircraft meets the beam.', { sim: { vert: 'G/S*', arm: '', gs: 0.3, alt: 2980, dme: 9.4, vs: -500 }, auto: 4000 }),
+        C('G/S — glideslope tracking', 'Descending on the beam at about 700 ft/min. FMA: G/S, LOC green.', { sim: { vert: 'G/S', gs: 0, alt: 2900, dme: 9.1, vs: -700 }, auto: 4000 }),
+        S('FCU/ALT knob', 'press', 'Go-around altitude — set', 'Once G/S is captured: set the missed approach altitude on the FCU.', { who: 'PF', sim: { fcuAlt: 3000, alt: 2800, dme: 8.8 } })
       ].concat(CONFIG, [
-        C('400 ft RA: LAND', 'LAND green on the FMA. If LAND does not appear: no autoland ◆.'),
-        C('Alert height 100 ft', 'CAT 3 DUAL: below the AH a single failure does not need a go-around.'),
-        C('About 40 ft: FLARE', ''),
-        C('"Minimum" — "Land" (or "Go around – flaps")', 'With a DH: decide at the "Minimum" callout. No DH: continue unless the AUTO LAND light comes on.'),
-        S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '"RETARD" at 10 ft RA in autoland. Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] }),
-        C('ROLL OUT — "Spoilers" — "Reverse green" — "Decel"', 'The AP keeps the centreline on the localiser.'),
-        S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Disconnect the APs at taxi speed, before leaving the runway: takeover pushbutton on the sidestick.', { who: 'PF', after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] })
+        C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
+        C('400 ft RA: LAND', 'LAND green on the FMA. If LAND does not appear: no autoland ◆.', { sim: { vert: 'LAND', alt: 400, dme: 1.3 }, auto: 4000 }),
+        C('Alert height 100 ft', 'CAT 3 DUAL: below the AH a single failure does not need a go-around.', { sim: { alt: 100, dme: 0.3 }, auto: 4000 }),
+        C('"Minimum" — "Land" (or "Go around – flaps")', 'With a DH: decide at the "Minimum" callout. No DH: continue unless the AUTO LAND light comes on.', { sim: { alt: 50, dme: 0.15 } }),
+        C('About 30 ft: FLARE', 'The autopilot raises the nose: FLARE green on the FMA.', { sim: { vert: 'FLARE', alt: 30, dme: 0.1, vs: -400 }, auto: 4000 }),
+        S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '"RETARD" at 10 ft RA in autoland. Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 10, dme: 0.05, cas: 130, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] }),
+        C('Touchdown: ROLL OUT', 'ROLL OUT green on the FMA. The AP keeps the centreline on the localiser.', { sim: { lat: 'ROLL OUT', alt: 0, dme: 0, cas: 125, vs: 0 }, auto: 4000 }),
+        REVERSE,
+        C('"Spoilers" — "Reverse green" — "Decel"', 'The PM\'s calls on the roll-out.', { who: 'PM', auto: 4000 }),
+        S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Disconnect the APs at taxi speed, before leaving the runway: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [] }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] })
       ])
     },
     {
@@ -454,10 +469,10 @@
   /* MCDU pages shown by the flows' steps (mcdu: key). 14 rows: title, six label and data pairs, scratchpad.
    * Cell: [text, colour, L | R | C | position across 0..1, small label]. Layout of the APPR page after Safety first #40;
    * the DES and RADIO NAV pages are drawn from general knowledge: to be checked against the FCOM. */
-  var APPR_ROWS = function (fls, min, pre) {
+  var APPR_ROWS = function (fls, baro, radio, pre) {
     return [[['APPR', pre ? 'w' : 'g', 'C']], [['QNH', 'w', 'L', 1]].concat(fls ? [['FLS/FINAL APP*', 'c', 'R']] : []), [['1013', 'c', 'L']],
-      [['TEMP', 'w', 'L', 1], [fls ? 'BARO' : 'RADIO', 'w', 'R', 1]], [['10°', 'c', 'L'], [min, 'c', 'R']],
-      [['MAG WIND', 'w', 'L', 1]], [['020°/20', 'c', 'L']], [['TRANS ALT', 'w', 'L', 1]], [['4000', 'c', 'L']],
+      [['TEMP', 'w', 'L', 1], ['BARO', 'w', 'R', 1]], [['10°', 'c', 'L'], [baro, 'c', 'R']],
+      [['MAG WIND', 'w', 'L', 1]].concat(radio ? [['RADIO', 'w', 'R', 1]] : []), [['020°/20', 'c', 'L']].concat(radio ? [[radio, 'c', 'R']] : []), [['TRANS ALT', 'w', 'L', 1]], [['4000', 'c', 'L']],
       [['VAPP', 'w', 'L', 1], ['VLS', 'w', 0.3, 1], ['LDG CONF', 'w', 'R', 1]], [['135', 'c', 'L'], ['123', 'g', 0.3], ['FULL/CONF3*', 'c', 'R']],
       pre ? [] : [['PREV', 'w', 'L', 1], ['NEXT', 'w', 'R', 1]], pre ? [['<ACTIVATE APPR PHASE', 'c', 'L']] : [['<PHASE', 'w', 'L'], ['PHASE>', 'w', 'R']], []];
   };
@@ -466,14 +481,15 @@
       [['CRS', 'w', 'L', 1], ['CRS', 'w', 'R', 1]], [['[ ]', 'c', 'L'], ['[ ]', 'c', 'R']],
       [['ILS /FREQ', 'w', 'L', 1], ['CRS', 'w', 'R', 1]], [['IBX/109.50', 'm', 'L'], ['143', 'm', 'R']],
       [['ADF1/FREQ', 'w', 'L', 1], ['FREQ/ADF2', 'w', 'R', 1]], [['[ ]/[   ]', 'c', 'L'], ['[   ]/[ ]', 'c', 'R']], [], [], [], [], []],
-    PERFAPPR_PRE: APPR_ROWS(false, '[   ]', true),
-    PERFAPPR: APPR_ROWS(false, '[   ]'),
-    PERFAPPR_FLS_PRE: APPR_ROWS(true, '[   ]', true),
+    PERFAPPR_PRE: APPR_ROWS(false, '[   ]', '[   ]', true),
+    PERFAPPR_ILS: APPR_ROWS(false, '210', '[   ]'),
+    PERFAPPR_CAT3: APPR_ROWS(false, '[   ]', '50'),
+    PERFAPPR_FLS_PRE: APPR_ROWS(true, '[   ]', null, true),
     PERFAPPR_FLS: APPR_ROWS(true, '410')
   };
 
-  // The callouts "Stabilised" and "Continue" are spoken when their step comes up (speak: in js/np.js) and the step moves on after 4 seconds.
-  PRACTICE.forEach(function (f) { f.steps.forEach(function (st) { var m = st.k === 'check' && /"(Stabilised|Continue)"/.exec(st.say); if (m) { st.speak = m[1]; st.auto = 4000; } }); });
+  // The callouts "Stabilised", "Continue" and "Land" are spoken when their step comes up (speak: in js/np.js) and the step moves on after 4 seconds.
+  PRACTICE.forEach(function (f) { f.steps.forEach(function (st) { var m = st.k === 'check' && /"(Stabilised|Continue|Land)"/.exec(st.say); if (m) { st.speak = m[1]; st.auto = 4000; } }); });
 
   window.NP_FLOWS = { INITIAL: INITIAL, FLOWS: FLOWS, PRACTICE: PRACTICE, LABELS: LABELS, MCDU: MCDU };
 })();

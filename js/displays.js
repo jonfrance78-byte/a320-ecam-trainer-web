@@ -559,7 +559,8 @@
     (f.box || []).forEach(function (c) { o += rc(c * 40 + 3, 2.5, 34, 10, 'sw', 1); });
     if (f.armLat) o += t(100, 19, f.armLat, 'c', 6.5, 'middle');
     if (f.cap) o += t(140, 10, f.cap, 'w', 7, 'middle');
-    if (f.min) o += t(140, 18, f.min, 'c', 6.5, 'middle');
+    if (f.cap2) o += t(140, 17, f.cap2, 'w', 6.5, 'middle');
+    if (f.min) o += t(140, f.cap2 ? 24 : 18, f.min, 'c', 6.5, 'middle');
     // Armed autobrake: column 4, third line, blue
     if (f.brk) o += t(140, 23, 'BRK ' + f.brk, 'c', 6.5, 'middle');
     o += t(180, 9, f.ap ? (f.ap.length === 2 ? 'AP1+2' : f.ap[0] || '') : 'AP1', 'w', 6.5, 'middle') + t(180, 16, f.fd === false ? '-FD2' : '1FD2', 'w', 6.5, 'middle') + t(180, 23, 'A/THR', 'w', 6.5, 'middle');

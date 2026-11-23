@@ -319,7 +319,7 @@
     if (!f.sim0) return;
     var a = simAt(f, k), b = simAt(f, k + 1), now = Date.now();
     R.boxes = (R.boxes || []).filter(function (x) { return x.until > now; });
-    ['thr', 'vert', 'lat', 'cap'].forEach(function (key, col) { if (b[key] && b[key] !== a[key]) R.boxes = R.boxes.filter(function (x) { return x.col !== col; }).concat([{ col: col, until: now + 10000 }]); });
+    [['thr', 0], ['vert', 1], ['lat', 2], ['cap', 3], ['cap2', 3]].forEach(function (kc) { var key = kc[0], col = kc[1]; if (b[key] && b[key] !== a[key]) R.boxes = R.boxes.filter(function (x) { return x.col !== col; }).concat([{ col: col, until: now + 10000 }]); });
     var rr = R;
     setTimeout(function () { if (R === rr && VIEW === 'run') { var el = document.querySelector('.np-disp'); if (el) el.outerHTML = dispHtml(); } }, 10100);
   }
@@ -328,7 +328,7 @@
     if (!f.sim0 || !DS) return '';
     var m = simAt(f, R.k), fls = m.type === 'FLS', dme = m.dme.toFixed(1) + 'NM';
     var lsTxt = fls ? ['RWY14L', '3.0°', '143°', dme] : ['IBX', '109.50', dme];
-    var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, min: m.min,
+    var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, cap2: m.cap2, min: m.min,
       ap: m.ap, fd: true, cas: m.cas, tgt: m.cas, vls: m.vls, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
       baro: '1013', ls: m.ls, dev: m.ls ? { loc: m.loc, gs: m.gs, dbl: fls } : null, lsTxt: m.ls ? lsTxt : null, fls: fls && m.ls, ra: m.alt < 2500 ? m.alt : null });
     var nd = DS.renderND({ alt: m.alt }, { mode: m.nd ? 'LS' : 'ARC', range: 10, cstr: false, opt: null, n1: 'OFF', n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(m.cas), tas: String(m.cas + 4),
