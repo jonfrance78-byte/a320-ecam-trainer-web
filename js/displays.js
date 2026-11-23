@@ -636,7 +636,7 @@
     } else { var yt = f.tgt != null ? Math.max(TOP, Math.min(BOT, MID - (f.tgt - spd) * 1.24)) : MID; o += '<path d="M24.4 ' + yt + ' l7 -3.4 v6.8 z" class="sm" fill="none" stroke-width="1.2"/>'; }
     // speed trend: a yellow arrow from the speed towards where it is heading (f.trend, knots in 10 s)
     if (f.trend && Math.abs(f.trend) >= 1.5) { var ytr = MID - f.trend * 1.24, dr = f.trend > 0 ? 1 : -1; o += ln(20.6, MID, 20.6, ytr + dr * 3.6, 'sy', 1.2) + '<path d="M20.6 ' + ytr + ' l-2.4 ' + (dr * 3.8) + ' h4.8 z" class="fy"/>'; }
-    o += ln(0, MID, 23.7, MID, 'sy', 1.8) + '<path d="M24.4 ' + MID + ' l7 -3.6 v7.2 z" class="fy"/>';
+    o += ln(0, MID, 23.7, MID, 'sy', 1.8) + '<path d="M24.4 ' + MID + ' l5.2 -2.5 v5 z" class="fy"/>';
     if (!f.cas) o += t(3, 166.5, '.798', 'g', 8, 'start');
     // altitude tape: grey, scale line on its right edge, ticks every 100 ft, numbers (hundreds, three digits) every 500 ft (0.093 units a foot)
     o += '<rect x="148.6" y="' + TOP + '" width="16.4" height="' + (BOT - TOP) + '" class="tape"/>' + ln(165.2, TOP, 165.2, BOT, 'sw', 0.8);
@@ -713,8 +713,9 @@
     var ppn = mode === 'ARC' ? R / e.range : R / (e.range / 2), o = '';
     // positions are NM east and north of the aircraft; with a heading (e.hdg) the plan is turned so that the heading is up
     var hr = hd * Math.PI / 180, P = function (q) { return [cx + (q[1] * Math.cos(hr) - q[2] * Math.sin(hr)) * ppn, cy - (q[1] * Math.sin(hr) + q[2] * Math.cos(hr)) * ppn]; }, RT = e.route || ROUTE, rng = function (f) { var v = e.range * f; return v % 1 ? v.toFixed(1) : String(v); };
-    o += t(6, 12, 'GS', 'w', 7) + t(19, 12, e.gs || '480', 'g', 9) + t(42, 12, 'TAS', 'w', 7) + t(58, 12, e.tas || '458', 'g', 9);
-    o += t(6, 24, '163/23', 'g', 8) + '<path d="M10 40 L10 30 M7 33 L10 29 L13 33" class="sg" fill="none" stroke-width="1"/>';
+    // ground speed, true airspeed and wind in the same size as the TO block (7.5)
+    o += t(6, 12, 'GS', 'w', 7.5) + t(17, 12, e.gs || '480', 'g', 7.5) + t(35, 12, 'TAS', 'w', 7.5) + t(50, 12, e.tas || '458', 'g', 7.5);
+    o += t(6, 24, '163/23', 'g', 7.5) + '<path d="M10 40 L10 30 M7 33 L10 29 L13 33" class="sg" fill="none" stroke-width="1"/>';
     o += '<clipPath id="nd-clip"><rect x="0" y="' + (e.hdg != null ? 18 : 30) + '" width="200" height="' + (e.hdg != null ? 162 : 150) + '"/></clipPath><g clip-path="url(#nd-clip)">';
     if (mode === 'ARC') {
       o += arc(cx, cy, R, 150, 30, 'sw', 1.4);

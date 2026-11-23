@@ -73,11 +73,11 @@ a { color: var(--accent); }
 .np-card { padding: 16px 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
 .np-card .eyebrow { display: flex; align-items: center; gap: 8px; }
 .np-who { padding: 0 6px; border-radius: 4px; background: rgba(68, 180, 255, .14); color: var(--ecam-b); font: 700 11px var(--font-mono); letter-spacing: .04em; }
-.np-act { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 6px; font: 700 clamp(19px, 3.6vw, 24px)/1.25 var(--font-head); }
+.np-act { display: flex; align-items: baseline; gap: 8px; margin: 2px 0 6px; font: 700 clamp(16px, 2.6vw, 20px)/1.25 var(--font-head); }
 .np-act-c { display: block; text-wrap: balance; }
-.np-ctl { flex: none; max-width: 60%; }
+.np-ctl { flex: 0 1 auto; min-width: 0; max-width: 55%; overflow-wrap: anywhere; }
 .np-dots { flex: 1; min-width: 16px; border-bottom: 2px dotted #3a4a66; transform: translateY(-5px); }
-.np-val { flex: none; max-width: 50%; text-align: right; color: var(--ecam-c); font-family: var(--font-mono); }
+.np-val { flex: 0 1 auto; min-width: 0; max-width: 55%; text-align: right; color: var(--ecam-c); font-family: var(--font-mono); font-size: .82em; overflow-wrap: anywhere; }
 .np-why { margin: 0 0 6px; max-width: 70ch; color: var(--ink); }
 .np-do { margin: 0; color: var(--ink-2); font-size: 14px; }
 .np-note { margin: 10px 0 0; font-size: 14px; font-weight: 700; }

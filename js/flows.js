@@ -338,7 +338,7 @@
   // The same configuration steps flown level at 3000 ft, before the final descent starts (RNAV and selected approaches).
   var LEVEL_DME = [12.0, 11.6, 11.2, 10.8, 10.4];
   var CONFIG_LEVEL = CONFIG.map(function (st, k) { return Object.assign({}, st, { sim: Object.assign({}, st.sim, { alt: 3000, dme: LEVEL_DME[k] }) }); });
-  var RETARD = S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', 'Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 20, dme: 0, cas: 126, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] });
+  var RETARD = S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', 'Bring both thrust levers back to IDLE.', { who: 'PF', speak: 'Retard', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 20, dme: 0, cas: 126, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] });
 
   var PRACTICE = [
     {
@@ -360,6 +360,7 @@
         C('G/S — glideslope tracking', 'Descending on the beam at about 700 ft/min. FMA: G/S, LOC green.', { sim: { vert: 'G/S', gs: 0, alt: 2900, dme: 9.1, vs: -700 }, auto: 4000 }),
       ].concat(CONFIG, [
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
+        C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 310, dme: 1.0 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 210, dme: 0.7 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Manual landing: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 190, dme: 0.6 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD,
@@ -389,10 +390,11 @@
       ].concat(CONFIG, [
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
         C('400 ft RA: LAND', 'LAND green on the FMA. If LAND does not appear: no autoland ◆.', { sim: { vert: 'LAND', alt: 400, dme: 1.3 }, auto: 4000 }),
+        C('150 ft: "Hundred above"', 'Automatic callout, 100 ft above the DH of 50 ft.', { sim: { alt: 150, dme: 0.47 } }),
         C('Alert height 100 ft', 'CAT 3 DUAL: below the AH a single failure does not need a go-around.', { sim: { alt: 100, dme: 0.3 }, auto: 4000 }),
         C('"Minimum" — "Land" (or "Go around – flaps")', 'With a DH: decide at the "Minimum" callout. No DH: continue unless the AUTO LAND light comes on.', { sim: { alt: 50, dme: 0.15 } }),
         C('About 30 ft: FLARE', 'The autopilot raises the nose: FLARE green on the FMA.', { sim: { vert: 'FLARE', alt: 30, dme: 0.1, vs: -400 }, auto: 4000 }),
-        S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '"RETARD" at 10 ft RA in autoland. Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 10, dme: 0.05, cas: 126, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] }),
+        S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '"RETARD" at 10 ft RA in autoland. Bring both thrust levers back to IDLE.', { who: 'PF', speak: 'Retard', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 10, dme: 0.05, cas: 126, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] }),
         C('Touchdown: ROLL OUT', 'ROLL OUT green on the FMA. The AP keeps the centreline on the localiser.', { sim: { lat: 'ROLL OUT', alt: 0, dme: 0, cas: 118, vs: 0 }, auto: 4000 }),
         REVERSE,
         C('"Spoilers" — "Reverse green" — "Decel"', 'The PM\'s calls on the roll-out.', { who: 'PM', auto: 4000 }),
@@ -417,6 +419,7 @@
         S('FCU/ALT knob', 'press', 'At FINAL APP — set go-around altitude', 'The missed approach altitude on the FCU, once FINAL APP is engaged.', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('Monitor: V/DEV, XTK, GPS PRIMARY', 'Go around if XTK exceeds 0.3 NM, V/DEV is excessive (½ dot ◆) or GPS PRIMARY is lost on both NDs.', { sim: { alt: 1500, dme: 4.7 } }),
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
+        C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 510, dme: 1.6 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'At or before the minimum: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD,
@@ -444,6 +447,7 @@
         C('F-G/S — tracking', 'FMA: F-G/S, F-LOC green.', { sim: { vert: 'F-G/S', gs: 0, alt: 2900, dme: 9.1, vs: -700 }, auto: 4000 })
       ].concat(CONFIG, [
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
+        C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 510, dme: 1.6 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD,
@@ -469,6 +473,7 @@
         S('FCU/ALT knob', 'press', 'Go-around altitude — set', 'Once descending below the missed approach altitude.', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('Distance / altitude checks', 'PM calls the check heights each mile; PF adjusts the FPA to regain the path.', { who: 'PM', sim: { alt: 1500, dme: 4.7 } }),
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
+        C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 510, dme: 1.6 } }),
         C('"Minimum" — "Continue"', 'No level-off at the MDA: continue only with the visual reference, otherwise go around.', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD,
@@ -516,8 +521,14 @@
     PERFAPPR_FLS: APPR_ROWS(true, '410')
   };
 
-  // The callouts "Stabilised", "Continue" and "Land" are spoken when their step comes up (speak: in js/np.js) and the step moves on after 4 seconds.
-  PRACTICE.forEach(function (f) { f.steps.forEach(function (st) { var m = st.k === 'check' && /"(Stabilised|Continue|Land)"/.exec(st.say); if (m) { st.speak = m[1]; st.auto = 4000; } }); });
+  // Every callout in quotes in a check step ("Stabilised", "Minimum", "Continue", "Spoilers"...) is spoken when the step comes up (speak: in js/np.js), 2 seconds apart, and the step moves on by itself.
+  PRACTICE.forEach(function (f) {
+    f.steps.forEach(function (st) {
+      if (st.k !== 'check' || st.speak) return;
+      var q = (st.say || '').replace(/\([^)]*\)/g, '').match(/"[^"]+"/g);
+      if (q) { st.speak = q.map(function (x) { return x.slice(1, -1); }); st.auto = Math.max(4000, 2000 * q.length); }
+    });
+  });
 
   window.NP_FLOWS = { INITIAL: INITIAL, FLOWS: FLOWS, PRACTICE: PRACTICE, LABELS: LABELS, MCDU: MCDU };
 })();

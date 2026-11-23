@@ -150,8 +150,8 @@
     var rr = R, kk = R.k;
     SPEAK_T = setTimeout(function () {
       if (R !== rr || R.k !== kk || VIEW !== 'run') return;
-      say(list[0]);
-      if (list.length > 1) SPEAK_T = setTimeout(function () { if (R === rr && R.k === kk && VIEW === 'run') say(list[1]); }, 2000);
+      var n = 0, next = function () { say(list[n]); if (++n < list.length) SPEAK_T = setTimeout(function () { if (R === rr && R.k === kk && VIEW === 'run') next(); }, 2000); };
+      next();
     }, 80);
   }
   function step() { return R.f.steps[R.k]; }
@@ -159,7 +159,13 @@
   function enterStep() {
     var st = step();
     R.reveal = false; R.ticks = {};
-    clearTimeout(AUTO_T); clearTimeout(SPEAK_T); if (R) { clearTimeout(R.holdT); R.held = false; }
+    clearTimeout(AUTO_T); clearTimeout(SPEAK_T); if (R) { clearTimeout(R.holdT); clearTimeout(R.modeT); R.held = false; R.modeHold = false; }
+    // A check step (a callout or an event of the aircraft) shows its state as it comes up: the numbers glide to it, and a new FMA mode
+    // (LAND at 400 ft, LOC*...) appears, boxed, once they have arrived.
+    if (st && st.k === 'check' && st.sim && MODE_KEYS.some(function (k) { return k in st.sim; })) {
+      var mr = R, mk = R.k; R.modeHold = true;
+      R.modeT = setTimeout(function () { if (R === mr && R.k === mk && VIEW === 'run') { R.modeHold = false; markFma(R.f, mk); var el = document.querySelector('.np-disp'); if (el) el.outerHTML = dispHtml(); } }, GLIDE_MS);
+    }
     if (st && st.speak) speak(st.speak);
     if (st) {
       R.pre = st.k === 'set' && NP.met(R.states, st);
@@ -182,7 +188,7 @@
   function complete(msg) {
     var st = step();
     if (st.k === 'check' || st.k === 'set') NP.applyAfter(R.states, st.after);
-    markFma(R.f, R.k);
+    if (st.k === 'set') markFma(R.f, R.k);
     R.note = { ok: true, s: msg };
     R.k++;
     if (R.k >= R.f.steps.length) { DONE[R.f.id] = true; store('done', DONE); }
@@ -277,7 +283,7 @@
   }
   function stageSvg() {
     var id = R.panel || 'LOWER', p = PN.P[id], st = step();
-    PN.LIVE.mcduPage = mcduPageAt(R.f, R.k + (R.held ? 1 : 0));
+    PN.LIVE.mcduPage = mcduPageAt(R.f, shownK());
     var target = st && st.k === 'set' && !st.nohl && !(MODE === 'recall' && !R.reveal) ? NP.resolve(st.ref).i : null;
     var aspect = p.w / p.h;
     return '<div class="np-stage' + (aspect > 2.2 ? ' wide' : '') + '"><p class="np-stage-l">' + esc(panelName(id)) + '</p>' +
@@ -332,9 +338,12 @@
    * frames a second over 2.5 s instead of jumping: R.anim holds the values on show, where they started and
    * where they are going. */
   var FPS = 24, GLIDE_MS = 3000, GLIDE = ['loc', 'gs', 'hdgNow', 'alt', 'dme', 'cas', 'vs', 'fpa', 'vls', 'vmax', 'vfen'], ANIM_T = 0;
+  var MODE_KEYS = ['thr', 'vert', 'lat', 'arm', 'armLat', 'cap', 'cap2'];
+  // how many steps' sim is on show: those done, the one being held, and the current one when it is a check
+  function shownK() { var st = R.f.steps[R.k]; return R.k + (R.held ? 1 : 0) + (st && st.k === 'check' && st.sim ? 1 : 0); }
   function pick(m) { var o = {}; GLIDE.forEach(function (k) { o[k] = m[k]; }); return o; }
   function animAt(f) {
-    var m = simAt(f, R.k + (R.held ? 1 : 0)), tg = pick(m), A = R.anim;
+    var m = simAt(f, shownK()), tg = pick(m), A = R.anim;
     if (!A) A = R.anim = { cur: tg, from: tg, tgt: tg, t0: 0 };
     else if (GLIDE.some(function (k) { return A.tgt[k] !== tg[k]; })) { A.from = Object.assign({}, A.cur); A.tgt = tg; A.t0 = Date.now(); }
     if (GLIDE.some(function (k) { return A.cur[k] !== A.tgt[k]; }) && !ANIM_T) {
@@ -369,7 +378,9 @@
   function dispHtml() {
     var f = R.f, DS = window.ECAM_DISPLAYS;
     if (!f.sim0 || !DS) return '';
-    var m = animAt(f), ty = m.type, fls = ty === 'FLS', xls = ty === 'ILS' || fls, dme = m.dme.toFixed(1) + 'NM';
+    var m = animAt(f);
+    if (R.modeHold) { var pm = simAt(f, R.k); MODE_KEYS.forEach(function (k) { m[k] = pm[k]; }); }
+    var ty = m.type, fls = ty === 'FLS', xls = ty === 'ILS' || fls, dme = m.dme.toFixed(1) + 'NM';
     var lsTxt = fls ? ['RWY14L', '3.0°', dme] : ['IBX', '109.50', dme], rt = appRoute(m.dme, (m.loc || 0) * 0.6);
     var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, cap2: m.cap2, min: m.min,
       ap: m.ap, fd: m.fd !== false, bird: m.bird, fpa: m.fpa, cas: m.cas, tgt: m.tgt != null ? m.tgt : m.cas, trend: m.tgt != null ? Math.max(-20, Math.min(20, m.tgt - m.cas)) : 0, vls: m.vls, vap: m.vls ? m.vls - 11 : null, vam: m.vls ? m.vls - 18 : null, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, fcuTop: true, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
