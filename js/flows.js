@@ -334,6 +334,7 @@
     S('FLAPS/FLAPS', '3', 'FLAPS 3 — speed checked', 'Speed below VFE for flaps 3 (185 kt) before selecting.', { who: 'PM', speak: ['Flaps 3', 'Speed checked, flaps 3'], sim: { alt: 1600, dme: 5.0, cas: 145, vls: 128, vmax: 185, vfen: 177 } }),
     S('FLAPS/FLAPS', 'FULL', 'FLAPS FULL — speed checked', 'Speed below VFE for flaps full (177 kt) before selecting. Landing checklist.', { who: 'PM', speak: ['Flaps full', 'Speed checked, flaps full'], sim: { alt: 1450, dme: 4.6, cas: 135, vls: 123, vmax: 177, vfen: null } })
   ];
+  var REVERSE = S('THR/Thrust lever 1', ['REV IDLE', 'MAX REV'], 'REVERSE — REV IDLE or FULL', 'Select reverse on both thrust levers: REV IDLE, or FULL if the situation needs it.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', after: [['THR/Thrust lever 2', { cur: 4 }]] });
   var RETARD = S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', 'Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 20, dme: 0, cas: 130, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] });
 
   var PRACTICE = [
@@ -345,8 +346,8 @@
         S('EFISL/LS', true, 'LS — ON', 'Both pilots: ILS scales on the PFD.', { sim: { ls: true } }),
         S('EFISL/ND MODE', 'LS', 'ROSE LS', 'The ND shows the ILS course and the localiser deviation bar.', { sim: { nd: true } }),
         S('MCDU1/RAD\nNAV', 'press', 'RAD NAV — ILS ident, frequency and course checked', 'The RADIO NAV page shows them. They match the chart. Identify the ILS on the PFD.', { mcdu: 'RADNAV' }),
-        S('MCDU1/PERF', 'press', 'PERF — DES page', 'The prompt to activate the approach phase is at the bottom of the page, in blue.', { who: 'PM', mcdu: 'PERFDES' }),
-        S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The PERF APPR page follows.', { who: 'PM', mcdu: 'PERFAPPR' }),
+        S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_PRE' }),
+        S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR' }),
         S('FCU/APPR', true, 'APPR', 'On an intercept heading with the approach clearance. FMA: G/S and LOC blue, CAT 1 (or better).', { who: 'PF', sim: { arm: 'G/S', armLat: 'LOC', cap: 'CAT 1' } }),
         C('LOC* — localiser capture', 'PF reads the FMA change, PM confirms ("Checked"). The deviation diamond is moving to the centre of the scale.', { sim: { lat: 'LOC*', armLat: '', hdgSel: false, hdgNow: 132, loc: 0.4, dme: 9.5 }, auto: 4000 }),
         C('LOC — localiser tracking', 'The aircraft is on the final approach course.', { sim: { lat: 'LOC', loc: 0, hdgNow: 143 }, auto: 4000 }),
@@ -357,7 +358,8 @@
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 210, dme: 0.7 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Manual landing: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 190, dme: 0.6 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
-        RETARD
+        RETARD,
+        REVERSE
       ])
     },
     {
@@ -393,7 +395,8 @@
         C('Monitor: V/DEV, XTK, GPS PRIMARY', 'Go around if XTK exceeds 0.3 NM, V/DEV is excessive (½ dot ◆) or GPS PRIMARY is lost on both NDs.'),
         C('"Minimum" — "Continue"', ''),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'At or before the minimum: takeover pushbutton on the sidestick.', { who: 'PF', after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
-        RETARD
+        RETARD,
+        REVERSE
       ])
     },
     {
@@ -406,8 +409,8 @@
         S('EFISL/ND MODE', 'LS', 'ROSE LS', 'The ND shows the FLS course and the deviation bar.', { sim: { nd: true } }),
         C('FLS data on the PFD vs chart', 'FLS ident, course and slope. Course ±1°, overlay ±3°, slope ±0.1°: outside these, the FLS must not be used.'),
         C('Capability: F-APP / F-APP + RAW / RAW ONLY', 'F-APP + RAW: show the raw data needles. RAW ONLY: the FLS must not be used.'),
-        S('MCDU1/PERF', 'press', 'PERF — DES page', 'The prompt to activate the approach phase is at the bottom of the page, in blue.', { who: 'PM', mcdu: 'PERFDES' }),
-        S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The PERF APPR page follows.', { who: 'PM', mcdu: 'PERFAPPR_FLS' }),
+        S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_FLS_PRE' }),
+        S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR_FLS' }),
         C('PERF APPR — BARO minimum', 'QNH and temperature (the FLS corrects the glideslope for cold) and the BARO minimum.', { who: 'PM', panel: 'MCDU1', sim: { min: 'BARO 410' } }),
         S('FCU/APPR', true, 'APPR', 'FMA: F-G/S and F-LOC blue (LOC and F-G/S for a localiser approach).', { who: 'PF', sim: { arm: 'F-G/S', armLat: 'F-LOC' } }),
         C('F-LOC* — capture', 'The double diamond is moving to the centre of the scale.', { sim: { lat: 'F-LOC*', armLat: '', hdgSel: false, hdgNow: 132, loc: 0.4, dme: 9.5 }, auto: 4000 }),
@@ -418,7 +421,8 @@
         S('FCU/ALT knob', 'press', 'Go-around altitude — set', '', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
-        RETARD
+        RETARD,
+        REVERSE
       ])
     },
     {
@@ -436,7 +440,8 @@
         C('Distance / altitude checks', 'PM calls the check heights each mile; PF adjusts the FPA to regain the path.', { who: 'PM' }),
         C('"Minimum" — "Continue"', 'No level-off at the MDA: continue only with the visual reference, otherwise go around.'),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
-        RETARD
+        RETARD,
+        REVERSE
       ])
     }
   ];
@@ -449,20 +454,21 @@
   /* MCDU pages shown by the flows' steps (mcdu: key). 14 rows: title, six label and data pairs, scratchpad.
    * Cell: [text, colour, L | R | C | position across 0..1, small label]. Layout of the APPR page after Safety first #40;
    * the DES and RADIO NAV pages are drawn from general knowledge: to be checked against the FCOM. */
-  var APPR_ROWS = function (fls, min) {
-    return [[['APPR', 'g', 'C']], [['QNH', 'w', 'L', 1]].concat(fls ? [['FLS/FINAL APP*', 'c', 'R']] : []), [['1013', 'c', 'L']],
+  var APPR_ROWS = function (fls, min, pre) {
+    return [[['APPR', pre ? 'w' : 'g', 'C']], [['QNH', 'w', 'L', 1]].concat(fls ? [['FLS/FINAL APP*', 'c', 'R']] : []), [['1013', 'c', 'L']],
       [['TEMP', 'w', 'L', 1], [fls ? 'BARO' : 'RADIO', 'w', 'R', 1]], [['10°', 'c', 'L'], [min, 'c', 'R']],
       [['MAG WIND', 'w', 'L', 1]], [['020°/20', 'c', 'L']], [['TRANS ALT', 'w', 'L', 1]], [['4000', 'c', 'L']],
       [['VAPP', 'w', 'L', 1], ['VLS', 'w', 0.3, 1], ['LDG CONF', 'w', 'R', 1]], [['135', 'c', 'L'], ['123', 'g', 0.3], ['FULL/CONF3*', 'c', 'R']],
-      [['PREV', 'w', 'L', 1], ['NEXT', 'w', 'R', 1]], [['<PHASE', 'w', 'L'], ['PHASE>', 'w', 'R']], []];
+      pre ? [] : [['PREV', 'w', 'L', 1], ['NEXT', 'w', 'R', 1]], pre ? [['<ACTIVATE APPR PHASE', 'c', 'L']] : [['<PHASE', 'w', 'L'], ['PHASE>', 'w', 'R']], []];
   };
   var MCDU = {
     RADNAV: [[['RADIO NAV', 'w', 'C']], [['VOR1/FREQ', 'w', 'L', 1], ['FREQ/VOR2', 'w', 'R', 1]], [['[ ]/[   ]', 'c', 'L'], ['[   ]/[ ]', 'c', 'R']],
       [['CRS', 'w', 'L', 1], ['CRS', 'w', 'R', 1]], [['[ ]', 'c', 'L'], ['[ ]', 'c', 'R']],
       [['ILS /FREQ', 'w', 'L', 1], ['CRS', 'w', 'R', 1]], [['IBX/109.50', 'm', 'L'], ['143', 'm', 'R']],
       [['ADF1/FREQ', 'w', 'L', 1], ['FREQ/ADF2', 'w', 'R', 1]], [['[ ]/[   ]', 'c', 'L'], ['[   ]/[ ]', 'c', 'R']], [], [], [], [], []],
-    PERFDES: [[['DESCENT', 'g', 'C']], [['CI', 'w', 'L', 1], ['MANAGED', 'w', 'R', 1]], [['35', 'c', 'L'], ['.78/300', 'm', 'R']], [], [], [], [], [], [], [], [], [], [['<ACTIVATE APPR PHASE', 'c', 'L']], []],
+    PERFAPPR_PRE: APPR_ROWS(false, '[   ]', true),
     PERFAPPR: APPR_ROWS(false, '[   ]'),
+    PERFAPPR_FLS_PRE: APPR_ROWS(true, '[   ]', true),
     PERFAPPR_FLS: APPR_ROWS(true, '410')
   };
 

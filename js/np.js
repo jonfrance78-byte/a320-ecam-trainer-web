@@ -131,14 +131,28 @@
     return states;
   }
   // A callout through the speakers (the browser's own voice). A list is spoken in turn, 2 seconds apart.
+  // Cancelling only when something is queued, resuming a paused engine, choosing an English voice when the
+  // device has one and speaking a moment after the cancel are the usual cures for a browser that stays silent.
   function speak(w) {
     var list = [].concat(w), ss = window.speechSynthesis;
     clearTimeout(SPEAK_T);
     if (!ss) return;
-    var say = function (x) { try { var u = new SpeechSynthesisUtterance(x); u.lang = 'en-GB'; u.rate = 0.9; ss.speak(u); } catch (e) { /* no speech: silent */ } };
-    try { ss.cancel(); } catch (e) { /* no speech: silent */ }
-    say(list[0]);
-    if (list.length > 1) { var rr = R, kk = R.k; SPEAK_T = setTimeout(function () { if (R === rr && R.k === kk && VIEW === 'run') say(list[1]); }, 2000); }
+    var say = function (x) {
+      try {
+        var u = new SpeechSynthesisUtterance(x), vs = ss.getVoices ? ss.getVoices() : [], v = vs.filter(function (q) { return /^en[-_]GB/i.test(q.lang); })[0] || vs.filter(function (q) { return /^en/i.test(q.lang); })[0];
+        if (v) { u.voice = v; u.lang = v.lang; }
+        u.rate = 0.9;
+        if (ss.resume) ss.resume();
+        ss.speak(u);
+      } catch (e) { /* no speech: silent */ }
+    };
+    try { if (ss.speaking || ss.pending) ss.cancel(); } catch (e) { /* no speech: silent */ }
+    var rr = R, kk = R.k;
+    SPEAK_T = setTimeout(function () {
+      if (R !== rr || R.k !== kk || VIEW !== 'run') return;
+      say(list[0]);
+      if (list.length > 1) SPEAK_T = setTimeout(function () { if (R === rr && R.k === kk && VIEW === 'run') say(list[1]); }, 2000);
+    }, 80);
   }
   function step() { return R.f.steps[R.k]; }
   // Before the step: remember whether its target is already met (then it is a check).
