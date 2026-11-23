@@ -328,11 +328,11 @@
    * descent preparation, below FL100 with the landing lights on. */
   var IN_APPR = [T('LOWER/L', 'ON'), T('LOWER/R', 'ON')];
   var CONFIG = [
-    S('FLAPS/FLAPS', '1', 'FLAPS 1 — speed checked', 'Check the speed is below VFE for the new configuration (230 kt) before selecting. The amber = on the speed tape is VFE next.', { who: 'PM', speak: 'Speed checked', sim: { alt: 2250, dme: 7.0, cas: 180, vls: 143, vmax: 230, vfen: 200 } }),
-    S('FLAPS/FLAPS', '2', 'FLAPS 2 — speed checked', 'Speed below VFE for flaps 2 (200 kt) before selecting.', { who: 'PM', speak: 'Speed checked', sim: { alt: 2000, dme: 6.3, cas: 160, vls: 133, vmax: 200, vfen: 185 } }),
-    S('LGLEVER/Landing gear lever', 'DOWN', 'GEAR DOWN — speed checked', 'Speed below VLO (250 kt) before selecting. Then GND SPLRS ARM.', { who: 'PM', speak: 'Speed checked', sim: { alt: 1800, dme: 5.7, cas: 155, vmax: 200, vfen: 185 } }),
-    S('FLAPS/FLAPS', '3', 'FLAPS 3 — speed checked', 'Speed below VFE for flaps 3 (185 kt) before selecting.', { who: 'PM', speak: 'Speed checked', sim: { alt: 1600, dme: 5.0, cas: 145, vls: 128, vmax: 185, vfen: 177 } }),
-    S('FLAPS/FLAPS', 'FULL', 'FLAPS FULL — speed checked', 'Speed below VFE for flaps full (177 kt) before selecting. Landing checklist.', { who: 'PM', speak: 'Speed checked', sim: { alt: 1450, dme: 4.6, cas: 135, vls: 123, vmax: 177, vfen: null } })
+    S('FLAPS/FLAPS', '1', 'FLAPS 1 — speed checked', 'Check the speed is below VFE for the new configuration (230 kt) before selecting. The amber = on the speed tape is VFE next.', { who: 'PM', speak: ['Flaps 1', 'Speed checked, flaps 1'], sim: { alt: 2250, dme: 7.0, cas: 180, vls: 143, vmax: 230, vfen: 200 } }),
+    S('FLAPS/FLAPS', '2', 'FLAPS 2 — speed checked', 'Speed below VFE for flaps 2 (200 kt) before selecting.', { who: 'PM', speak: ['Flaps 2', 'Speed checked, flaps 2'], sim: { alt: 2000, dme: 6.3, cas: 160, vls: 133, vmax: 200, vfen: 185 } }),
+    S('LGLEVER/Landing gear lever', 'DOWN', 'GEAR DOWN — speed checked', 'Speed below VLO (250 kt) before selecting. Then GND SPLRS ARM.', { who: 'PM', speak: ['Gear down', 'Speed checked, gear down'], sim: { alt: 1800, dme: 5.7, cas: 155, vmax: 200, vfen: 185 } }),
+    S('FLAPS/FLAPS', '3', 'FLAPS 3 — speed checked', 'Speed below VFE for flaps 3 (185 kt) before selecting.', { who: 'PM', speak: ['Flaps 3', 'Speed checked, flaps 3'], sim: { alt: 1600, dme: 5.0, cas: 145, vls: 128, vmax: 185, vfen: 177 } }),
+    S('FLAPS/FLAPS', 'FULL', 'FLAPS FULL — speed checked', 'Speed below VFE for flaps full (177 kt) before selecting. Landing checklist.', { who: 'PM', speak: ['Flaps full', 'Speed checked, flaps full'], sim: { alt: 1450, dme: 4.6, cas: 135, vls: 123, vmax: 177, vfen: null } })
   ];
   var RETARD = S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', 'Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 20, dme: 0, cas: 130, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] });
 
