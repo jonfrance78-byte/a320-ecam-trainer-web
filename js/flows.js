@@ -334,11 +334,13 @@
     S('FLAPS/FLAPS', '3', 'FLAPS 3 — speed checked', 'Speed below VFE for flaps 3 (185 kt) before selecting.', { who: 'PM', speak: ['Flaps 3', 'Speed checked, flaps 3'], sim: { alt: 1600, dme: 5.0, cas: 145, tgt: 145, vls: 128, vmax: 185, vfen: 177 } }),
     S('FLAPS/FLAPS', 'FULL', 'FLAPS FULL — speed checked', 'Speed below VFE for flaps full (177 kt) before selecting. The target is VAPP 130 kt: VLS 123 plus a third of the 21 kt headwind, with the ground speed mini (109 kt) holding the ground speed up. Landing checklist.', { who: 'PM', speak: ['Flaps full', 'Speed checked, flaps full'], sim: { alt: 1450, dme: 4.6, cas: 130, tgt: 130, vls: 123, vmax: 177, vfen: null } })
   ];
-  var REVERSE = S('THR/Thrust lever 1', ['REV IDLE', 'MAX REV'], 'REVERSE — REV IDLE or FULL', 'Select reverse on both thrust levers: REV IDLE, or FULL if the situation needs it.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', after: [['THR/Thrust lever 2', { cur: 4 }]] });
+  // The automatic callout at 20 ft RA, repeated until the thrust levers are at idle.
+  var RETARD_CALL = C('About 20 ft: "Retard" — "Retard" — "Retard"', 'Automatic callout at 20 ft RA, repeated until the thrust levers are at idle.', { sim: { alt: 20, dme: 0.03 }, gap: 900 });
+  var REVERSE = S('THR/Thrust lever 1', ['REV IDLE', 'MAX REV'], 'REV THRUST — IDLE or FULL', 'Select reverse thrust on both thrust levers: REV IDLE, or FULL if the situation needs it.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', after: [['THR/Thrust lever 2', { cur: 4 }]] });
   // The same configuration steps flown level at 3000 ft, before the final descent starts (RNAV and selected approaches).
   var LEVEL_DME = [12.0, 11.6, 11.2, 10.8, 10.4];
   var CONFIG_LEVEL = CONFIG.map(function (st, k) { return Object.assign({}, st, { sim: Object.assign({}, st.sim, { alt: 3000, dme: LEVEL_DME[k] }) }); });
-  var RETARD = S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', 'Bring both thrust levers back to IDLE.', { who: 'PF', speak: 'Retard', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 20, dme: 0, cas: 126, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] });
+  var RETARD = S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', 'Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 20, dme: 0, cas: 126, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] });
 
   var PRACTICE = [
     {
@@ -363,6 +365,7 @@
         C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 310, dme: 1.0 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 210, dme: 0.7 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Manual landing: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 190, dme: 0.6 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
+        RETARD_CALL,
         RETARD,
         REVERSE
       ])
@@ -373,7 +376,6 @@
       sim0: { type: 'ILS', alt: 3000, dme: 9.4, cas: 200, tgt: 200, vls: 155, vfen: 230, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
       steps: [
         S('EFISL/LS', true, 'LS — ON', 'Both pilots: ILS scales on the PFD.', { sim: { ls: true } }),
-        S('EFISR/LS', true, 'LS — ON'),
         S('EFISL/ND MODE', ['LS', 'ARC'], 'ROSE LS or ARC', 'ARC (used most of the time) or ROSE LS. The ND shows the flight plan with the final approach and the ILS ident at the top.', { sim: { nd: true } }),
         S('MCDU1/RAD\nNAV', 'press', 'RAD NAV — ILS ident, frequency and course checked', 'The RADIO NAV page shows them. They match the chart. Identify the ILS on the PFD.', { mcdu: 'RADNAV' }),
         S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_PRE' }),
@@ -394,11 +396,12 @@
         C('Alert height 100 ft', 'CAT 3 DUAL: below the AH a single failure does not need a go-around.', { sim: { alt: 100, dme: 0.3 }, auto: 4000 }),
         C('"Minimum" — "Land" (or "Go around – flaps")', 'With a DH: decide at the "Minimum" callout. No DH: continue unless the AUTO LAND light comes on.', { sim: { alt: 50, dme: 0.15 } }),
         C('About 30 ft: FLARE', 'The autopilot raises the nose: FLARE green on the FMA.', { sim: { vert: 'FLARE', alt: 30, dme: 0.1, vs: -400 }, auto: 4000 }),
-        S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '"RETARD" at 10 ft RA in autoland. Bring both thrust levers back to IDLE.', { who: 'PF', speak: 'Retard', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 10, dme: 0.05, cas: 126, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] }),
-        C('Touchdown: ROLL OUT', 'ROLL OUT green on the FMA. The AP keeps the centreline on the localiser.', { sim: { lat: 'ROLL OUT', alt: 0, dme: 0, cas: 118, vs: 0 }, auto: 4000 }),
+        RETARD_CALL,
+        S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '"RETARD" at 10 ft RA in autoland. Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 10, dme: 0.05, cas: 126, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] }),
+        C('Touchdown: ROLL OUT', 'ROLL OUT green on the FMA. The AP keeps the centreline on the localiser.', { sim: { lat: 'ROLL OUT', vert: '', alt: 0, dme: 0, cas: 118, vs: 0 }, auto: 4000 }),
         REVERSE,
         C('"Spoilers" — "Reverse green" — "Decel"', 'The PM\'s calls on the roll-out.', { who: 'PM', auto: 4000 }),
-        S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Disconnect the APs at taxi speed, before leaving the runway: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [] }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] })
+        S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Disconnect the AP when the crew has sufficient visual contact: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [] }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] })
       ])
     },
     {
@@ -422,6 +425,7 @@
         C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 510, dme: 1.6 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'At or before the minimum: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
+        RETARD_CALL,
         RETARD,
         REVERSE
       ])
@@ -450,6 +454,7 @@
         C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 510, dme: 1.6 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
+        RETARD_CALL,
         RETARD,
         REVERSE
       ])
@@ -476,6 +481,7 @@
         C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 510, dme: 1.6 } }),
         C('"Minimum" — "Continue"', 'No level-off at the MDA: continue only with the visual reference, otherwise go around.', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
+        RETARD_CALL,
         RETARD,
         REVERSE
       ])
@@ -526,7 +532,11 @@
     f.steps.forEach(function (st) {
       if (st.k !== 'check' || st.speak) return;
       var q = (st.say || '').replace(/\([^)]*\)/g, '').match(/"[^"]+"/g);
-      if (q) { st.speak = q.map(function (x) { return x.slice(1, -1); }); st.auto = Math.max(4000, 2000 * q.length); }
+      if (!q) return;
+      // a callout tied to an altitude is spoken once the aircraft has glided there (3 s, see js/np.js); the step moves on 2 s after the last one
+      var delay = st.sim && 'alt' in st.sim ? 3000 : 0, gap = st.gap || 2000;
+      st.speak = q.map(function (x) { return x.slice(1, -1); });
+      st.auto = Math.max(4000, delay + gap * (q.length - 1) + 2000);
     });
   });
 

@@ -133,7 +133,7 @@
   // A callout through the speakers (the browser's own voice). A list is spoken in turn, 2 seconds apart.
   // Cancelling only when something is queued, resuming a paused engine, choosing an English voice when the
   // device has one and speaking a moment after the cancel are the usual cures for a browser that stays silent.
-  function speak(w) {
+  function speak(w, delay, gap) {
     var list = [].concat(w), ss = window.speechSynthesis;
     clearTimeout(SPEAK_T);
     if (!ss) return;
@@ -150,9 +150,9 @@
     var rr = R, kk = R.k;
     SPEAK_T = setTimeout(function () {
       if (R !== rr || R.k !== kk || VIEW !== 'run') return;
-      var n = 0, next = function () { say(list[n]); if (++n < list.length) SPEAK_T = setTimeout(function () { if (R === rr && R.k === kk && VIEW === 'run') next(); }, 2000); };
+      var n = 0, next = function () { say(list[n]); if (++n < list.length) SPEAK_T = setTimeout(function () { if (R === rr && R.k === kk && VIEW === 'run') next(); }, gap || 2000); };
       next();
-    }, 80);
+    }, 80 + (delay || 0));
   }
   function step() { return R.f.steps[R.k]; }
   // Before the step: remember whether its target is already met (then it is a check).
@@ -166,7 +166,8 @@
       var mr = R, mk = R.k; R.modeHold = true;
       R.modeT = setTimeout(function () { if (R === mr && R.k === mk && VIEW === 'run') { R.modeHold = false; markFma(R.f, mk); var el = document.querySelector('.np-disp'); if (el) el.outerHTML = dispHtml(); } }, GLIDE_MS);
     }
-    if (st && st.speak) speak(st.speak);
+    // a callout tied to an altitude waits for the aircraft to glide there
+    if (st && st.speak) speak(st.speak, st.k === 'check' && st.sim && 'alt' in st.sim ? GLIDE_MS : 0, st.gap);
     if (st) {
       R.pre = st.k === 'set' && NP.met(R.states, st);
       if (st.k === 'set') R.panel = NP.resolve(st.ref).panel;
