@@ -251,12 +251,32 @@
       '<div class="np-prog" role="progressbar" aria-valuemin="0" aria-valuemax="' + n + '" aria-valuenow="' + k + '"><span style="width:' + (100 * k / n) + '%"></span></div>' +
       '<div class="np-run-meta"><span>' + k + ' / ' + n + '</span>' + modeSeg() + '</div>' +
       '</div>' +
-      '<div class="np-grid"><div class="np-main">' + stepCard() + '<div id="np-stage">' + stageSvg() + '</div></div>' +
+      '<div class="np-grid"><div class="np-main">' + stepCard() + '<div class="np-stagerow' + (f.sim0 ? ' has-disp' : '') + '">' + dispHtml() + '<div id="np-stage">' + stageSvg() + '</div></div></div>' +
       '<aside class="np-side"><details class="np-side-d" open><summary>Items in this flow</summary>' + stepList() + '</details></aside></div>' +
       '</main>';
     document.getElementById('app').innerHTML = h;
     var cur = document.querySelector('.np-steps li.now');
     if (cur && cur.scrollIntoView && window.matchMedia('(min-width: 900px)').matches) cur.scrollIntoView({ block: 'nearest' });
+  }
+  /* The PFD and ND beside the panels in the ILS and FLS practice flows. The state is the
+   * flow's sim0 plus the sim of every step done so far (js/flows.js). Layout of the PFD
+   * data after the Airbus Safety first #40 article on the FLS. */
+  function simAt(f, k) {
+    var m = Object.assign({}, f.sim0);
+    for (var i = 0; i < k && i < f.steps.length; i++) if (f.steps[i].sim) Object.assign(m, f.steps[i].sim);
+    return m;
+  }
+  function dispHtml() {
+    var f = R.f, DS = window.ECAM_DISPLAYS;
+    if (!f.sim0 || !DS) return '';
+    var m = simAt(f, R.k), fls = m.type === 'FLS', dme = m.dme.toFixed(1) + 'NM';
+    var lsTxt = fls ? ['RWY14L', '3.0°', '143°', dme] : ['IBX', '109.50', dme];
+    var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, min: m.min,
+      ap: m.ap, fd: true, cas: m.cas, tgt: m.cas, vls: m.vls, fcuAlt: m.fcuAlt, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
+      baro: '1013', ls: m.ls, dev: m.ls ? { loc: m.loc, gs: m.gs, dbl: fls } : null, lsTxt: m.ls ? lsTxt : null, fls: fls && m.ls, ra: m.alt < 2500 ? m.alt : null });
+    var nd = DS.renderND({ alt: m.alt }, { mode: m.nd ? 'LS' : 'ARC', range: 10, cstr: false, opt: null, n1: 'OFF', n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(m.cas), tas: String(m.cas + 4),
+      loc: m.ls ? m.loc : null, lsTxt: [fls ? 'FLS RWY14L' : 'ILS1 109.50', 'CRS 143°'] });
+    return '<div class="np-disp" aria-label="PFD and ND">' + pfd + nd + '</div>';
   }
   function renderStage() { var el = document.getElementById('np-stage'); if (el) el.innerHTML = stageSvg(); }
 

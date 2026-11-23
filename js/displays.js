@@ -550,11 +550,15 @@
   // when selected and magenta when managed.
   function renderPFD(s, f) {
     f = f || { thr: 'MACH', vert: 'ALT CRZ', lat: 'NAV', fcuAlt: s.alt, vs: 0, arm: '' };
-    var o = '', cy = 95, cx = 100, spd = 232, alt = s.alt;
+    var o = '', cy = 95, cx = 100, spd = f.cas || 232, alt = s.alt;
     // FMA
     for (var i = 1; i < 5; i++) o += ln(i * 40, 2, i * 40, 22, 'sw', 0.8);
     [f.thr, f.vert, f.lat].forEach(function (m, k) { o += t(20 + k * 40, 10, m, 'g', m.length > 7 ? 6 : 7, 'middle'); });
     if (f.arm) o += t(60, 19, f.arm, 'c', 6.5, 'middle');
+    // Approach: armed lateral mode (second line, blue); capability and minimum in column 4 (F-APP, CAT 1, BARO 910)
+    if (f.armLat) o += t(100, 19, f.armLat, 'c', 6.5, 'middle');
+    if (f.cap) o += t(140, 10, f.cap, 'w', 7, 'middle');
+    if (f.min) o += t(140, 18, f.min, 'c', 6.5, 'middle');
     // Armed autobrake: column 4, third line, blue
     if (f.brk) o += t(140, 23, 'BRK ' + f.brk, 'c', 6.5, 'middle');
     o += t(180, 9, f.ap ? (f.ap.length === 2 ? 'AP1+2' : f.ap[0] || '') : 'AP1', 'w', 6.5, 'middle') + t(180, 16, f.fd === false ? '-FD2' : '1FD2', 'w', 6.5, 'middle') + t(180, 23, 'A/THR', 'w', 6.5, 'middle');
@@ -576,42 +580,51 @@
     });
     o += '<path d="M' + cx + ' 47 l-4 -7 h8 z" class="sy" fill="none" stroke-width="1.2"/><path d="M' + cx + ' 49 l-4 6 h8 z" class="sy" fill="none" stroke-width="1.2"/>';
     // flight director bars (FD pushbutton on the EFIS panel), green, on the target
-    if (f.fd !== false) o += ln(cx - 30, cy + 3, cx + 30, cy + 3, 'sg', 1.8) + ln(cx - 3, cy - 30, cx - 3, cy + 30, 'sg', 1.8);
+    if (f.fd !== false) o += ln(cx - 30, cy + 3 + (f.fdy || 0), cx + 30, cy + 3 + (f.fdy || 0), 'sg', 1.8) + ln(cx - 3 + (f.fdx || 0), cy - 30, cx - 3 + (f.fdx || 0), cy + 30, 'sg', 1.8);
     // ILS deviation scales (LS pushbutton): no ILS tuned in cruise, so no diamonds
     if (f.ls) {
       [-24, -12, 12, 24].forEach(function (d) { o += circ(cx + d, 146, 1.6, 'sw', 0.9) + circ(141, cy + d, 1.6, 'sw', 0.9); });
       o += ln(cx, 142, cx, 150, 'sy', 1.2) + ln(137, cy, 145, cy, 'sy', 1.2);
+      // Deviation diamonds, magenta: one for the ILS, a double diamond for the FLS (Safety first #40). f.dev: loc (+ right) and gs (+ up) in dots.
+      if (f.dev) {
+        var dia = function (x, y) { return '<path d="M' + x + ' ' + (y - 4.5) + ' l3.5 4.5 l-3.5 4.5 l-3.5 -4.5 z" class="sm" fill="none" stroke-width="1.2"/>'; };
+        var lx = cx + Math.max(-2.5, Math.min(2.5, f.dev.loc)) * 12, gy = cy - Math.max(-2.5, Math.min(2.5, f.dev.gs)) * 12;
+        o += f.dev.dbl ? dia(lx - 3.5, 146) + dia(lx + 3.5, 146) + dia(141, gy - 4) + dia(141, gy + 4) : dia(lx, 146) + dia(141, gy);
+      }
     }
     // aircraft symbol
     o += '<path d="M66 ' + (cy - 3) + ' h22 v10 h-6 v-5 h-16 z M134 ' + (cy - 3) + ' h-22 v10 h6 v-5 h16 z" class="fk sy" stroke-width="1.4"/>' + rc(cx - 2.5, cy - 2.5, 5, 5, 'sy', 1.2);
     // speed tape
     o += '<rect x="22" y="40" width="26" height="112" class="tape"/>';
-    for (var v = 190; v <= 270; v += 10) {
+    for (var v = Math.floor((spd - 60) / 10) * 10; v <= spd + 60; v += 10) {
       var y = cy - (v - spd) * 1.6;
       if (y < 42 || y > 150) continue;
       o += ln(40, y, 48, y, 'sw', 1);
       if (v % 20 === 0) o += t(37, y + 3, String(v), 'w', 8, 'end');
     }
-    for (var b2 = 40; b2 < 64; b2 += 4) o += '<rect x="46" y="' + b2 + '" width="3" height="2" class="fr"/>';
-    o += '<rect x="46" y="130" width="3" height="20" class="fa"/>' + circ(50, 118, 2, 'sg', 1.2);
+    if (f.vls) { var yl = cy - (f.vls - spd) * 1.6; if (yl < 150) o += '<rect x="46" y="' + Math.max(42, yl) + '" width="3" height="' + (150 - Math.max(42, yl)) + '" class="fa"/>'; }
+    else {
+      for (var b2 = 40; b2 < 64; b2 += 4) o += '<rect x="46" y="' + b2 + '" width="3" height="2" class="fr"/>';
+      o += '<rect x="46" y="130" width="3" height="20" class="fa"/>' + circ(50, 118, 2, 'sg', 1.2);
+    }
     o += ln(14, cy, 54, cy, 'sy', 1.6) + '<path d="M54 ' + cy + ' l6 -4 v8 z" class="fy"/>';
     // speed target: managed magenta at the current speed, selected blue (its value above or below the tape when off it)
     if (f.spdSel && f.spd != null) {
       var ys = cy - (f.spd - spd) * 1.6;
       if (ys < 42) o += t(35, 37, f.spdTxt || String(f.spd), 'c', 8, 'middle'); else if (ys > 150) o += t(35, 158, f.spdTxt || String(f.spd), 'c', 8, 'middle');
       else o += '<path d="M48 ' + ys + ' l6 -4 v8 z" class="c"/>';
-    } else o += '<path d="M48 ' + cy + ' l6 -4 v8 z" class="m"/>';
-    o += t(28, 166, '.798', 'g', 9, 'middle');
+    } else { var yt = f.tgt != null ? Math.max(42, Math.min(150, cy - (f.tgt - spd) * 1.6)) : cy; o += '<path d="M48 ' + yt + ' l6 -4 v8 z" class="m"/>'; }
+    if (!f.cas) o += t(28, 166, '.798', 'g', 9, 'middle');
     // altitude tape
     o += '<rect x="152" y="40" width="24" height="112" class="tape"/>';
-    for (var a2 = alt - 600; a2 <= alt + 600; a2 += 100) {
+    for (var a2 = Math.floor(alt / 100) * 100 - 600; a2 <= alt + 600; a2 += 100) {
       var ya = cy - (a2 - alt) * 0.4;
       if (ya < 42 || ya > 150) continue;
       o += ln(152, ya, 158, ya, 'sw', 1);
       if (a2 % 500 === 0 && a2 !== alt) o += t(164, ya + 3, String(a2 / 100), 'w', 7.5, 'middle');
     }
     o += ln(138, cy, 152, cy, 'sy', 1.6);
-    o += '<rect x="150" y="' + (cy - 8) + '" width="32" height="16" class="screen sy" stroke-width="1.2"/>' + t(170, cy + 4, String(Math.floor(alt / 100)), 'g', 11, 'end') + t(181, cy + 3, '00', 'g', 7, 'end');
+    o += '<rect x="150" y="' + (cy - 8) + '" width="32" height="16" class="screen sy" stroke-width="1.2"/>' + t(170, cy + 4, String(Math.floor(alt / 100)), 'g', 11, 'end') + t(181, cy + 3, ('0' + Math.round((alt % 100) / 20) * 20).slice(-2), 'g', 7, 'end');
     // FCU altitude: blue, above or below the tape (on it when within 600 ft), magenta dot when managed is not shown
     var fa = f.fcuAlt, yf = cy - (fa - alt) * 0.4;
     if (fa > alt + 600) o += t(164, 36, String(fa), 'c', 8, 'middle'); else if (fa < alt - 600) o += t(164, 162, String(fa), 'c', 8, 'middle');
@@ -625,17 +638,27 @@
     if (av >= 200) o += rc(186, f.vs > 0 ? 36 : 145, 12, 9, 'sg', 0.8) + t(192, f.vs > 0 ? 43 : 152, String(Math.round(av / 100)), 'g', 6.5, 'middle');
     // heading tape
     o += '<rect x="60" y="168" width="80" height="14" class="tape"/>';
-    [['34', 68], ['35', 84], ['0', 100], ['1', 116], ['2', 132]].forEach(function (q) { o += t(q[1], 180, q[0], 'w', 7, 'middle') + ln(q[1] + 8, 168, q[1] + 8, 171, 'sw', 1); });
+    var hn = f.hdgNow || 0;
+    for (var hb = Math.floor((hn - 40) / 5) * 5; hb <= hn + 40; hb += 5) {
+      var hx = 100 + (hb - hn) * 1.6, hm = (hb % 360 + 360) % 360;
+      if (hx < 62 || hx > 138) continue;
+      o += ln(hx, 168, hx, 171, 'sw', 1);
+      if (hm % 10 === 0) o += t(hx, 180, String(hm / 10), 'w', 7, 'middle');
+    }
     o += ln(100, 160, 100, 172, 'sy', 1.6);
     // baro reference under the altitude scale: STD boxed, or QNH and its value
     if (f.baro === 'Std') o += rc(152, 180, 24, 11, 'sy', 1) + t(164, 188.5, 'STD', 'c', 8, 'middle');
     else if (f.baro) o += t(150, 189, 'QNH', 'w', 6.5, 'start') + t(196, 189, f.baro, 'c', 7.5, 'end');
     // selected heading: blue triangle on the tape (current heading 360, 1.6 units per degree), or its value at the side
     if (f.hdgSel && f.hdg != null) {
-      var dh = ((f.hdg + 540) % 360) - 180;
+      var dh = ((f.hdg - hn + 540) % 360) - 180;
       if (Math.abs(dh) <= 24) o += '<path d="M' + (100 + dh * 1.6) + ' 168 l-3.5 -6 h7 z" class="c"/>';
       else o += t(dh < 0 ? 56 : 144, 180, ('00' + f.hdg).slice(-3), 'c', 7.5, dh < 0 ? 'end' : 'start');
     }
+    // radio altitude below 2500 ft, ILS or runway data bottom left, FLS label
+    if (f.ra != null) o += t(100, 139, String(f.ra), 'g', 9, 'middle');
+    (f.lsTxt || []).forEach(function (l, k) { o += t(3, 172 + k * 8, l, 'm', 6.5); });
+    if (f.fls) o += t(176, 166, 'FLS', 'w', 7, 'middle');
     return svg200(o, 'pfd');
   }
 
@@ -653,13 +676,13 @@
   };
   function renderND(s, e) {
     e = e || { mode: 'ARC', range: 40, cstr: false, opt: null, n1: 'VOR', n2: 'VOR' };
-    var mode = e.mode, rose = mode === 'LS' || mode === 'VOR' || mode === 'NAV', plan = mode === 'PLAN';
+    var hd = e.hdg || 0, mode = e.mode, rose = mode === 'LS' || mode === 'VOR' || mode === 'NAV', plan = mode === 'PLAN';
     var cx = mode === 'ARC' ? 104 : 100, cy = mode === 'ARC' ? 176 : 102, R = mode === 'ARC' ? 124 : 70;
     var ppn = mode === 'ARC' ? R / e.range : R / (e.range / 2), o = '';
     var P = function (q) { return [cx + q[1] * ppn, cy - q[2] * ppn]; }, rng = function (f) { var v = e.range * f; return v % 1 ? v.toFixed(1) : String(v); };
-    o += t(6, 12, 'GS', 'w', 7) + t(19, 12, '480', 'g', 9) + t(42, 12, 'TAS', 'w', 7) + t(58, 12, '458', 'g', 9);
+    o += t(6, 12, 'GS', 'w', 7) + t(19, 12, e.gs || '480', 'g', 9) + t(42, 12, 'TAS', 'w', 7) + t(58, 12, e.tas || '458', 'g', 9);
     o += t(6, 24, '163/23', 'g', 8) + '<path d="M10 40 L10 30 M7 33 L10 29 L13 33" class="sg" fill="none" stroke-width="1"/>';
-    o += '<clipPath id="nd-clip"><rect x="0" y="30" width="200" height="150"/></clipPath><g clip-path="url(#nd-clip)">';
+    o += '<clipPath id="nd-clip"><rect x="0" y="' + (e.hdg != null ? 18 : 30) + '" width="200" height="' + (e.hdg != null ? 162 : 150) + '"/></clipPath><g clip-path="url(#nd-clip)">';
     if (mode === 'ARC') {
       o += arc(cx, cy, R, 150, 30, 'sw', 1.4);
       for (var d = -60; d <= 60; d += 5) {
@@ -674,7 +697,7 @@
       });
     } else {
       if (!plan) for (var b = 0; b < 360; b += 5) {
-        var ab = 90 - b, b0 = pt(cx, cy, R, ab), b1 = pt(cx, cy, R + (b % 10 ? 3 : 5), ab);
+        var ab = 90 - (b - hd), b0 = pt(cx, cy, R, ab), b1 = pt(cx, cy, R + (b % 10 ? 3 : 5), ab);
         o += ln(b0[0], b0[1], b1[0], b1[1], 'sw', 1);
         if (b % 30 === 0) { var bl = pt(cx, cy, R + 11, ab); o += t(bl[0], bl[1] + 3, String(b / 10), 'w', b === 0 ? 9 : 7, 'middle'); }
       }
@@ -684,9 +707,12 @@
     }
     if (mode === 'LS' || mode === 'VOR') {
       // course pointer and deviation bar: magenta for the ILS, cyan for the VOR; no signal in cruise
-      var cc = mode === 'LS' ? 'sm' : 'sc', ct = mode === 'LS' ? 'm' : 'c';
-      o += ln(cx, cy - R + 2, cx, cy - 22, cc, 2.2) + '<path d="M' + cx + ' ' + (cy - R + 2) + ' l-4 7 h8 z" class="' + ct + '"/>' + ln(cx, cy + 22, cx, cy + R - 2, cc, 2.2);
+      var cc = mode === 'LS' ? 'sm' : 'sc', ct = mode === 'LS' ? 'm' : 'c', dxb = (e.loc || 0) * 14;
+      o += '<g transform="rotate(' + ((e.crs == null ? hd : e.crs) - hd) + ' ' + cx + ' ' + cy + ')">' +
+        ln(cx, cy - R + 2, cx, cy - 22, cc, 2.2) + '<path d="M' + cx + ' ' + (cy - R + 2) + ' l-4 7 h8 z" class="' + ct + '"/>' + ln(cx, cy + 22, cx, cy + R - 2, cc, 2.2);
       [-28, -14, 14, 28].forEach(function (d) { o += circ(cx + d, cy, 2, 'sw', 1); });
+      if (e.loc != null) o += ln(cx + dxb, cy - 20, cx + dxb, cy + 20, cc, 2.2);
+      o += '</g>';
     } else {
       // flight plan: green, the TO waypoint white; constraints (CSTR) magenta; EFIS options magenta
       var path = [[cx, cy]].concat(ROUTE.map(P));
@@ -718,7 +744,7 @@
     // aircraft symbol (yellow); in PLAN a small one on the route
     o += plan ? '<path d="M' + (cx - 4) + ' ' + cy + ' h8 M' + cx + ' ' + (cy - 5) + ' v9" class="sy" fill="none" stroke-width="1.6"/>'
       : '<path d="M' + (cx - 10) + ' ' + (cy - 4) + ' h20 M' + cx + ' ' + (cy - 14) + ' v18 M' + (cx - 4) + ' ' + (cy + 2) + ' h8" class="sy" fill="none" stroke-width="2.2"/>';
-    if (mode === 'LS') o += t(196, 12, 'ILS1 109.50', 'm', 7.5, 'end') + t(196, 22, 'CRS 360°', 'm', 7.5, 'end');
+    if (mode === 'LS') o += t(196, 12, (e.lsTxt || ['ILS1 109.50'])[0], 'm', 7.5, 'end') + t(196, 22, (e.lsTxt || [0, 'CRS 360°'])[1], 'm', 7.5, 'end');
     else if (mode === 'VOR') o += t(196, 12, 'VOR1 115.10', 'w', 7.5, 'end') + t(196, 22, 'CRS 360°', 'c', 7.5, 'end');
     else o += t(196, 12, 'MAMOL', 'w', 7.5, 'end') + t(196, 22, '008° ' + 22 + 'NM', 'g', 7.5, 'end');
     o += t(184, 160, mode === 'PLAN' ? '' : 'WX+T+H', 'g', 6, 'end');

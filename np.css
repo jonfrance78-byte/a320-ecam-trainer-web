@@ -99,6 +99,10 @@ a { color: var(--accent); }
 .np-list-sub { padding: 2px 10px 4px 35px; color: var(--ink-2); font: 12.5px var(--font-mono); }
 
 .np-stage { padding: 12px; border: 1px solid var(--rule); border-radius: 14px; background: #0d1422; }
+.np-stagerow { display: grid; gap: 14px; min-width: 0; }
+.np-disp { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.np-disp .ecam { width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--edge, #2a3446); }
+@media (min-width: 1200px) { .np-stagerow.has-disp { grid-template-columns: minmax(0, 1fr) 280px; align-items: start; } .np-stagerow.has-disp .np-disp { order: 2; grid-template-columns: 1fr; } }
 .np-stage-l { margin: 0 0 8px; text-align: center; font: 700 12px var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); }
 .np-svg { max-height: 58vh; }
 .np-stage.wide .np-svg { max-height: 40vh; }
