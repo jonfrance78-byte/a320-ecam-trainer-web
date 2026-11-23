@@ -348,7 +348,7 @@
     var f = R.f, DS = window.ECAM_DISPLAYS;
     if (!f.sim0 || !DS) return '';
     var m = animAt(f), fls = m.type === 'FLS', dme = m.dme.toFixed(1) + 'NM';
-    var lsTxt = fls ? ['RWY14L', '3.0°', '143°', dme] : ['IBX', '109.50', dme];
+    var lsTxt = fls ? ['RWY14L', '3.0°', dme] : ['IBX', '109.50', dme];
     var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, cap2: m.cap2, min: m.min,
       ap: m.ap, fd: true, cas: m.cas, tgt: m.cas, vls: m.vls, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
       baro: '1013', ls: m.ls, dev: m.ls ? { loc: m.loc, gs: m.gs, dbl: fls } : null, lsTxt: m.ls ? lsTxt : null, fls: fls && m.ls, ra: m.alt < 2500 ? m.alt : null });

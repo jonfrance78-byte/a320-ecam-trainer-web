@@ -553,17 +553,18 @@
     var o = '', cy = 95, cx = 100, spd = f.cas || 232, alt = s.alt;
     // FMA
     for (var i = 1; i < 5; i++) o += ln(i * 40, 2, i * 40, 22, 'sw', 0.8);
-    [f.thr, f.vert, f.lat].forEach(function (m, k) { o += t(20 + k * 40, 10, m, 'g', m.length > 7 ? 6 : 7, 'middle'); });
-    if (f.arm) o += t(60, 19, f.arm, 'c', 6.5, 'middle');
+    [f.thr, f.vert, f.lat].forEach(function (m, k) { o += t(20 + k * 40, 10, m, 'g', m.length > 7 ? 6.5 : 8, 'middle'); });
+    if (f.arm) o += t(60, 19, f.arm, 'c', 7.5, 'middle');
     // Approach: armed lateral mode (second line, blue); capability and minimum in column 4 (F-APP, CAT 1, BARO 910)
     (f.box || []).forEach(function (c) { o += rc(c * 40 + 3, 2.5, 34, 10, 'sw', 1); });
-    if (f.armLat) o += t(100, 19, f.armLat, 'c', 6.5, 'middle');
-    if (f.cap) o += t(140, 10, f.cap, 'w', 7, 'middle');
-    if (f.cap2) o += t(140, 17, f.cap2, 'w', 6.5, 'middle');
-    if (f.min) o += t(140, f.cap2 ? 24 : 18, f.min, 'c', 6.5, 'middle');
+    if (f.armLat) o += t(100, 19, f.armLat, 'c', 7.5, 'middle');
+    if (f.cap) o += t(140, 10, f.cap, 'w', 8, 'middle');
+    if (f.cap2) o += t(140, 17, f.cap2, 'w', 7.5, 'middle');
+    // minimum on the third line: the label (BARO, DH) white and its value cyan, as on the aircraft
+    if (f.min) { var mp = f.min.split(' '), cw = 4.2, mx = 140 - (f.min.length * cw) / 2; o += t(mx, 24, mp[0], 'w', 7, 'start') + t(mx + (mp[0].length + 1) * cw, 24, mp.slice(1).join(' '), 'c', 7, 'start'); }
     // Armed autobrake: column 4, third line, blue
     if (f.brk) o += t(140, 23, 'BRK ' + f.brk, 'c', 6.5, 'middle');
-    o += t(180, 9, f.ap ? (f.ap.length === 2 ? 'AP1+2' : f.ap[0] || '') : 'AP1', 'w', 6.5, 'middle') + t(180, 16, f.fd === false ? '-FD2' : '1FD2', 'w', 6.5, 'middle') + t(180, 23, 'A/THR', 'w', 6.5, 'middle');
+    o += t(180, 9, f.ap ? (f.ap.length === 2 ? 'AP1+2' : f.ap[0] || '') : 'AP1', 'w', 7.5, 'middle') + t(180, 16, f.fd === false ? '-FD2' : '1FD2', 'w', 7.5, 'middle') + t(180, 23, 'A/THR', 'w', 7.5, 'middle');
     // attitude
     o += '<clipPath id="pfd-att"><path d="M64 60 Q66 46 100 44 Q134 46 136 60 L136 132 Q134 148 100 150 Q66 148 64 132 Z"/></clipPath><g clip-path="url(#pfd-att)">';
     var hz = cy + 5;
@@ -585,13 +586,15 @@
     if (f.fd !== false) o += ln(cx - 30, cy + 3 + (f.fdy || 0), cx + 30, cy + 3 + (f.fdy || 0), 'sg', 1.8) + ln(cx - 3 + (f.fdx || 0), cy - 30, cx - 3 + (f.fdx || 0), cy + 30, 'sg', 1.8);
     // ILS deviation scales (LS pushbutton): no ILS tuned in cruise, so no diamonds
     if (f.ls) {
-      [-24, -12, 12, 24].forEach(function (d) { o += circ(cx + d, 146, 1.6, 'sw', 0.9) + circ(141, cy + d, 1.6, 'sw', 0.9); });
-      o += ln(cx, 142, cx, 150, 'sy', 1.2) + ln(137, cy, 145, cy, 'sy', 1.2);
+      [-24, -12, 12, 24].forEach(function (d) { o += circ(cx + d, 157, 1.6, 'sw', 0.9) + circ(141, cy + d, 1.6, 'sw', 0.9); });
+      o += ln(cx, 153, cx, 161, 'sy', 1.2) + ln(137, cy, 145, cy, 'sy', 1.2);
       // Deviation diamonds, magenta: one for the ILS, a double diamond for the FLS (Safety first #40). f.dev: loc (+ right) and gs (+ up) in dots.
       if (f.dev) {
         var dia = function (x, y) { return '<path d="M' + x + ' ' + (y - 4.5) + ' l3.5 4.5 l-3.5 4.5 l-3.5 -4.5 z" class="sm" fill="none" stroke-width="1.2"/>'; };
+        // the FLS double diamond: a second, smaller diamond inside the first
+        var dia2 = function (x, y) { return dia(x, y) + '<path d="M' + x + ' ' + (y - 2.4) + ' l1.9 2.4 l-1.9 2.4 l-1.9 -2.4 z" class="sm" fill="none" stroke-width="1"/>'; };
         var lx = cx + Math.max(-2.5, Math.min(2.5, f.dev.loc)) * 12, gy = cy - Math.max(-2.5, Math.min(2.5, f.dev.gs)) * 12;
-        o += f.dev.dbl ? dia(lx - 3.5, 146) + dia(lx + 3.5, 146) + dia(141, gy - 4) + dia(141, gy + 4) : dia(lx, 146) + dia(141, gy);
+        o += f.dev.dbl ? dia2(lx, 157) + dia2(141, gy) : dia(lx, 157) + dia(141, gy);
       }
     }
     // aircraft symbol
@@ -602,7 +605,7 @@
       var y = cy - (v - spd) * 1.6;
       if (y < 42 || y > 150) continue;
       o += ln(40, y, 48, y, 'sw', 1);
-      if (v % 20 === 0) o += t(37, y + 3, String(v), 'w', 8, 'end');
+      if (v % 20 === 0) o += t(38, y + 3.2, String(v), 'w', 9, 'end');
     }
     if (f.vls) { var yl = cy - (f.vls - spd) * 1.6; if (yl < 150) o += '<rect x="46" y="' + Math.max(42, yl) + '" width="3" height="' + (150 - Math.max(42, yl)) + '" class="fa"/>'; }
     else {
@@ -622,26 +625,31 @@
     if (!f.cas) o += t(28, 166, '.798', 'g', 9, 'middle');
     // altitude tape
     o += '<rect x="152" y="40" width="24" height="112" class="tape"/>';
-    // 0.14 px per ft: the tape shows about 390 ft each side, ticks every 100 ft, numbers (hundreds) every 200 ft
-    for (var a2 = Math.floor(alt / 100) * 100 - 400; a2 <= alt + 400; a2 += 100) {
-      var ya = cy - (a2 - alt) * 0.14;
+    // 0.09 px per ft: about 600 ft each side, ticks every 100 ft, numbers (hundreds, three digits) every 500 ft
+    for (var a2 = Math.floor(alt / 100) * 100 - 700; a2 <= alt + 700; a2 += 100) {
+      var ya = cy - (a2 - alt) * 0.09;
       if (ya < 42 || ya > 150) continue;
-      o += ln(152, ya, 158, ya, 'sw', 1);
-      if (a2 % 200 === 0 && Math.abs(ya - cy) > 9) o += t(166, ya + 3, String(a2 / 100), 'w', 7.5, 'middle');
+      o += ln(172, ya, a2 % 500 === 0 ? 167 : 169.5, ya, 'sw', 1);
+      if (a2 % 500 === 0 && a2 >= 0 && Math.abs(ya - cy) > 10) o += t(165, ya + 3, ('00' + a2 / 100).slice(-3), 'w', 7.5, 'end');
     }
     o += ln(138, cy, 152, cy, 'sy', 1.6);
-    o += '<rect x="150" y="' + (cy - 8) + '" width="32" height="16" class="screen sy" stroke-width="1.2"/>' + t(170, cy + 4, String(Math.floor(alt / 100)), 'g', 11, 'end') + t(181, cy + 3, ('0' + Math.floor((alt % 100) / 20) * 20).slice(-2), 'g', 7, 'end');
-    // FCU altitude: blue, above or below the tape (on it when within about 390 ft), magenta dot when managed is not shown
-    var fa = f.fcuAlt, yf = cy - (fa - alt) * 0.14;
-    if (fa > alt + 390) o += t(164, 36, String(fa), 'c', 8, 'middle'); else if (fa < alt - 390) o += t(164, 162, String(fa), 'c', 8, 'middle');
+    // altitude box: hundreds large, the last two digits on a drum (20 ft steps) with the next above and below
+    var l2 = Math.floor((alt % 100) / 20) * 20, pad2 = function (n) { return ('0' + ((n + 100) % 100)).slice(-2); };
+    o += '<clipPath id="pfd-alt"><rect x="151" y="' + (cy - 10) + '" width="31" height="20"/></clipPath><rect x="150" y="' + (cy - 10) + '" width="32" height="20" class="screen sy" stroke-width="1.2"/>' +
+      t(170, cy + 4.5, String(Math.floor(alt / 100)), 'g', 12, 'end') +
+      '<g clip-path="url(#pfd-alt)">' + t(176, cy - 4, pad2(l2 + 20), 'g', 6.5, 'middle') + t(176, cy + 3.5, pad2(l2), 'g', 8, 'middle') + t(176, cy + 10.5, pad2(l2 - 20), 'g', 6.5, 'middle') + '</g>';
+    // FCU altitude: blue, above or below the tape (on it when within about 600 ft), magenta dot when managed is not shown
+    var fa = f.fcuAlt, yf = cy - (fa - alt) * 0.09;
+    if (fa > alt + 600) o += t(164, 36, String(fa), 'c', 8.5, 'middle'); else if (fa < alt - 600) o += t(164, 162, String(fa), 'c', 8.5, 'middle');
     else if (fa !== alt) o += rc(153, yf - 4, 22, 8, 'sc', 1) + t(164, yf + 2.5, String(fa / 100), 'c', 6.5, 'middle');
     // vertical speed
     o += '<path d="M184 46 L194 52 L194 138 L184 144 Z" class="tape"/>';
-    [['6', 50], ['2', 64], ['1', 78], ['1', 112], ['2', 126], ['6', 140]].forEach(function (q) { o += t(186, q[1] + 2.5, q[0], 'w', 6, 'start') + ln(190, q[1], 193, q[1], 'sw', 1); });
+    [['6', 50], ['2', 64], ['1', 78], ['1', 112], ['2', 126], ['6', 140]].forEach(function (q) { o += t(186, q[1] + 2.8, q[0], 'w', 7, 'start') + ln(190, q[1], 193, q[1], 'sw', 1); });
     // V/S needle: 1000 and 2000 ft/min at 17 and 31 units from level, 6000 at 45
     var av = Math.abs(f.vs), dv = av <= 1000 ? av * 0.017 : av <= 2000 ? 17 + (av - 1000) * 0.014 : 31 + Math.min(av - 2000, 4000) * 0.0035, yv = cy - (f.vs >= 0 ? dv : -dv);
     o += ln(199, cy, 191, yv, 'sg', 1.6);
-    if (av >= 200) o += rc(176, f.vs > 0 ? 36 : 145, 22, 9, 'sg', 0.8) + t(187, f.vs > 0 ? 43 : 152, String(Math.round(av / 100) * 100), 'g', 6.5, 'middle');
+    // the readout is in hundreds of ft/min, two digits (07 for 700), as in the Airbus Safety first #40 figure
+    if (av >= 200) o += '<rect x="182" y="' + (f.vs > 0 ? 36 : 145) + '" width="15" height="9" class="screen sg" stroke-width="0.6"/>' + t(189.5, f.vs > 0 ? 43 : 152, ('0' + Math.round(av / 100)).slice(-2), 'g', 7, 'middle');
     // heading tape
     o += '<rect x="60" y="168" width="80" height="14" class="tape"/>';
     var hn = f.hdgNow || 0;
@@ -649,22 +657,27 @@
       var hx = 100 + (hb - hn) * 1.6, hm = (hb % 360 + 360) % 360;
       if (hx < 62 || hx > 138) continue;
       o += ln(hx, 168, hx, 171, 'sw', 1);
-      if (hm % 10 === 0) o += t(hx, 180, String(hm / 10), 'w', 7, 'middle');
+      if (hm % 10 === 0) o += t(hx, 180.5, String(hm / 10), 'w', 8.5, 'middle');
     }
     o += ln(100, 160, 100, 172, 'sy', 1.6);
     // baro reference under the altitude scale: STD boxed, or QNH and its value
     if (f.baro === 'Std') o += rc(152, 180, 24, 11, 'sy', 1) + t(164, 188.5, 'STD', 'c', 8, 'middle');
-    else if (f.baro) o += t(150, 189, 'QNH', 'w', 6.5, 'start') + t(196, 189, f.baro, 'c', 7.5, 'end');
+    else if (f.baro) o += t(150, 189, 'QNH', 'w', 7.5, 'start') + t(196, 189, f.baro, 'c', 8.5, 'end');
     // selected heading: blue triangle on the tape (current heading 360, 1.6 units per degree), or its value at the side
     if (f.hdgSel && f.hdg != null) {
       var dh = ((f.hdg - hn + 540) % 360) - 180;
       if (Math.abs(dh) <= 24) o += '<path d="M' + (100 + dh * 1.6) + ' 168 l-3.5 -6 h7 z" class="c"/>';
-      else o += t(dh < 0 ? 56 : 144, 180, ('00' + f.hdg).slice(-3), 'c', 7.5, dh < 0 ? 'end' : 'start');
+      else o += t(dh < 0 ? 56 : 144, 180, ('00' + f.hdg).slice(-3), 'c', 8.5, dh < 0 ? 'end' : 'start');
     }
     // radio altitude below 2500 ft, ILS or runway data bottom left, FLS label
     if (f.ra != null) o += t(100, 139, String(f.ra), 'g', 9, 'middle');
-    (f.lsTxt || []).forEach(function (l, k) { o += t(3, 172 + k * 8, l, 'm', 6.5); });
-    if (f.fls) o += t(176, 166, 'FLS', 'w', 7, 'middle');
+    // ILS ident and frequency, or runway and slope, then the distance (the number magenta, NM cyan), all magenta and large like the aircraft's
+    (f.lsTxt || []).forEach(function (l, k) {
+      var y = 169 + k * 7.5, dm = /^(.*?)\s*NM$/.exec(l);
+      if (dm) o += t(3, y, dm[1], 'm', 7) + t(3 + dm[1].length * 4.3 + 1.5, y, 'NM', 'c', 5);
+      else o += t(3, y, l, 'm', k === 0 ? 8.5 : 7);
+    });
+    if (f.fls) o += t(150, 159, 'FLS', 'm', 9, 'end');
     return svg200(o, 'pfd');
   }
 
