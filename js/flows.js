@@ -347,12 +347,12 @@
       sim0: { type: 'ILS', alt: 3000, dme: 9.4, cas: 200, vls: 155, vfen: 230, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
       steps: [
         S('EFISL/LS', true, 'LS — ON', 'Both pilots: ILS scales on the PFD.', { sim: { ls: true } }),
-        S('EFISL/ND MODE', 'LS', 'ROSE LS', 'The ND shows the ILS course and the localiser deviation bar.', { sim: { nd: true } }),
+        S('EFISL/ND MODE', ['LS', 'ARC'], 'ROSE LS or ARC', 'ARC (used most of the time) or ROSE LS. The ND shows the flight plan with the final approach and the ILS ident at the top.', { sim: { nd: true } }),
         S('MCDU1/RAD\nNAV', 'press', 'RAD NAV — ILS ident, frequency and course checked', 'The RADIO NAV page shows them. They match the chart. Identify the ILS on the PFD.', { mcdu: 'RADNAV' }),
         S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_PRE' }),
         S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR_ILS_SCR' }),
-        S('MCDU1/LSK 2R', 'press', 'BARO minimum — 210', 'The BARO minimum (the DA from the chart, 210 ft here) is in the scratchpad: press the key beside BARO (2R). It must be set to get the "Minimum" call.', { who: 'PM', mcdu: 'PERFAPPR_ILS', sim: { min: 'BARO 210' } }),
-        S('FCU/APPR', true, 'Arm the Approach', 'On an intercept heading with the approach clearance. FMA: G/S and LOC blue, CAT 1 (or better).', { who: 'PF', sim: { arm: 'G/S', armLat: 'LOC', cap: 'CAT 1' } }),
+        S('MCDU1/LSK 2R', 'press', 'BARO minimum — 210', 'The BARO minimum (the DA from the chart, 210 ft here) is in the scratchpad: press the key beside BARO (2R). It must be set to get the "Minimum" call.', { who: 'PM', hold: 3000, mcdu: 'PERFAPPR_ILS', sim: { min: 'BARO 210' } }),
+        S('FCU/APPR', true, 'Arm the Approach', 'On an intercept heading with the approach clearance. FMA: G/S and LOC blue, CAT 1 (or better).', { who: 'PF', sim: { arm: 'G/S', armLat: 'LOC', cap: 'CAT1' } }),
         C('LOC* — localiser capture', 'PF reads the FMA change, PM confirms ("Checked"). The deviation diamond is moving to the centre of the scale.', { sim: { lat: 'LOC*', armLat: '', hdgSel: false, hdgNow: 132, loc: 0.4, dme: 9.5 }, auto: 4000 }),
         C('LOC — localiser tracking', 'The aircraft is on the final approach course.', { sim: { lat: 'LOC', loc: 0, hdgNow: 143 }, auto: 4000 }),
         C('G/S* — glideslope capture', 'The glideslope diamond comes down to the centre as the aircraft meets the beam.', { sim: { vert: 'G/S*', arm: '', gs: 0.3, alt: 2980, dme: 9.4, vs: -500 }, auto: 4000 }),
@@ -373,12 +373,12 @@
       steps: [
         S('EFISL/LS', true, 'LS — ON', 'Both pilots: ILS scales on the PFD.', { sim: { ls: true } }),
         S('EFISR/LS', true, 'LS — ON'),
-        S('EFISL/ND MODE', 'LS', 'ROSE LS', 'The ND shows the ILS course and the localiser deviation bar.', { sim: { nd: true } }),
+        S('EFISL/ND MODE', ['LS', 'ARC'], 'ROSE LS or ARC', 'ARC (used most of the time) or ROSE LS. The ND shows the flight plan with the final approach and the ILS ident at the top.', { sim: { nd: true } }),
         S('MCDU1/RAD\nNAV', 'press', 'RAD NAV — ILS ident, frequency and course checked', 'The RADIO NAV page shows them. They match the chart. Identify the ILS on the PFD.', { mcdu: 'RADNAV' }),
         S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_PRE' }),
         S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR_CAT3_SCR' }),
-        S('MCDU1/LSK 3R', 'press', 'RADIO minimum — 50', 'The RADIO minimum (the DH from the chart, 50 ft here, or NO DH) is in the scratchpad: press the key beside RADIO (3R).', { who: 'PM', mcdu: 'PERFAPPR_CAT3', sim: { min: 'DH 50' } }),
-        S('FCU/APPR', true, 'Arm the Approach', 'On an intercept heading with the approach clearance. FMA: G/S and LOC blue; CAT 3 SINGLE with one autopilot.', { who: 'PF', sim: { arm: 'G/S', armLat: 'LOC', cap: 'CAT 3', cap2: 'SINGLE' } }),
+        S('MCDU1/LSK 3R', 'press', 'RADIO minimum — 50', 'The RADIO minimum (the DH from the chart, 50 ft here, or NO DH) is in the scratchpad: press the key beside RADIO (3R).', { who: 'PM', hold: 3000, mcdu: 'PERFAPPR_CAT3', sim: { min: 'DH 50' } }),
+        S('FCU/APPR', true, 'Arm the Approach', 'On an intercept heading with the approach clearance. FMA: G/S and LOC blue; CAT 3 SINGLE with one autopilot.', { who: 'PF', sim: { arm: 'G/S', armLat: 'LOC', cap: 'CAT3', cap2: 'SINGLE' } }),
         S('FCU/AP2', true, 'AP2 — ON', 'Second autopilot: available once APPR is armed. FMA shows CAT 3 DUAL with both APs and A/THR.', { who: 'PF', sim: { ap: ['AP1', 'AP2'], cap2: 'DUAL' } }),
         C('FMA: CAT 3 DUAL, DH (or NO DH) — checked', 'PF announces the capability and minimum; PM crosschecks against the briefing.'),
         C('LOC* — localiser capture', 'The deviation diamond is moving to the centre of the scale.', { sim: { lat: 'LOC*', armLat: '', hdgSel: false, hdgNow: 132, loc: 0.4, dme: 9.5 }, auto: 4000 }),
@@ -405,12 +405,12 @@
       sim0: { type: 'RNAV', alt: 3000, dme: 12.5, cas: 200, vls: 155, vfen: 230, hdgNow: 143, hdgSel: false, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'NAV', ap: ['AP1'], loc: 0, gs: 0, vs: 0 },
       steps: [
         S('EFISL/LS', false, 'LS — OFF', 'No LS for a FINAL APP approach.'),
-        S('EFISL/ND MODE', 'NAV', 'ROSE NAV', 'The ND shows the flight plan with the final approach.', { sim: { nd: true } }),
+        S('EFISL/ND MODE', ['NAV', 'ARC'], 'ROSE NAV or ARC', 'ARC (used most of the time) or ROSE NAV shows the flight plan with the final approach.', { sim: { nd: true } }),
         S('MCDU1/PROG', 'press', 'PROG — GPS PRIMARY, RNP 0.3', 'REQUIRED 0.3 NM ◆ and ACCUR HIGH. GPS PRIMARY on both NDs.'),
         S('MCDU1/F-PLN', 'press', 'F-PLN — approach checked', 'Approach not modified between the FAF and the MAP: waypoints, altitudes and the FPA against the chart.'),
         S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_FLS_PRE' }),
         S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR_FLS_SCR' }),
-        S('MCDU1/LSK 2R', 'press', 'BARO minimum — 410', 'The BARO minimum (MDA + add-on as DA (CDFA) ◆, or the LNAV/VNAV DA; 410 ft here) is in the scratchpad: press the key beside BARO (2R).', { who: 'PM', mcdu: 'PERFAPPR_FLS', sim: { min: 'BARO 410' } }),
+        S('MCDU1/LSK 2R', 'press', 'BARO minimum — 410', 'The BARO minimum (MDA + add-on as DA (CDFA) ◆, or the LNAV/VNAV DA; 410 ft here) is in the scratchpad: press the key beside BARO (2R).', { who: 'PM', hold: 3000, mcdu: 'PERFAPPR_FLS', sim: { min: 'BARO 410' } }),
         S('FCU/APPR', true, 'Arm the Approach', 'FMA: APP NAV (green), FINAL (blue).', { who: 'PF', sim: { lat: 'APP NAV', arm: 'FINAL' } })
       ].concat(CONFIG_LEVEL, [
         C('FDP: FINAL APP engages', 'FMA FINAL APP green. The aircraft starts down on the FMS vertical path.', { sim: { vert: 'FINAL APP', arm: '', alt: 2940, dme: 9.3, vs: -700 }, auto: 4000 }),
@@ -429,12 +429,12 @@
       steps: [
         S('EFISL/LS', true, 'LS — ON (FLS)', 'For an FLS approach the LS pushbutton shows the FLS beam: F-LOC and F-G/S scales with double diamonds, and F-APP in the FMA.', { sim: { ls: true, cap: 'F-APP' } }),
         S('EFISR/LS', true, 'LS — ON'),
-        S('EFISL/ND MODE', 'LS', 'ROSE LS', 'The ND shows the FLS course and the deviation bar.', { sim: { nd: true } }),
+        S('EFISL/ND MODE', ['LS', 'ARC'], 'ROSE LS or ARC', 'ARC (used most of the time) or ROSE LS. The ND shows the flight plan with the final approach and the FLS ident at the top.', { sim: { nd: true } }),
         C('FLS data on the PFD vs chart', 'FLS ident, course and slope. Course ±1°, overlay ±3°, slope ±0.1°: outside these, the FLS must not be used.'),
         C('Capability: F-APP / F-APP + RAW / RAW ONLY', 'F-APP + RAW: show the raw data needles. RAW ONLY: the FLS must not be used.'),
         S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_FLS_PRE' }),
         S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR_FLS_SCR' }),
-        S('MCDU1/LSK 2R', 'press', 'BARO minimum — 410', 'The BARO minimum (410 ft here) is in the scratchpad: press the key beside BARO (2R). The FLS also corrects the glideslope for cold from the temperature on this page.', { who: 'PM', mcdu: 'PERFAPPR_FLS', sim: { min: 'BARO 410' } }),
+        S('MCDU1/LSK 2R', 'press', 'BARO minimum — 410', 'The BARO minimum (410 ft here) is in the scratchpad: press the key beside BARO (2R). The FLS also corrects the glideslope for cold from the temperature on this page.', { who: 'PM', hold: 3000, mcdu: 'PERFAPPR_FLS', sim: { min: 'BARO 410' } }),
         S('FCU/APPR', true, 'Arm the Approach', 'FMA: F-G/S and F-LOC blue (LOC and F-G/S for a localiser approach).', { who: 'PF', sim: { arm: 'F-G/S', armLat: 'F-LOC' } }),
         C('F-LOC* — capture', 'The double diamond is moving to the centre of the scale.', { sim: { lat: 'F-LOC*', armLat: '', hdgSel: false, hdgNow: 132, loc: 0.4, dme: 9.5 }, auto: 4000 }),
         C('F-LOC — tracking', 'The aircraft is on the final approach course.', { sim: { lat: 'F-LOC', loc: 0, hdgNow: 143 }, auto: 4000 }),
@@ -454,10 +454,10 @@
       sim0: { type: 'NPA', alt: 3000, dme: 12.5, cas: 200, vls: 155, vfen: 230, hdgNow: 143, hdgSel: false, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 0, gs: 0, vs: 0 },
       steps: [
         S('EFISL/ADF/VOR 1', 'VOR', 'VOR 1 needle', 'Raw data for the approach on the ND.', { sim: { vor: true } }),
-        S('EFISL/ND MODE', 'VOR', 'ROSE VOR', 'ND in ROSE VOR (or ARC with the needles).', { sim: { nd: true } }),
+        S('EFISL/ND MODE', ['VOR', 'ARC'], 'ROSE VOR or ARC', 'ARC (used most of the time) or ROSE VOR, with the VOR needle.', { sim: { nd: true } }),
         S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_PRE' }),
         S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR_NPA_SCR' }),
-        S('MCDU1/LSK 2R', 'press', 'BARO minimum — 410', 'The BARO minimum (MDA + add-on as DA (CDFA) ◆; 410 ft here) is in the scratchpad: press the key beside BARO (2R).', { who: 'PM', mcdu: 'PERFAPPR_NPA', sim: { min: 'BARO 410' } })
+        S('MCDU1/LSK 2R', 'press', 'BARO minimum — 410', 'The BARO minimum (MDA + add-on as DA (CDFA) ◆; 410 ft here) is in the scratchpad: press the key beside BARO (2R).', { who: 'PM', hold: 3000, mcdu: 'PERFAPPR_NPA', sim: { min: 'BARO 410' } })
       ].concat(CONFIG_LEVEL, [
         C('Landing configuration and VAPP before the FDP', 'Early stabilised technique for a selected approach.'),
         S('FCU/HDG-V/S / TRK-FPA', 'press', 'TRK-FPA', 'The flight path vector (bird) shows on the PFD. FCU windows show TRK and FPA.', { who: 'PF', sim: { bird: true, fd: false } }),

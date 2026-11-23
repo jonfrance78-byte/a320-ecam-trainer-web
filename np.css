@@ -106,7 +106,20 @@ a { color: var(--accent); }
    Narrower: the card, then the displays, then the panel. */
 .np-left { display: contents; }
 .np-stagerow.has-disp .np-card { order: 1; } .np-stagerow.has-disp .np-disp { order: 2; } .np-stagerow.has-disp #np-stage { order: 3; }
-@media (min-width: 1200px) { .np-stagerow.has-disp { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: start; } .np-stagerow.has-disp .np-left { display: grid; gap: 14px; align-content: start; } .np-stagerow.has-disp .np-disp { grid-template-columns: 1fr; } .np-disp .ecam { display: block; width: min(100%, calc(50vh - 40px)); margin-inline: auto; } }
+@media (min-width: 1000px) { .np-stagerow.has-disp { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); align-items: start; } .np-stagerow.has-disp .np-left { display: grid; gap: 14px; align-content: start; } .np-stagerow.has-disp .np-disp { grid-template-columns: 1fr; } .np-disp .ecam { display: block; width: min(100%, calc(50vh - 40px)); margin-inline: auto; } }
+/* On a screen at least 700 px tall everything fits without scrolling: the card and the panel share the left column, the PFD and ND
+   share the height of the middle, and the step list scrolls inside its own box. */
+@media (min-width: 1000px) and (min-height: 700px) {
+  .np-run { padding-bottom: 0; }
+  .np-stagerow.has-disp { height: calc(100vh - 190px); grid-template-rows: minmax(0, 1fr); }
+  .np-stagerow.has-disp .np-left { height: 100%; grid-template-rows: auto minmax(0, 1fr); }
+  .np-stagerow.has-disp #np-stage { display: flex; flex-direction: column; min-height: 0; }
+  .np-stagerow.has-disp #np-stage .np-stage { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+  .np-stagerow.has-disp #np-stage .np-svg { flex: 1 1 0; min-height: 0; max-height: none; width: 100%; }
+  .np-stagerow.has-disp .np-disp { height: 100%; min-height: 0; grid-template-rows: 1fr 1fr; }
+  .np-disp .ecam { width: 100%; height: 100%; min-height: 0; margin: 0; }
+  .np-side-d { max-height: calc(100vh - 190px); overflow-y: auto; }
+}
 .np-stage-l { margin: 0 0 8px; text-align: center; font: 700 12px var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--ink-2); }
 .np-svg { max-height: 58vh; }
 .np-stage.wide .np-svg { max-height: 40vh; }

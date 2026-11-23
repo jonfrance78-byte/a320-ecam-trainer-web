@@ -159,7 +159,7 @@
   function enterStep() {
     var st = step();
     R.reveal = false; R.ticks = {};
-    clearTimeout(AUTO_T); clearTimeout(SPEAK_T);
+    clearTimeout(AUTO_T); clearTimeout(SPEAK_T); if (R) { clearTimeout(R.holdT); R.held = false; }
     if (st && st.speak) speak(st.speak);
     if (st) {
       R.pre = st.k === 'set' && NP.met(R.states, st);
@@ -190,7 +190,7 @@
   }
   function pressCtl(i) {
     var st = step();
-    if (!st || st.k !== 'set') return;
+    if (!st || st.k !== 'set' || R.held) return;
     var r = NP.resolve(st.ref), it = PN.P[R.panel].items[i];
     var also = st.also ? NP.resolve(st.also) : null;
     if (R.panel !== r.panel || (i !== r.i && !(also && R.panel === also.panel && i === also.i))) {
@@ -203,7 +203,12 @@
     NP.pressToward(R.states, st);
     var s = R.states[r.panel][r.i];
     if (s && s.down) setTimeout(function () { if (s) { s.down = false; if (VIEW === 'run') renderStage(); } }, 180);
-    if (NP.kind(st) === 'press' || NP.met(R.states, st)) complete(ctlLabel(st.ref) + ': ' + st.say + '.');
+    if (NP.kind(st) === 'press' || NP.met(R.states, st)) {
+      var done = ctlLabel(st.ref) + ': ' + st.say + '.';
+      // hold: the result stays on show for that many ms before the next action (R.held: the page and displays already show the step done)
+      if (st.hold) { R.held = true; R.note = { ok: true, s: st.say + ' entered.' }; render(); clearTimeout(R.holdT); var rr = R, kk = R.k; R.holdT = setTimeout(function () { if (R === rr && R.k === kk && VIEW === 'run') { R.held = false; complete(done); } }, st.hold); }
+      else complete(done);
+    }
     else { R.note = { ok: true, s: 'Keep going: ' + ctlLabel(st.ref) + ' is moving to ' + st.say + '.' }; render(); }
   }
 
@@ -272,7 +277,7 @@
   }
   function stageSvg() {
     var id = R.panel || 'LOWER', p = PN.P[id], st = step();
-    PN.LIVE.mcduPage = mcduPageAt(R.f, R.k);
+    PN.LIVE.mcduPage = mcduPageAt(R.f, R.k + (R.held ? 1 : 0));
     var target = st && st.k === 'set' && !st.nohl && !(MODE === 'recall' && !R.reveal) ? NP.resolve(st.ref).i : null;
     var aspect = p.w / p.h;
     return '<div class="np-stage' + (aspect > 2.2 ? ' wide' : '') + '"><p class="np-stage-l">' + esc(panelName(id)) + '</p>' +
@@ -329,7 +334,7 @@
   var FPS = 24, GLIDE_MS = 2500, GLIDE = ['loc', 'gs', 'hdgNow'], ANIM_T = 0;
   function pick(m) { var o = {}; GLIDE.forEach(function (k) { o[k] = m[k]; }); return o; }
   function animAt(f) {
-    var m = simAt(f, R.k), tg = pick(m), A = R.anim;
+    var m = simAt(f, R.k + (R.held ? 1 : 0)), tg = pick(m), A = R.anim;
     if (!A) A = R.anim = { cur: tg, from: tg, tgt: tg, t0: 0 };
     else if (GLIDE.some(function (k) { return A.tgt[k] !== tg[k]; })) { A.from = Object.assign({}, A.cur); A.tgt = tg; A.t0 = Date.now(); }
     if (GLIDE.some(function (k) { return A.cur[k] !== A.tgt[k]; }) && !ANIM_T) {
@@ -344,23 +349,25 @@
     }
     return Object.assign({}, m, A.cur);
   }
-  // RNAV: the final approach as a flight plan on the ND, in NM east and north of the aircraft (the final track is 143°, the
-  // aircraft is d NM from the threshold; the FDP is 9.4 NM out, the missed approach point 4.5 NM past the runway).
-  function appRoute(d) {
-    var u = [Math.sin(143 * Math.PI / 180), Math.cos(143 * Math.PI / 180)];
-    return [['ELBEK', 9.4], ['RW14L', 0], ['NIVRO', -4.5]].filter(function (w) { return d - w[1] > -0.3; }).map(function (w) { return [w[0], (d - w[1]) * u[0], (d - w[1]) * u[1]]; });
+  // The ND (ARC, the mode used most of the time) shows the final approach as the flight plan, in NM east and north of the aircraft: the
+  // final track is 143°, the aircraft is d NM from the threshold and xt NM left of the final track (the FDP is 9.4 NM out, the missed
+  // approach point 4.5 NM past the runway).
+  function appRoute(d, xt) {
+    var th = 143 * Math.PI / 180, u = [Math.sin(th), Math.cos(th)], rv = [Math.cos(th), -Math.sin(th)];
+    return [['ELBEK', 9.4], ['RW14L', 0], ['NIVRO', -4.5]].filter(function (w) { return d - w[1] > -0.3; }).map(function (w) { return [w[0], (d - w[1]) * u[0] + xt * rv[0], (d - w[1]) * u[1] + xt * rv[1], w[1]]; });
   }
   function dispHtml() {
     var f = R.f, DS = window.ECAM_DISPLAYS;
     if (!f.sim0 || !DS) return '';
     var m = animAt(f), ty = m.type, fls = ty === 'FLS', xls = ty === 'ILS' || fls, dme = m.dme.toFixed(1) + 'NM';
-    var lsTxt = fls ? ['RWY14L', '3.0°', dme] : ['IBX', '109.50', dme], rt = ty === 'RNAV' ? appRoute(m.dme) : null;
+    var lsTxt = fls ? ['RWY14L', '3.0°', dme] : ['IBX', '109.50', dme], rt = appRoute(m.dme, (m.loc || 0) * 0.6);
     var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, cap2: m.cap2, min: m.min,
-      ap: m.ap, fd: m.fd !== false, bird: m.bird, fpa: m.fpa, cas: m.cas, tgt: m.cas, vls: m.vls, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, fcuTop: true, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
+      ap: m.ap, fd: m.fd !== false, bird: m.bird, fpa: m.fpa, cas: m.cas, tgt: m.cas, vls: m.vls, vap: m.vls ? m.vls - 11 : null, vam: m.vls ? m.vls - 18 : null, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, fcuTop: true, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
       baro: '1013', ls: m.ls && xls, dev: m.ls && xls ? { loc: m.loc, gs: m.gs, dbl: fls } : null, lsTxt: m.ls && xls ? lsTxt : null, fls: fls && m.ls, ra: m.alt < 2500 ? m.alt : null });
-    var nd = DS.renderND({ alt: m.alt }, { mode: !m.nd ? 'ARC' : xls ? 'LS' : ty === 'RNAV' ? 'NAV' : 'VOR', range: ty === 'RNAV' ? 20 : 10, cstr: false, opt: null, n1: ty === 'NPA' && m.vor ? 'VOR' : 'OFF', brg1: 143, n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(m.cas), tas: String(m.cas + 4),
-      loc: xls ? (m.ls ? m.loc : null) : ty === 'NPA' ? m.loc : null, lsTxt: xls ? [fls ? 'FLS RWY14L' : 'ILS1 109.50', 'CRS 143°'] : ['VOR1 115.10', 'CRS 143°'],
-      route: rt, to: rt && rt.length ? [rt[0][0], '143° ' + (m.dme - (rt[0][0] === 'ELBEK' ? 9.4 : rt[0][0] === 'RW14L' ? 0 : -4.5)).toFixed(1) + 'NM'] : null });
+    var nxt = rt[0], eta = Math.max(0, Math.round((nxt ? m.dme - nxt[3] : 0) / Math.max(m.cas, 100) * 3600)), mmss = ('0' + Math.floor(eta / 60)).slice(-2) + ':' + ('0' + eta % 60).slice(-2);
+    var nd = DS.renderND({ alt: m.alt }, { mode: 'ARC', range: 20, cstr: false, opt: null, n1: ty === 'NPA' && m.vor ? 'VOR' : 'OFF', brg1: 143, n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(m.cas), tas: String(m.cas + 4),
+      hdgBug: m.hdgSel ? 113 : null, route: rt, ls: m.ls && xls ? { rwy: fls ? 'FLS14L' : 'ILS14L' } : null,
+      to: nxt ? { name: nxt[0], brg: '143°', dist: Math.max(0, m.dme - nxt[3]).toFixed(1), eta: mmss } : null });
     return '<div class="np-disp" aria-label="PFD and ND">' + pfd + nd + '</div>';
   }
   function renderStage() { var el = document.getElementById('np-stage'); if (el) el.innerHTML = stageSvg(); }
