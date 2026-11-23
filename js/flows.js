@@ -406,8 +406,8 @@
       steps: [
         S('EFISL/LS', false, 'LS — OFF', 'No LS for a FINAL APP approach.'),
         S('EFISL/ND MODE', ['NAV', 'ARC'], 'ROSE NAV or ARC', 'ARC (used most of the time) or ROSE NAV shows the flight plan with the final approach.', { sim: { nd: true } }),
-        S('MCDU1/PROG', 'press', 'PROG — GPS PRIMARY, RNP 0.3', 'REQUIRED 0.3 NM ◆ and ACCUR HIGH. GPS PRIMARY on both NDs.'),
-        S('MCDU1/F-PLN', 'press', 'F-PLN — approach checked', 'Approach not modified between the FAF and the MAP: waypoints, altitudes and the FPA against the chart.'),
+        S('MCDU1/PROG', 'press', 'PROG — GPS PRIMARY, RNP 0.3', 'REQUIRED 0.3 NM ◆ and ACCUR HIGH. GPS PRIMARY on both NDs.', { mcdu: 'PROG_RNAV' }),
+        S('MCDU1/F-PLN', 'press', 'F-PLN — approach checked', 'Approach not modified between the FAF and the MAP: waypoints, altitudes and the FPA against the chart.', { mcdu: 'FPLN_RNAV' }),
         S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_FLS_PRE' }),
         S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR_FLS_SCR' }),
         S('MCDU1/LSK 2R', 'press', 'BARO minimum — 410', 'The BARO minimum (MDA + add-on as DA (CDFA) ◆, or the LNAV/VNAV DA; 410 ft here) is in the scratchpad: press the key beside BARO (2R).', { who: 'PM', hold: 3000, mcdu: 'PERFAPPR_FLS', sim: { min: 'BARO 410' } }),
@@ -415,7 +415,8 @@
       ].concat(CONFIG_LEVEL, [
         C('FDP: FINAL APP engages', 'FMA FINAL APP green. The aircraft starts down on the FMS vertical path.', { sim: { vert: 'FINAL APP', arm: '', alt: 2940, dme: 9.3, vs: -700 }, auto: 4000 }),
         S('FCU/ALT knob', 'press', 'At FINAL APP — set go-around altitude', 'The missed approach altitude on the FCU, once FINAL APP is engaged.', { who: 'PF', sim: { fcuAlt: 3000 } }),
-        C('Monitor: V/DEV, XTK, GPS PRIMARY', 'Go around if XTK exceeds 0.3 NM, V/DEV is excessive (½ dot ◆) or GPS PRIMARY is lost on both NDs.', { sim: { alt: 1000, dme: 3.1 } }),
+        C('Monitor: V/DEV, XTK, GPS PRIMARY', 'Go around if XTK exceeds 0.3 NM, V/DEV is excessive (½ dot ◆) or GPS PRIMARY is lost on both NDs.', { sim: { alt: 1500, dme: 4.7 } }),
+        C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'At or before the minimum: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD,
@@ -442,6 +443,7 @@
         S('FCU/ALT knob', 'press', 'At F-G/S* — set go-around altitude', 'The missed approach altitude on the FCU, as the G/S* mode engages.', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('F-G/S — tracking', 'FMA: F-G/S, F-LOC green.', { sim: { vert: 'F-G/S', gs: 0, alt: 2900, dme: 9.1, vs: -700 }, auto: 4000 })
       ].concat(CONFIG, [
+        C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
         C('"Minimum" — "Continue"', '', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD,
@@ -455,6 +457,7 @@
       steps: [
         S('EFISL/ADF/VOR 1', 'VOR', 'VOR 1 needle', 'Raw data for the approach on the ND.', { sim: { vor: true } }),
         S('EFISL/ND MODE', ['VOR', 'ARC'], 'ROSE VOR or ARC', 'ARC (used most of the time) or ROSE VOR, with the VOR needle.', { sim: { nd: true } }),
+        S('MCDU1/RAD\nNAV', 'press', 'RAD NAV — VOR frequency, ident and course checked', 'The RADIO NAV page shows the VOR: frequency, ident and course. They match the chart.', { mcdu: 'RADNAV_VOR' }),
         S('MCDU1/PERF', 'press', 'PERF — APPR page', 'The approach page: QNH, temperature, wind, minimum and speeds. ACTIVATE APPR PHASE is at the bottom, in blue.', { who: 'PM', mcdu: 'PERFAPPR_PRE' }),
         S('MCDU1/LSK 6L', 'press', 'ACTIVATE APPR PHASE', 'The title goes green: the approach phase is active.', { who: 'PM', mcdu: 'PERFAPPR_NPA_SCR' }),
         S('MCDU1/LSK 2R', 'press', 'BARO minimum — 410', 'The BARO minimum (MDA + add-on as DA (CDFA) ◆; 410 ft here) is in the scratchpad: press the key beside BARO (2R).', { who: 'PM', hold: 3000, mcdu: 'PERFAPPR_NPA', sim: { min: 'BARO 410' } })
@@ -464,7 +467,8 @@
         S('FCU/HDG knob', 'press', 'Final TRK — pull', 'Set the final approach course corrected for drift, and pull.', { who: 'PF', sim: { lat: 'TRACK' } }),
         S('FCU/V/S knob', 'press', 'FPA −3.0 — pull', 'About 0.3 NM before the FDP for a 3° path ◆. FMA: FPA green. Check −3.0 in FPA, not V/S.', { who: 'PF', sim: { vert: 'FPA -3.0°', fpa: -3, alt: 2940, dme: 9.3, vs: -700 } }),
         S('FCU/ALT knob', 'press', 'Go-around altitude — set', 'Once descending below the missed approach altitude.', { who: 'PF', sim: { fcuAlt: 3000 } }),
-        C('Distance / altitude checks', 'PM calls the check heights each mile; PF adjusts the FPA to regain the path.', { who: 'PM', sim: { alt: 1000, dme: 3.1 } }),
+        C('Distance / altitude checks', 'PM calls the check heights each mile; PF adjusts the FPA to regain the path.', { who: 'PM', sim: { alt: 1500, dme: 4.7 } }),
+        C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
         C('"Minimum" — "Continue"', 'No level-off at the MDA: continue only with the visual reference, otherwise go around.', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD,
@@ -489,6 +493,13 @@
       pre ? [] : [['PREV', 'w', 'L', 1], ['NEXT', 'w', 'R', 1]], pre ? [['<ACTIVATE APPR PHASE', 'c', 'L']] : [['<PHASE', 'w', 'L'], ['PHASE>', 'w', 'R']], scratch ? [[scratch, 'w', 'L']] : []];
   };
   var MCDU = {
+    RADNAV_VOR: [[['RADIO NAV', 'w', 'C']], [['VOR1/FREQ', 'w', 'L', 1], ['FREQ/VOR2', 'w', 'R', 1]], [['POL/115.10', 'm', 'L'], ['[   ]/[ ]', 'c', 'R']],
+      [['CRS', 'w', 'L', 1], ['CRS', 'w', 'R', 1]], [['143', 'm', 'L'], ['[ ]', 'c', 'R']],
+      [['ILS /FREQ', 'w', 'L', 1], ['CRS', 'w', 'R', 1]], [['[ ]/[   ]', 'c', 'L'], ['[ ]', 'c', 'R']],
+      [['ADF1/FREQ', 'w', 'L', 1], ['FREQ/ADF2', 'w', 'R', 1]], [['[ ]/[   ]', 'c', 'L'], ['[   ]/[ ]', 'c', 'R']], [], [], [], [], []],
+    PROG_RNAV: [[['APPR', 'g', 'C']], [], [], [], [], [], [['GPS PRIMARY', 'g', 'C']], [], [['REQUIRED', 'w', 'L', 1], ['ESTIMATED', 'w', 'R', 1]], [['0.3NM', 'c', 'L'], ['0.05NM', 'g', 'R']], [['ACCUR', 'w', 'R', 1]], [['HIGH', 'g', 'R']], [], []],
+    FPLN_RNAV: [[['FROM', 'w', 'L', 1], ['TIME', 'w', 0.52, 1], ['SPD/ALT', 'w', 'R', 1]],
+      [['SOMRA', 'g', 'L'], ['0212', 'w', 0.52], ['/3000', 'g', 'R']], [['ELBEK', 'g', 'L'], ['0214', 'w', 0.52], ['/3000', 'm', 'R']], [['RW14L', 'g', 'L'], ['0217', 'w', 0.52], ['/ 40', 'm', 'R']], [['NIVRO', 'g', 'L'], ['0219', 'w', 0.52], ['/3000', 'g', 'R']], [], [], [], [], [], [], [], [], []],
     RADNAV: [[['RADIO NAV', 'w', 'C']], [['VOR1/FREQ', 'w', 'L', 1], ['FREQ/VOR2', 'w', 'R', 1]], [['[ ]/[   ]', 'c', 'L'], ['[   ]/[ ]', 'c', 'R']],
       [['CRS', 'w', 'L', 1], ['CRS', 'w', 'R', 1]], [['[ ]', 'c', 'L'], ['[ ]', 'c', 'R']],
       [['ILS /FREQ', 'w', 'L', 1], ['CRS', 'w', 'R', 1]], [['IBX/109.50', 'm', 'L'], ['143', 'm', 'R']],

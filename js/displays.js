@@ -567,7 +567,7 @@
     if (f.min) { var mp = f.min.split(' '), cw = 4.4, mx = CC[3] - (f.min.length * cw) / 2; o += t(mx, 29.4, mp[0], 'w', 7.4, 'start') + t(mx + (mp[0].length + 1) * cw, 29.4, mp.slice(1).join(' '), 'c', 7.4, 'start'); }
     // armed autobrake: column 4, third line, blue
     else if (f.brk) o += t(CC[3], 29.4, 'BRK ' + f.brk, 'c', 7.4, 'middle');
-    o += t(CC[4], 11.2, f.ap ? (f.ap.length === 2 ? 'AP1+2' : f.ap[0] || '') : 'AP1', 'w', 8, 'middle') + t(CC[4], 20.3, f.fd === false ? '- FD 2' : '1 FD 2', 'w', 8, 'middle') + t(CC[4], 29.4, 'A/THR', 'w', 8, 'middle');
+    o += t(CC[4], 11.2, f.ap ? (f.ap.length === 2 ? 'AP1+2' : f.ap[0] || '') : 'AP1', 'w', 8, 'middle') + t(CC[4], 20.3, f.fd === false ? '- FD 2' : '1 FD 2', 'w', 8, 'middle', ' textLength="25" lengthAdjust="spacing"') + t(CC[4], 29.4, 'A/THR', 'w', 8, 'middle');
     // attitude display: sky and ground in a rounded shape, pitch ladder (2.15 units a degree), horizon
     var ADI = 'M40.5 124 Q42 142 70 152 Q87 157 104 152 Q132 142 133.5 124 L133.5 86 Q132 68 118 60 Q105 53 87 52.5 Q69 53 56 60 Q42 68 40.5 86 Z';
     o += '<clipPath id="pfd-att"><path d="' + ADI + '"/></clipPath><g clip-path="url(#pfd-att)">';
@@ -652,7 +652,7 @@
       '<g clip-path="url(#pfd-alt)">' + t(171.3, 98.8, pad2(l2 + 20), 'g', 5.2, 'middle') + t(171.3, 104.8, pad2(l2), 'g', 5.8, 'middle') + t(171.3, 110.6, pad2(l2 - 20), 'g', 5.2, 'middle') + '</g>';
     // FCU altitude: approach practice (f.fcuTop) shows it as a value above the tape; the flight deck shows it on the tape, or above or below it
     var fa = f.fcuAlt, yf = MID - (fa - alt) * 0.093;
-    if (f.fcuTop) { if (fa != null) o += t(160.5, 48.4, String(fa), 'c', 7.6, 'middle') + ln(149, TOP, 172, TOP, 'sw', 1); }
+    if (f.fcuTop) { if (fa != null) o += t(160.5, 48.4, String(fa), 'w', 7.6, 'middle') + ln(149, TOP, 172, TOP, 'sw', 1); }
     else if (fa > alt + 560) o += t(160.5, 48.4, String(fa), 'c', 7.6, 'middle') + ln(149, TOP, 172, TOP, 'sw', 1);
     else if (fa < alt - 560) o += t(160.5, 164, String(fa), 'c', 7.6, 'middle');
     else if (fa !== alt) o += rc(149, yf - 3.2, 16, 6.4, 'sc', 1.1);
@@ -751,11 +751,14 @@
       o += '</g>';
     } else {
       // flight plan: green, the TO waypoint white; constraints (CSTR) magenta; EFIS options magenta
-      var path = [[cx, cy]].concat(RT.map(P));
-      o += '<polyline points="' + pts(path) + '" class="sg" fill="none" stroke-width="1.4"/>';
+      // each leg takes the colour of the waypoint it ends at (w[4]: 'sc' for the missed approach, cyan), green by default
+      var prev = [cx, cy];
+      RT.forEach(function (w) { var q = P(w); o += ln(prev[0], prev[1], q[0], q[1], w[4] || 'sg', 1.4); prev = q; });
+      // a holding pattern (e.hold: points in NM east and north of the aircraft), cyan
+      if (e.hold && e.hold.length) o += '<polyline points="' + pts(e.hold.map(P)) + '" class="sc" fill="none" stroke-width="1.3"/>';
       RT.forEach(function (w, k) {
-        var q = P(w), c = k === 0 ? 'sw' : 'sg';
-        o += '<path d="M' + q[0] + ' ' + (q[1] - 3.5) + ' l3.5 3.5 l-3.5 3.5 l-3.5 -3.5 z" class="' + c + '" fill="none" stroke-width="1.2"/>' + t(q[0] + 6, q[1] + 3, w[0], k === 0 ? 'w' : 'g', 7);
+        var q = P(w), c = k === 0 ? 'sw' : (w[4] || 'sg');
+        o += '<path d="M' + q[0] + ' ' + (q[1] - 3.5) + ' l3.5 3.5 l-3.5 3.5 l-3.5 -3.5 z" class="' + c + '" fill="none" stroke-width="1.2"/>' + t(q[0] + 6, q[1] + 3, w[0], k === 0 ? 'w' : w[4] === 'sc' ? 'c' : 'g', 7);
         if (e.cstr && w[3]) o += circ(q[0], q[1], 6, 'sm', 1) + t(q[0] + 6, q[1] + 11, w[3], 'm', 6.5);
       });
       (OPTS[e.opt] || []).forEach(function (w) {

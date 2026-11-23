@@ -331,7 +331,7 @@
   /* The ILS and FLS course and glidepath bars (and the heading they bring) glide to their new place at 24
    * frames a second over 2.5 s instead of jumping: R.anim holds the values on show, where they started and
    * where they are going. */
-  var FPS = 24, GLIDE_MS = 2500, GLIDE = ['loc', 'gs', 'hdgNow'], ANIM_T = 0;
+  var FPS = 24, GLIDE_MS = 3000, GLIDE = ['loc', 'gs', 'hdgNow', 'alt', 'dme', 'cas', 'vs', 'fpa', 'vls', 'vmax', 'vfen'], ANIM_T = 0;
   function pick(m) { var o = {}; GLIDE.forEach(function (k) { o[k] = m[k]; }); return o; }
   function animAt(f) {
     var m = simAt(f, R.k + (R.held ? 1 : 0)), tg = pick(m), A = R.anim;
@@ -342,7 +342,7 @@
       ANIM_T = setInterval(function () {
         var p = Math.min(1, (Date.now() - A.t0) / GLIDE_MS), e = p * p * (3 - 2 * p);
         if (R !== rr || VIEW !== 'run' || R.anim !== A) { clearInterval(ANIM_T); ANIM_T = 0; return; }
-        GLIDE.forEach(function (k) { A.cur[k] = p >= 1 ? A.tgt[k] : A.from[k] + (A.tgt[k] - A.from[k]) * e; });
+        GLIDE.forEach(function (k) { var a = A.from[k], b = A.tgt[k]; A.cur[k] = p >= 1 || typeof a !== 'number' || typeof b !== 'number' ? b : a + (b - a) * e; });
         var el = document.querySelector('.np-disp'); if (el) el.outerHTML = dispHtml();
         if (p >= 1) { clearInterval(ANIM_T); ANIM_T = 0; }
       }, 1000 / FPS);
@@ -354,7 +354,17 @@
   // approach point 4.5 NM past the runway).
   function appRoute(d, xt) {
     var th = 143 * Math.PI / 180, u = [Math.sin(th), Math.cos(th)], rv = [Math.cos(th), -Math.sin(th)];
-    return [['ELBEK', 9.4], ['RW14L', 0], ['NIVRO', -4.5]].filter(function (w) { return d - w[1] > -0.3; }).map(function (w) { return [w[0], (d - w[1]) * u[0] + xt * rv[0], (d - w[1]) * u[1] + xt * rv[1], w[1]]; });
+    return [['ELBEK', 9.4], ['RW14L', 0], ['NIVRO', -4.5, 'sc']].filter(function (w) { return d - w[1] > -0.3; }).map(function (w) { return [w[0], (d - w[1]) * u[0] + xt * rv[0], (d - w[1]) * u[1] + xt * rv[1], w[1], w[2]]; });
+  }
+  // The missed approach holds at NIVRO: a racetrack on the final track, right turns, 4 NM legs (inbound, then outbound 2.4 NM to the right).
+  function holdPts(d, xt) {
+    var th = 143 * Math.PI / 180, u = [Math.sin(th), Math.cos(th)], rv = [Math.cos(th), -Math.sin(th)], s0 = -4.5, pts = [], i, ph;
+    var add = function (s, r) { var fw = d - s; pts.push(['', fw * u[0] + (r + xt) * rv[0], fw * u[1] + (r + xt) * rv[1]]); };
+    add(s0 + 4, 0); add(s0, 0);
+    for (i = 1; i <= 12; i++) { ph = i * Math.PI / 12; add(s0 - 1.2 * Math.sin(ph), 1.2 - 1.2 * Math.cos(ph)); }
+    add(s0 + 4, 2.4);
+    for (i = 1; i <= 12; i++) { ph = i * Math.PI / 12; add(s0 + 4 + 1.2 * Math.sin(ph), 1.2 + 1.2 * Math.cos(ph)); }
+    return pts;
   }
   function dispHtml() {
     var f = R.f, DS = window.ECAM_DISPLAYS;
@@ -363,10 +373,10 @@
     var lsTxt = fls ? ['RWY14L', '3.0°', dme] : ['IBX', '109.50', dme], rt = appRoute(m.dme, (m.loc || 0) * 0.6);
     var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, cap2: m.cap2, min: m.min,
       ap: m.ap, fd: m.fd !== false, bird: m.bird, fpa: m.fpa, cas: m.cas, tgt: m.cas, vls: m.vls, vap: m.vls ? m.vls - 11 : null, vam: m.vls ? m.vls - 18 : null, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, fcuTop: true, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
-      baro: '1013', ls: m.ls && xls, dev: m.ls && xls ? { loc: m.loc, gs: m.gs, dbl: fls } : null, lsTxt: m.ls && xls ? lsTxt : null, fls: fls && m.ls, ra: m.alt < 2500 ? m.alt : null });
+      baro: '1013', ls: m.ls && xls, dev: m.ls && xls ? { loc: m.loc, gs: m.gs, dbl: fls } : null, lsTxt: m.ls && xls ? lsTxt : null, fls: fls && m.ls, ra: m.alt < 2500 ? Math.max(0, Math.round(m.alt)) : null });
     var nxt = rt[0], eta = Math.max(0, Math.round((nxt ? m.dme - nxt[3] : 0) / Math.max(m.cas, 100) * 3600)), mmss = ('0' + Math.floor(eta / 60)).slice(-2) + ':' + ('0' + eta % 60).slice(-2);
-    var nd = DS.renderND({ alt: m.alt }, { mode: 'ARC', range: 20, cstr: false, opt: null, n1: ty === 'NPA' && m.vor ? 'VOR' : 'OFF', brg1: 143, n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(m.cas), tas: String(m.cas + 4),
-      hdgBug: m.hdgSel ? 113 : null, route: rt, ls: m.ls && xls ? { rwy: fls ? 'FLS14L' : 'ILS14L' } : null,
+    var nd = DS.renderND({ alt: m.alt }, { mode: 'ARC', range: 20, cstr: false, opt: null, n1: ty === 'NPA' && m.vor ? 'VOR' : 'OFF', brg1: 143, n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(Math.round(m.cas)), tas: String(Math.round(m.cas) + 4),
+      hdgBug: m.hdgSel ? 113 : null, route: rt, hold: holdPts(m.dme, (m.loc || 0) * 0.6), ls: m.ls && xls ? { rwy: fls ? 'FLS14L' : 'ILS14L' } : null,
       to: nxt ? { name: nxt[0], brg: '143°', dist: Math.max(0, m.dme - nxt[3]).toFixed(1), eta: mmss } : null });
     return '<div class="np-disp" aria-label="PFD and ND">' + pfd + nd + '</div>';
   }
