@@ -568,13 +568,13 @@
     // armed autobrake: column 4, third line, blue
     else if (f.brk) o += t(CC[3], 29.4, 'BRK ' + f.brk, 'c', 7.4, 'middle');
     o += t(CC[4], 11.2, f.ap ? (f.ap.length === 2 ? 'AP1+2' : f.ap[0] || '') : 'AP1', 'w', 8, 'middle') + t(CC[4], 20.3, f.fd === false ? '- FD 2' : '1 FD 2', 'w', 8, 'middle', ' textLength="25" lengthAdjust="spacing"') + t(CC[4], 29.4, 'A/THR', 'w', 8, 'middle');
-    // attitude display: sky and ground in a rounded shape, pitch ladder (2.15 units a degree), horizon
+    // attitude display: sky and ground in a rounded shape, pitch ladder (1.95 units a degree, to 20 degrees), horizon
     var ADI = 'M40.5 124 Q42 142 70 152 Q87 157 104 152 Q132 142 133.5 124 L133.5 86 Q132 68 118 60 Q105 53 87 52.5 Q69 53 56 60 Q42 68 40.5 86 Z';
     o += '<clipPath id="pfd-att"><path d="' + ADI + '"/></clipPath><g clip-path="url(#pfd-att)">';
     o += '<rect x="30" y="40" width="115" height="' + (hz - 40) + '" class="sky"/><rect x="30" y="' + hz + '" width="115" height="70" class="gnd"/>' + ln(30, hz, 145, hz, 'sw', 1);
-    for (var pd = -30; pd <= 30; pd += 2.5) {
+    for (var pd = -20; pd <= 20; pd += 2.5) {
       if (!pd) continue;
-      var py = hz - pd * 2.15, hl = pd % 10 === 0 ? 12.2 : pd % 5 === 0 ? 5.5 : 3;
+      var py = hz - pd * 1.95, hl = pd % 10 === 0 ? 12.2 : pd % 5 === 0 ? 5.5 : 3;
       if (py < 52 || py > 158) continue;
       o += ln(AX - hl, py, AX + hl, py, 'sw', 1);
       if (pd % 10 === 0) o += t(AX - hl - 3, py + 2.3, Math.abs(pd), 'w', 6.4, 'end') + t(AX + hl + 3, py + 2.3, Math.abs(pd), 'w', 6.4, 'start');
@@ -589,11 +589,11 @@
     // flight director bars (FD pushbutton on the EFIS panel), green
     if (f.fd !== false) o += ln(AX - 24, ay + 1.5 + (f.fdy || 0), AX + 24, ay + 1.5 + (f.fdy || 0), 'sg', 1.6) + ln(AX + (f.fdx || 0), ay - 24, AX + (f.fdx || 0), ay + 24, 'sg', 1.6);
     // flight path vector (TRK-FPA): the bird, below the horizon by the flight path angle
-    if (f.bird) { var by = hz + (-(f.fpa || 0)) * 2.15; o += circ(AX, by, 2.4, 'sg', 1.2) + ln(AX - 9, by, AX - 2.4, by, 'sg', 1.2) + ln(AX + 2.4, by, AX + 9, by, 'sg', 1.2) + ln(AX, by - 2.4, AX, by - 5.5, 'sg', 1.2); }
+    if (f.bird) { var by = hz + (-(f.fpa || 0)) * 1.95; o += circ(AX, by, 2.4, 'sg', 1.2) + ln(AX - 9, by, AX - 2.4, by, 'sg', 1.2) + ln(AX + 2.4, by, AX + 9, by, 'sg', 1.2) + ln(AX, by - 2.4, AX, by - 5.5, 'sg', 1.2); }
     // aircraft symbol: black wings outlined in yellow, and the centre square
     o += '<path d="M43 100.3 H62.3 V109 H57.8 V104.8 H43 Z M131.4 100.3 H112.1 V109 H116.6 V104.8 H131.4 Z" class="fk sy" stroke-width="1.3"/>' + rc(AX - 1.7, ay - 1.7, 3.4, 3.4, 'sy', 1.1);
     // radio altitude below 2500 ft
-    if (f.ra != null) o += t(AX, 151.5, String(f.ra), 'g', 8.7, 'middle');
+    if (f.ra != null) o += t(AX, 153.5, String(f.ra), 'g', 9.2, 'middle');
     // ILS / FLS: the LOC scale under the attitude display and the G/S scale beside it (19 units a dot), the yellow indexes
     if (f.ls) {
       [-38, -19, 19, 38].forEach(function (d) { o += circ(AX + d, 167.5, 1.3, 'sw', 0.9) + circ(138.2, hz + d, 1.3, 'sw', 0.9); });
@@ -632,8 +632,10 @@
     if (f.spdSel && f.spd != null) {
       var ys = MID - (f.spd - spd) * 1.24;
       if (ys < TOP) o += t(12.5, 47, f.spdTxt || String(f.spd), 'c', 7.4, 'middle'); else if (ys > BOT) o += t(12.5, 163, f.spdTxt || String(f.spd), 'c', 7.4, 'middle');
-      else o += '<path d="M24.4 ' + ys + ' l7 -3.4 v6.8 z" class="c"/>';
-    } else { var yt = f.tgt != null ? Math.max(TOP, Math.min(BOT, MID - (f.tgt - spd) * 1.24)) : MID; o += '<path d="M24.4 ' + yt + ' l6.4 -3.2 v6.4 z" class="m"/>'; }
+      else o += '<path d="M24.4 ' + ys + ' l7 -3.4 v6.8 z" class="sc" fill="none" stroke-width="1.2"/>';
+    } else { var yt = f.tgt != null ? Math.max(TOP, Math.min(BOT, MID - (f.tgt - spd) * 1.24)) : MID; o += '<path d="M24.4 ' + yt + ' l7 -3.4 v6.8 z" class="sm" fill="none" stroke-width="1.2"/>'; }
+    // speed trend: a yellow arrow from the speed towards where it is heading (f.trend, knots in 10 s)
+    if (f.trend && Math.abs(f.trend) >= 1.5) { var ytr = MID - f.trend * 1.24, dr = f.trend > 0 ? 1 : -1; o += ln(20.6, MID, 20.6, ytr + dr * 3.6, 'sy', 1.2) + '<path d="M20.6 ' + ytr + ' l-2.4 ' + (dr * 3.8) + ' h4.8 z" class="fy"/>'; }
     o += ln(0, MID, 23.7, MID, 'sy', 1.8) + '<path d="M24.4 ' + MID + ' l7 -3.6 v7.2 z" class="fy"/>';
     if (!f.cas) o += t(3, 166.5, '.798', 'g', 8, 'start');
     // altitude tape: grey, scale line on its right edge, ticks every 100 ft, numbers (hundreds, three digits) every 500 ft (0.093 units a foot)
@@ -684,11 +686,11 @@
     }
     // ILS ident and frequency, or runway and slope, then the distance (the number magenta, NM cyan), magenta and large like the aircraft's
     (f.lsTxt || []).forEach(function (l, k) {
-      var y = [180.2, 189.4, 198][k] || 198, dm = /^(.*?)\s*NM$/.exec(l);
-      if (dm) o += t(2.4, y, dm[1], 'm', 8) + t(2.4 + dm[1].length * 4.8 + 1.5, y, 'NM', 'c', 5.2);
-      else o += t(2.4, y, l, 'm', k === 0 ? 9.4 : 8.4);
+      var y = [177.5, 185.3, 193.2][k] || 193.2, dm = /^(.*?)\s*NM$/.exec(l);
+      if (dm) o += t(2.4, y, dm[1], 'm', 6.8) + t(2.4 + dm[1].length * 4.1 + 1.5, y, 'NM', 'c', 4.6);
+      else o += t(2.4, y, l, 'm', k === 0 ? 7.6 : 6.8);
     });
-    if (f.fls) o += t(136.5, 158, 'FLS', 'm', 9, 'start');
+    if (f.fls) o += t(143, 156.5, 'FLS', 'm', 8.4, 'end');
     return svg200(o, 'pfd');
   }
 
@@ -794,7 +796,7 @@
       // the TO waypoint, as on the aircraft: name white and bearing green, then the distance (NM cyan) and the time
       var to = e.to || { name: 'MAMOL', brg: '008°', dist: '22', eta: '02:17' };
       o += t(196, 12, to.brg, 'g', 7.5, 'end') + t(196 - to.brg.length * 4.5 - 3, 12, to.name, 'w', 7.5, 'end') +
-        t(196 - 11, 22, to.dist, 'g', 7.5, 'end') + t(196, 22, 'NM', 'c', 5.2, 'end') + t(196, 32, to.eta, 'g', 7.5, 'end');
+        t(196 - 11, 22, to.dist, 'g', 7.5, 'end') + t(196, 22, 'NM', 'c', 5.2, 'end') + (to.eta ? t(196, 32, to.eta, 'g', 7.5, 'end') : '');
       if (e.ls && e.ls.rwy) o += t(100, 12, e.ls.rwy, 'g', 8, 'middle');
     }
     if (mode !== 'LS' && mode !== 'VOR') o += t(184, 160, mode === 'PLAN' ? '' : 'WX+T+H', 'g', 6, 'end');

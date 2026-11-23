@@ -328,23 +328,23 @@
    * descent preparation, below FL100 with the landing lights on. */
   var IN_APPR = [T('LOWER/L', 'ON'), T('LOWER/R', 'ON')];
   var CONFIG = [
-    S('FLAPS/FLAPS', '1', 'FLAPS 1 — speed checked', 'Check the speed is below VFE for the new configuration (230 kt) before selecting. The amber = on the speed tape is VFE next.', { who: 'PM', speak: ['Flaps 1', 'Speed checked, flaps 1'], sim: { alt: 2250, dme: 7.0, cas: 180, vls: 143, vmax: 230, vfen: 200 } }),
-    S('FLAPS/FLAPS', '2', 'FLAPS 2 — speed checked', 'Speed below VFE for flaps 2 (200 kt) before selecting.', { who: 'PM', speak: ['Flaps 2', 'Speed checked, flaps 2'], sim: { alt: 2000, dme: 6.3, cas: 160, vls: 133, vmax: 200, vfen: 185 } }),
-    S('LGLEVER/Landing gear lever', 'DOWN', 'GEAR DOWN — speed checked', 'Speed below VLO (250 kt) before selecting. Then GND SPLRS ARM.', { who: 'PM', speak: ['Gear down', 'Speed checked, gear down'], sim: { alt: 1800, dme: 5.7, cas: 155, vmax: 200, vfen: 185 } }),
-    S('FLAPS/FLAPS', '3', 'FLAPS 3 — speed checked', 'Speed below VFE for flaps 3 (185 kt) before selecting.', { who: 'PM', speak: ['Flaps 3', 'Speed checked, flaps 3'], sim: { alt: 1600, dme: 5.0, cas: 145, vls: 128, vmax: 185, vfen: 177 } }),
-    S('FLAPS/FLAPS', 'FULL', 'FLAPS FULL — speed checked', 'Speed below VFE for flaps full (177 kt) before selecting. Landing checklist.', { who: 'PM', speak: ['Flaps full', 'Speed checked, flaps full'], sim: { alt: 1450, dme: 4.6, cas: 135, vls: 123, vmax: 177, vfen: null } })
+    S('FLAPS/FLAPS', '1', 'FLAPS 1 — speed checked', 'Check the speed is below VFE for the new configuration (230 kt) before selecting. The amber = on the speed tape is VFE next.', { who: 'PM', speak: ['Flaps 1', 'Speed checked, flaps 1'], sim: { alt: 2250, dme: 7.0, cas: 180, tgt: 180, vls: 143, vmax: 230, vfen: 200 } }),
+    S('FLAPS/FLAPS', '2', 'FLAPS 2 — speed checked', 'Speed below VFE for flaps 2 (200 kt) before selecting.', { who: 'PM', speak: ['Flaps 2', 'Speed checked, flaps 2'], sim: { alt: 2000, dme: 6.3, cas: 160, tgt: 160, vls: 133, vmax: 200, vfen: 185 } }),
+    S('LGLEVER/Landing gear lever', 'DOWN', 'GEAR DOWN — speed checked', 'Speed below VLO (250 kt) before selecting. Then GND SPLRS ARM.', { who: 'PM', speak: ['Gear down', 'Speed checked, gear down'], sim: { alt: 1800, dme: 5.7, cas: 155, tgt: 155, vmax: 200, vfen: 185 } }),
+    S('FLAPS/FLAPS', '3', 'FLAPS 3 — speed checked', 'Speed below VFE for flaps 3 (185 kt) before selecting.', { who: 'PM', speak: ['Flaps 3', 'Speed checked, flaps 3'], sim: { alt: 1600, dme: 5.0, cas: 145, tgt: 145, vls: 128, vmax: 185, vfen: 177 } }),
+    S('FLAPS/FLAPS', 'FULL', 'FLAPS FULL — speed checked', 'Speed below VFE for flaps full (177 kt) before selecting. The target is VAPP 130 kt: VLS 123 plus a third of the 21 kt headwind, with the ground speed mini (109 kt) holding the ground speed up. Landing checklist.', { who: 'PM', speak: ['Flaps full', 'Speed checked, flaps full'], sim: { alt: 1450, dme: 4.6, cas: 130, tgt: 130, vls: 123, vmax: 177, vfen: null } })
   ];
   var REVERSE = S('THR/Thrust lever 1', ['REV IDLE', 'MAX REV'], 'REVERSE — REV IDLE or FULL', 'Select reverse on both thrust levers: REV IDLE, or FULL if the situation needs it.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', after: [['THR/Thrust lever 2', { cur: 4 }]] });
   // The same configuration steps flown level at 3000 ft, before the final descent starts (RNAV and selected approaches).
   var LEVEL_DME = [12.0, 11.6, 11.2, 10.8, 10.4];
   var CONFIG_LEVEL = CONFIG.map(function (st, k) { return Object.assign({}, st, { sim: Object.assign({}, st.sim, { alt: 3000, dme: LEVEL_DME[k] }) }); });
-  var RETARD = S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', 'Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 20, dme: 0, cas: 130, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] });
+  var RETARD = S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', 'Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 20, dme: 0, cas: 126, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] });
 
   var PRACTICE = [
     {
       id: 'p-ils', from: 'appr', pre: IN_APPR, title: 'ILS CAT I — practise', phase: 'Approach',
       // sim0 and each step's sim: what the PFD and ND beside the panels show (js/np.js). RWY 14L, course 143°, level at 3000 ft (FCU altitude 3000) on a 113° intercept heading.
-      sim0: { type: 'ILS', alt: 3000, dme: 9.4, cas: 200, vls: 155, vfen: 230, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
+      sim0: { type: 'ILS', alt: 3000, dme: 9.4, cas: 200, tgt: 200, vls: 155, vfen: 230, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
       steps: [
         S('EFISL/LS', true, 'LS — ON', 'Both pilots: ILS scales on the PFD.', { sim: { ls: true } }),
         S('EFISL/ND MODE', ['LS', 'ARC'], 'ROSE LS or ARC', 'ARC (used most of the time) or ROSE LS. The ND shows the flight plan with the final approach and the ILS ident at the top.', { sim: { nd: true } }),
@@ -369,7 +369,7 @@
     {
       id: 'p-lvo', from: 'appr', pre: IN_APPR, title: 'CAT III autoland — practise', phase: 'Approach',
       // As the ILS flow (RWY 14L, course 143°, level at 3000 ft), with CAT 3 SINGLE then DUAL, a radio DH of 50 ft, LAND at 400 ft, FLARE and ROLL OUT.
-      sim0: { type: 'ILS', alt: 3000, dme: 9.4, cas: 200, vls: 155, vfen: 230, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
+      sim0: { type: 'ILS', alt: 3000, dme: 9.4, cas: 200, tgt: 200, vls: 155, vfen: 230, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
       steps: [
         S('EFISL/LS', true, 'LS — ON', 'Both pilots: ILS scales on the PFD.', { sim: { ls: true } }),
         S('EFISR/LS', true, 'LS — ON'),
@@ -392,8 +392,8 @@
         C('Alert height 100 ft', 'CAT 3 DUAL: below the AH a single failure does not need a go-around.', { sim: { alt: 100, dme: 0.3 }, auto: 4000 }),
         C('"Minimum" — "Land" (or "Go around – flaps")', 'With a DH: decide at the "Minimum" callout. No DH: continue unless the AUTO LAND light comes on.', { sim: { alt: 50, dme: 0.15 } }),
         C('About 30 ft: FLARE', 'The autopilot raises the nose: FLARE green on the FMA.', { sim: { vert: 'FLARE', alt: 30, dme: 0.1, vs: -400 }, auto: 4000 }),
-        S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '"RETARD" at 10 ft RA in autoland. Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 10, dme: 0.05, cas: 130, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] }),
-        C('Touchdown: ROLL OUT', 'ROLL OUT green on the FMA. The AP keeps the centreline on the localiser.', { sim: { lat: 'ROLL OUT', alt: 0, dme: 0, cas: 125, vs: 0 }, auto: 4000 }),
+        S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '"RETARD" at 10 ft RA in autoland. Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 10, dme: 0.05, cas: 126, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] }),
+        C('Touchdown: ROLL OUT', 'ROLL OUT green on the FMA. The AP keeps the centreline on the localiser.', { sim: { lat: 'ROLL OUT', alt: 0, dme: 0, cas: 118, vs: 0 }, auto: 4000 }),
         REVERSE,
         C('"Spoilers" — "Reverse green" — "Decel"', 'The PM\'s calls on the roll-out.', { who: 'PM', auto: 4000 }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Disconnect the APs at taxi speed, before leaving the runway: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [] }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] })
@@ -402,7 +402,7 @@
     {
       id: 'p-rnav', from: 'appr', pre: IN_APPR, title: 'RNAV (GNSS) FINAL APP — practise', phase: 'Approach',
       // RWY 14L, final track 143°, level at 3000 ft; the final descent point (FDP) is 9.4 NM from the threshold.
-      sim0: { type: 'RNAV', alt: 3000, dme: 12.5, cas: 200, vls: 155, vfen: 230, hdgNow: 143, hdgSel: false, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'NAV', ap: ['AP1'], loc: 0, gs: 0, vs: 0 },
+      sim0: { type: 'RNAV', alt: 3000, dme: 12.5, cas: 200, tgt: 200, vls: 155, vfen: 230, hdgNow: 143, hdgSel: false, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'NAV', ap: ['AP1'], loc: 0, gs: 0, vs: 0 },
       steps: [
         S('EFISL/LS', false, 'LS — OFF', 'No LS for a FINAL APP approach.'),
         S('EFISL/ND MODE', ['NAV', 'ARC'], 'ROSE NAV or ARC', 'ARC (used most of the time) or ROSE NAV shows the flight plan with the final approach.', { sim: { nd: true } }),
@@ -426,7 +426,7 @@
     {
       id: 'p-fls', from: 'appr', pre: IN_APPR, title: 'FLS — practise', phase: 'Approach',
       // Display after Safety first #40 (July 2025): F-APP in the FMA once LS is pressed, F-G/S and F-LOC armed then engaged, double diamonds, RWY / slope / course on the PFD.
-      sim0: { type: 'FLS', alt: 3000, dme: 9.4, cas: 200, vls: 155, vfen: 230, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
+      sim0: { type: 'FLS', alt: 3000, dme: 9.4, cas: 200, tgt: 200, vls: 155, vfen: 230, hdgNow: 113, hdgSel: true, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 1.8, gs: 2.2, vs: 0 },
       steps: [
         S('EFISL/LS', true, 'LS — ON (FLS)', 'For an FLS approach the LS pushbutton shows the FLS beam: F-LOC and F-G/S scales with double diamonds, and F-APP in the FMA.', { sim: { ls: true, cap: 'F-APP' } }),
         S('EFISR/LS', true, 'LS — ON'),
@@ -453,7 +453,7 @@
     {
       id: 'p-sel', from: 'appr', pre: IN_APPR, title: 'Selected NPA (TRK-FPA) — practise', phase: 'Approach',
       // A VOR approach to RWY 14L on the 143° track, level at 3000 ft; the final descent point (FDP) is 9.4 NM from the threshold.
-      sim0: { type: 'NPA', alt: 3000, dme: 12.5, cas: 200, vls: 155, vfen: 230, hdgNow: 143, hdgSel: false, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 0, gs: 0, vs: 0 },
+      sim0: { type: 'NPA', alt: 3000, dme: 12.5, cas: 200, tgt: 200, vls: 155, vfen: 230, hdgNow: 143, hdgSel: false, crs: 143, fcuAlt: 3000, thr: 'SPEED', vert: 'ALT', lat: 'HDG', ap: ['AP1'], loc: 0, gs: 0, vs: 0 },
       steps: [
         S('EFISL/ADF/VOR 1', 'VOR', 'VOR 1 needle', 'Raw data for the approach on the ND.', { sim: { vor: true } }),
         S('EFISL/ND MODE', ['VOR', 'ARC'], 'ROSE VOR or ARC', 'ARC (used most of the time) or ROSE VOR, with the VOR needle.', { sim: { nd: true } }),
@@ -488,8 +488,8 @@
   var APPR_ROWS = function (fls, baro, radio, pre, scratch) {
     return [[['APPR', pre ? 'w' : 'g', 'C']], [['QNH', 'w', 'L', 1]].concat(fls ? [['FLS/FINAL APP*', 'c', 'R']] : []), [['1013', 'c', 'L']],
       [['TEMP', 'w', 'L', 1], ['BARO', 'w', 'R', 1]], [['10°', 'c', 'L'], [baro, 'c', 'R']],
-      [['MAG WIND', 'w', 'L', 1]].concat(radio ? [['RADIO', 'w', 'R', 1]] : []), [['020°/20', 'c', 'L']].concat(radio ? [[radio, 'c', 'R']] : []), [['TRANS ALT', 'w', 'L', 1]], [['4000', 'c', 'L']],
-      [['VAPP', 'w', 'L', 1], ['VLS', 'w', 0.3, 1], ['LDG CONF', 'w', 'R', 1]], [['135', 'c', 'L'], ['123', 'g', 0.3], ['FULL/CONF3*', 'c', 'R']],
+      [['MAG WIND', 'w', 'L', 1]].concat(radio ? [['RADIO', 'w', 'R', 1]] : []), [['163°/23', 'c', 'L']].concat(radio ? [[radio, 'c', 'R']] : []), [['TRANS ALT', 'w', 'L', 1]], [['4000', 'c', 'L']],
+      [['VAPP', 'w', 'L', 1], ['VLS', 'w', 0.3, 1], ['LDG CONF', 'w', 'R', 1]], [['130', 'c', 'L'], ['123', 'g', 0.3], ['FULL/CONF3*', 'c', 'R']],
       pre ? [] : [['PREV', 'w', 'L', 1], ['NEXT', 'w', 'R', 1]], pre ? [['<ACTIVATE APPR PHASE', 'c', 'L']] : [['<PHASE', 'w', 'L'], ['PHASE>', 'w', 'R']], scratch ? [[scratch, 'w', 'L']] : []];
   };
   var MCDU = {

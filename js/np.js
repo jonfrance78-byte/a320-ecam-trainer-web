@@ -372,12 +372,12 @@
     var m = animAt(f), ty = m.type, fls = ty === 'FLS', xls = ty === 'ILS' || fls, dme = m.dme.toFixed(1) + 'NM';
     var lsTxt = fls ? ['RWY14L', '3.0°', dme] : ['IBX', '109.50', dme], rt = appRoute(m.dme, (m.loc || 0) * 0.6);
     var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, cap2: m.cap2, min: m.min,
-      ap: m.ap, fd: m.fd !== false, bird: m.bird, fpa: m.fpa, cas: m.cas, tgt: m.cas, vls: m.vls, vap: m.vls ? m.vls - 11 : null, vam: m.vls ? m.vls - 18 : null, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, fcuTop: true, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
+      ap: m.ap, fd: m.fd !== false, bird: m.bird, fpa: m.fpa, cas: m.cas, tgt: m.tgt != null ? m.tgt : m.cas, trend: m.tgt != null ? Math.max(-20, Math.min(20, m.tgt - m.cas)) : 0, vls: m.vls, vap: m.vls ? m.vls - 11 : null, vam: m.vls ? m.vls - 18 : null, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, fcuTop: true, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
       baro: '1013', ls: m.ls && xls, dev: m.ls && xls ? { loc: m.loc, gs: m.gs, dbl: fls } : null, lsTxt: m.ls && xls ? lsTxt : null, fls: fls && m.ls, ra: m.alt < 2500 ? Math.max(0, Math.round(m.alt)) : null });
-    var nxt = rt[0], eta = Math.max(0, Math.round((nxt ? m.dme - nxt[3] : 0) / Math.max(m.cas, 100) * 3600)), mmss = ('0' + Math.floor(eta / 60)).slice(-2) + ':' + ('0' + eta % 60).slice(-2);
-    var nd = DS.renderND({ alt: m.alt }, { mode: 'ARC', range: 20, cstr: false, opt: null, n1: ty === 'NPA' && m.vor ? 'VOR' : 'OFF', brg1: 143, n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(Math.round(m.cas)), tas: String(Math.round(m.cas) + 4),
+    var nxt = rt[0];
+    var nd = DS.renderND({ alt: m.alt }, { mode: 'ARC', range: 20, cstr: false, opt: null, n1: ty === 'NPA' && m.vor ? 'VOR' : 'OFF', brg1: 143, n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(Math.round(m.cas) + 4 - 21), tas: String(Math.round(m.cas) + 4),
       hdgBug: m.hdgSel ? 113 : null, route: rt, hold: holdPts(m.dme, (m.loc || 0) * 0.6), ls: m.ls && xls ? { rwy: fls ? 'FLS14L' : 'ILS14L' } : null,
-      to: nxt ? { name: nxt[0], brg: '143°', dist: Math.max(0, m.dme - nxt[3]).toFixed(1), eta: mmss } : null });
+      to: nxt ? { name: nxt[0], brg: '143°', dist: Math.max(0, m.dme - nxt[3]).toFixed(1) } : null });
     return '<div class="np-disp" aria-label="PFD and ND">' + pfd + nd + '</div>';
   }
   function renderStage() { var el = document.getElementById('np-stage'); if (el) el.innerHTML = stageSvg(); }
