@@ -156,12 +156,13 @@
     if (st && st.auto) { var kk = R.k, rr = R; AUTO_T = setTimeout(function () { if (R === rr && R.k === kk && VIEW === 'run') complete('Checked.'); }, st.auto); }
   }
   function jumpTo(k) {
-    R.k = k; R.states = presets(R.f, NP.stateAt(D, R.f, k)); R.note = null;
+    R.k = k; R.states = presets(R.f, NP.stateAt(D, R.f, k)); R.note = null; R.boxes = [];
     enterStep();
   }
   function complete(msg) {
     var st = step();
     if (st.k === 'check' || st.k === 'set') NP.applyAfter(R.states, st.after);
+    markFma(R.f, R.k);
     R.note = { ok: true, s: msg };
     R.k++;
     if (R.k >= R.f.steps.length) { DONE[R.f.id] = true; store('done', DONE); }
@@ -171,7 +172,8 @@
     var st = step();
     if (!st || st.k !== 'set') return;
     var r = NP.resolve(st.ref), it = PN.P[R.panel].items[i];
-    if (R.panel !== r.panel || i !== r.i) {
+    var also = st.also ? NP.resolve(st.also) : null;
+    if (R.panel !== r.panel || (i !== r.i && !(also && R.panel === also.panel && i === also.i))) {
       if (MODE === 'recall') R.errors++;
       R.note = { ok: false, s: 'Not this one: that is ' + PN.ctlName(it) + '.' + (MODE === 'recall' ? ' The next item is on this panel.' : ' The item is highlighted.') };
       render();
@@ -251,7 +253,7 @@
   function stageSvg() {
     var id = R.panel || 'LOWER', p = PN.P[id], st = step();
     PN.LIVE.mcduPage = mcduPageAt(R.f, R.k);
-    var target = st && st.k === 'set' && !(MODE === 'recall' && !R.reveal) ? NP.resolve(st.ref).i : null;
+    var target = st && st.k === 'set' && !st.nohl && !(MODE === 'recall' && !R.reveal) ? NP.resolve(st.ref).i : null;
     var aspect = p.w / p.h;
     return '<div class="np-stage' + (aspect > 2.2 ? ' wide' : '') + '"><p class="np-stage-l">' + esc(panelName(id)) + '</p>' +
       '<svg viewBox="-4 -4 ' + (p.w + 8) + ' ' + (p.h + 8) + '" class="pv-svg np-svg" role="group" aria-label="' + esc(panelName(id)) + ' panel">' +
@@ -291,13 +293,23 @@
     for (var i = 0; i < k && i < f.steps.length; i++) if (f.steps[i].sim) Object.assign(m, f.steps[i].sim);
     return m;
   }
+  /* A new engaged FMA mode (or approach capability) is boxed in white for 10 s: "white box on FMA"
+   * and "guidance mode boxing on the FMA", Airbus Safety first #37. */
+  function markFma(f, k) {
+    if (!f.sim0) return;
+    var a = simAt(f, k), b = simAt(f, k + 1), now = Date.now();
+    R.boxes = (R.boxes || []).filter(function (x) { return x.until > now; });
+    ['thr', 'vert', 'lat', 'cap'].forEach(function (key, col) { if (b[key] && b[key] !== a[key]) R.boxes = R.boxes.filter(function (x) { return x.col !== col; }).concat([{ col: col, until: now + 10000 }]); });
+    var rr = R;
+    setTimeout(function () { if (R === rr && VIEW === 'run') { var el = document.querySelector('.np-disp'); if (el) el.outerHTML = dispHtml(); } }, 10100);
+  }
   function dispHtml() {
     var f = R.f, DS = window.ECAM_DISPLAYS;
     if (!f.sim0 || !DS) return '';
     var m = simAt(f, R.k), fls = m.type === 'FLS', dme = m.dme.toFixed(1) + 'NM';
     var lsTxt = fls ? ['RWY14L', '3.0°', '143°', dme] : ['IBX', '109.50', dme];
     var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, min: m.min,
-      ap: m.ap, fd: true, cas: m.cas, tgt: m.cas, vls: m.vls, vmax: m.vmax, vfen: m.vfen, fcuAlt: m.fcuAlt, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
+      ap: m.ap, fd: true, cas: m.cas, tgt: m.cas, vls: m.vls, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
       baro: '1013', ls: m.ls, dev: m.ls ? { loc: m.loc, gs: m.gs, dbl: fls } : null, lsTxt: m.ls ? lsTxt : null, fls: fls && m.ls, ra: m.alt < 2500 ? m.alt : null });
     var nd = DS.renderND({ alt: m.alt }, { mode: m.nd ? 'LS' : 'ARC', range: 10, cstr: false, opt: null, n1: 'OFF', n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(m.cas), tas: String(m.cas + 4),
       loc: m.ls ? m.loc : null, lsTxt: [fls ? 'FLS RWY14L' : 'ILS1 109.50', 'CRS 143°'] });

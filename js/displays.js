@@ -556,6 +556,7 @@
     [f.thr, f.vert, f.lat].forEach(function (m, k) { o += t(20 + k * 40, 10, m, 'g', m.length > 7 ? 6 : 7, 'middle'); });
     if (f.arm) o += t(60, 19, f.arm, 'c', 6.5, 'middle');
     // Approach: armed lateral mode (second line, blue); capability and minimum in column 4 (F-APP, CAT 1, BARO 910)
+    (f.box || []).forEach(function (c) { o += rc(c * 40 + 3, 2.5, 34, 10, 'sw', 1); });
     if (f.armLat) o += t(100, 19, f.armLat, 'c', 6.5, 'middle');
     if (f.cap) o += t(140, 10, f.cap, 'w', 7, 'middle');
     if (f.min) o += t(140, 18, f.min, 'c', 6.5, 'middle');
@@ -620,17 +621,18 @@
     if (!f.cas) o += t(28, 166, '.798', 'g', 9, 'middle');
     // altitude tape
     o += '<rect x="152" y="40" width="24" height="112" class="tape"/>';
-    for (var a2 = Math.floor(alt / 100) * 100 - 600; a2 <= alt + 600; a2 += 100) {
-      var ya = cy - (a2 - alt) * 0.4;
+    // 0.14 px per ft: the tape shows about 390 ft each side, ticks every 100 ft, numbers (hundreds) every 200 ft
+    for (var a2 = Math.floor(alt / 100) * 100 - 400; a2 <= alt + 400; a2 += 100) {
+      var ya = cy - (a2 - alt) * 0.14;
       if (ya < 42 || ya > 150) continue;
       o += ln(152, ya, 158, ya, 'sw', 1);
-      if (a2 % 500 === 0 && a2 !== alt) o += t(164, ya + 3, String(a2 / 100), 'w', 7.5, 'middle');
+      if (a2 % 200 === 0 && Math.abs(ya - cy) > 9) o += t(166, ya + 3, String(a2 / 100), 'w', 7.5, 'middle');
     }
     o += ln(138, cy, 152, cy, 'sy', 1.6);
     o += '<rect x="150" y="' + (cy - 8) + '" width="32" height="16" class="screen sy" stroke-width="1.2"/>' + t(170, cy + 4, String(Math.floor(alt / 100)), 'g', 11, 'end') + t(181, cy + 3, ('0' + Math.floor((alt % 100) / 20) * 20).slice(-2), 'g', 7, 'end');
-    // FCU altitude: blue, above or below the tape (on it when within 600 ft), magenta dot when managed is not shown
-    var fa = f.fcuAlt, yf = cy - (fa - alt) * 0.4;
-    if (fa > alt + 600) o += t(164, 36, String(fa), 'c', 8, 'middle'); else if (fa < alt - 600) o += t(164, 162, String(fa), 'c', 8, 'middle');
+    // FCU altitude: blue, above or below the tape (on it when within about 390 ft), magenta dot when managed is not shown
+    var fa = f.fcuAlt, yf = cy - (fa - alt) * 0.14;
+    if (fa > alt + 390) o += t(164, 36, String(fa), 'c', 8, 'middle'); else if (fa < alt - 390) o += t(164, 162, String(fa), 'c', 8, 'middle');
     else if (fa !== alt) o += rc(153, yf - 4, 22, 8, 'sc', 1) + t(164, yf + 2.5, String(fa / 100), 'c', 6.5, 'middle');
     // vertical speed
     o += '<path d="M184 46 L194 52 L194 138 L184 144 Z" class="tape"/>';
@@ -638,7 +640,7 @@
     // V/S needle: 1000 and 2000 ft/min at 17 and 31 units from level, 6000 at 45
     var av = Math.abs(f.vs), dv = av <= 1000 ? av * 0.017 : av <= 2000 ? 17 + (av - 1000) * 0.014 : 31 + Math.min(av - 2000, 4000) * 0.0035, yv = cy - (f.vs >= 0 ? dv : -dv);
     o += ln(199, cy, 191, yv, 'sg', 1.6);
-    if (av >= 200) o += rc(186, f.vs > 0 ? 36 : 145, 12, 9, 'sg', 0.8) + t(192, f.vs > 0 ? 43 : 152, String(Math.round(av / 100)), 'g', 6.5, 'middle');
+    if (av >= 200) o += rc(176, f.vs > 0 ? 36 : 145, 22, 9, 'sg', 0.8) + t(187, f.vs > 0 ? 43 : 152, String(Math.round(av / 100) * 100), 'g', 6.5, 'middle');
     // heading tape
     o += '<rect x="60" y="168" width="80" height="14" class="tape"/>';
     var hn = f.hdgNow || 0;
