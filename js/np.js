@@ -176,7 +176,7 @@
     if (st && st.auto) { var kk = R.k, rr = R; AUTO_T = setTimeout(function () { if (R === rr && R.k === kk && VIEW === 'run') complete('Checked.'); }, st.auto); }
   }
   function jumpTo(k) {
-    R.k = k; R.states = presets(R.f, NP.stateAt(D, R.f, k)); R.note = null; R.boxes = [];
+    R.k = k; R.states = presets(R.f, NP.stateAt(D, R.f, k)); R.note = null; R.boxes = []; R.anim = null;
     enterStep();
   }
   function complete(msg) {
@@ -323,10 +323,31 @@
     var rr = R;
     setTimeout(function () { if (R === rr && VIEW === 'run') { var el = document.querySelector('.np-disp'); if (el) el.outerHTML = dispHtml(); } }, 10100);
   }
+  /* The ILS and FLS course and glidepath bars (and the heading they bring) glide to their new place at 24
+   * frames a second over 2.5 s instead of jumping: R.anim holds the values on show, where they started and
+   * where they are going. */
+  var FPS = 24, GLIDE_MS = 2500, GLIDE = ['loc', 'gs', 'hdgNow'], ANIM_T = 0;
+  function pick(m) { var o = {}; GLIDE.forEach(function (k) { o[k] = m[k]; }); return o; }
+  function animAt(f) {
+    var m = simAt(f, R.k), tg = pick(m), A = R.anim;
+    if (!A) A = R.anim = { cur: tg, from: tg, tgt: tg, t0: 0 };
+    else if (GLIDE.some(function (k) { return A.tgt[k] !== tg[k]; })) { A.from = Object.assign({}, A.cur); A.tgt = tg; A.t0 = Date.now(); }
+    if (GLIDE.some(function (k) { return A.cur[k] !== A.tgt[k]; }) && !ANIM_T) {
+      var rr = R;
+      ANIM_T = setInterval(function () {
+        var p = Math.min(1, (Date.now() - A.t0) / GLIDE_MS), e = p * p * (3 - 2 * p);
+        if (R !== rr || VIEW !== 'run' || R.anim !== A) { clearInterval(ANIM_T); ANIM_T = 0; return; }
+        GLIDE.forEach(function (k) { A.cur[k] = p >= 1 ? A.tgt[k] : A.from[k] + (A.tgt[k] - A.from[k]) * e; });
+        var el = document.querySelector('.np-disp'); if (el) el.outerHTML = dispHtml();
+        if (p >= 1) { clearInterval(ANIM_T); ANIM_T = 0; }
+      }, 1000 / FPS);
+    }
+    return Object.assign({}, m, A.cur);
+  }
   function dispHtml() {
     var f = R.f, DS = window.ECAM_DISPLAYS;
     if (!f.sim0 || !DS) return '';
-    var m = simAt(f, R.k), fls = m.type === 'FLS', dme = m.dme.toFixed(1) + 'NM';
+    var m = animAt(f), fls = m.type === 'FLS', dme = m.dme.toFixed(1) + 'NM';
     var lsTxt = fls ? ['RWY14L', '3.0°', '143°', dme] : ['IBX', '109.50', dme];
     var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, cap2: m.cap2, min: m.min,
       ap: m.ap, fd: true, cas: m.cas, tgt: m.cas, vls: m.vls, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
