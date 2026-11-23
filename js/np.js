@@ -130,12 +130,17 @@
     states.FCU = states.FCU || {}; states.FCU[i] = Object.assign({}, states.FCU[i], { val: String(f.sim0.fcuAlt) });
     return states;
   }
+  // A callout through the speakers (the browser's own voice).
+  function speak(w) {
+    try { var ss = window.speechSynthesis; if (!ss) return; ss.cancel(); var u = new SpeechSynthesisUtterance(w); u.lang = 'en-GB'; u.rate = 0.9; ss.speak(u); } catch (e) { /* no speech: silent */ }
+  }
   function step() { return R.f.steps[R.k]; }
   // Before the step: remember whether its target is already met (then it is a check).
   function enterStep() {
     var st = step();
     R.reveal = false; R.ticks = {};
     clearTimeout(AUTO_T);
+    if (st && st.speak) speak(st.speak);
     if (st) {
       R.pre = st.k === 'set' && NP.met(R.states, st);
       if (st.k === 'set') R.panel = NP.resolve(st.ref).panel;
@@ -209,7 +214,7 @@
     if (hide) h += '<button class="btn" data-act="reveal">Show the item</button>';
     h += '<span class="np-sp"></span>' +
       (R.k > 0 ? '<button class="btn sm" data-act="prev">Back</button>' : '') +
-      '<button class="btn sm" data-act="skip">Skip</button></div>';
+      '<button class="btn sm" data-act="skip">Next</button></div>';
     return h + '</div>';
   }
   function checklist(st) {
@@ -361,7 +366,7 @@
       case 'tick': R.ticks[+el.getAttribute('data-j')] = !R.ticks[+el.getAttribute('data-j')]; render(); break;
       case 'listdone': complete(step().name + ' checklist complete.'); break;
       case 'reveal': R.reveal = true; render(); break;
-      case 'skip': if (step()) { var st = step(); NP.apply(R.states, st); R.k++; R.note = { ok: true, s: 'Skipped.' }; if (R.k >= R.f.steps.length) { DONE[R.f.id] = true; store('done', DONE); } enterStep(); } break;
+      case 'skip': if (step()) { var st = step(); NP.apply(R.states, st); R.k++; R.note = { ok: true, s: 'Next item.' }; if (R.k >= R.f.steps.length) { DONE[R.f.id] = true; store('done', DONE); } enterStep(); } break;
       case 'prev': jumpTo(Math.max(0, R.k - 1)); break;
       case 'jump': jumpTo(+el.getAttribute('data-k')); break;
     }

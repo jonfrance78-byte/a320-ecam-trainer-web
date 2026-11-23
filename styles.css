@@ -719,6 +719,7 @@ body:not(:has(.appbar.slim)) .m-card { box-shadow: 0 10px 34px rgba(0, 0, 0, .18
 body:not(:has(.appbar.slim)) .btn, body:not(:has(.appbar.slim)) .opt { background: #fff; color: var(--ink); }
 body:not(:has(.appbar.slim)) .btn:hover, body:not(:has(.appbar.slim)) .opt:hover:not([disabled]) { background: var(--card); }
 body:not(:has(.appbar.slim)) .btn.primary, body:not(:has(.appbar.slim)) .np-tab.on { color: #fff; }
+body:not(:has(.appbar.slim)) .btn.primary { background: var(--ink); border-color: var(--ink); }
 body:not(:has(.appbar.slim)) .opt.right { border-color: #1f7a3d; background: rgba(31, 122, 61, .08); }
 body:not(:has(.appbar.slim)) .opt.wrong { border-color: var(--ink-2); background: var(--card); }
 body:not(:has(.appbar.slim)) .m-list li.bad { color: var(--ink); text-decoration: underline; }
