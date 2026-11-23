@@ -298,7 +298,7 @@
       '<div class="np-prog" role="progressbar" aria-valuemin="0" aria-valuemax="' + n + '" aria-valuenow="' + k + '"><span style="width:' + (100 * k / n) + '%"></span></div>' +
       '<div class="np-run-meta"><span>' + k + ' / ' + n + '</span>' + modeSeg() + '</div>' +
       '</div>' +
-      '<div class="np-grid"><div class="np-main">' + stepCard() + '<div class="np-stagerow' + (f.sim0 ? ' has-disp' : '') + '">' + dispHtml() + '<div id="np-stage">' + stageSvg() + '</div></div></div>' +
+      '<div class="np-grid"><div class="np-main"><div class="np-stagerow' + (f.sim0 ? ' has-disp' : '') + '"><div class="np-left">' + stepCard() + '<div id="np-stage">' + stageSvg() + '</div></div>' + dispHtml() + '</div></div>' +
       '<aside class="np-side"><details class="np-side-d" open><summary>Items in this flow</summary>' + stepList() + '</details></aside></div>' +
       '</main>';
     document.getElementById('app').innerHTML = h;
@@ -344,16 +344,23 @@
     }
     return Object.assign({}, m, A.cur);
   }
+  // RNAV: the final approach as a flight plan on the ND, in NM east and north of the aircraft (the final track is 143°, the
+  // aircraft is d NM from the threshold; the FDP is 9.4 NM out, the missed approach point 4.5 NM past the runway).
+  function appRoute(d) {
+    var u = [Math.sin(143 * Math.PI / 180), Math.cos(143 * Math.PI / 180)];
+    return [['ELBEK', 9.4], ['RW14L', 0], ['NIVRO', -4.5]].filter(function (w) { return d - w[1] > -0.3; }).map(function (w) { return [w[0], (d - w[1]) * u[0], (d - w[1]) * u[1]]; });
+  }
   function dispHtml() {
     var f = R.f, DS = window.ECAM_DISPLAYS;
     if (!f.sim0 || !DS) return '';
-    var m = animAt(f), fls = m.type === 'FLS', dme = m.dme.toFixed(1) + 'NM';
-    var lsTxt = fls ? ['RWY14L', '3.0°', dme] : ['IBX', '109.50', dme];
+    var m = animAt(f), ty = m.type, fls = ty === 'FLS', xls = ty === 'ILS' || fls, dme = m.dme.toFixed(1) + 'NM';
+    var lsTxt = fls ? ['RWY14L', '3.0°', dme] : ['IBX', '109.50', dme], rt = ty === 'RNAV' ? appRoute(m.dme) : null;
     var pfd = DS.renderPFD({ alt: m.alt }, { thr: m.thr, vert: m.vert, lat: m.lat, arm: m.arm, armLat: m.armLat, cap: m.cap, cap2: m.cap2, min: m.min,
-      ap: m.ap, fd: true, cas: m.cas, tgt: m.cas, vls: m.vls, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
-      baro: '1013', ls: m.ls, dev: m.ls ? { loc: m.loc, gs: m.gs, dbl: fls } : null, lsTxt: m.ls ? lsTxt : null, fls: fls && m.ls, ra: m.alt < 2500 ? m.alt : null });
-    var nd = DS.renderND({ alt: m.alt }, { mode: m.nd ? 'LS' : 'ARC', range: 10, cstr: false, opt: null, n1: 'OFF', n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(m.cas), tas: String(m.cas + 4),
-      loc: m.ls ? m.loc : null, lsTxt: [fls ? 'FLS RWY14L' : 'ILS1 109.50', 'CRS 143°'] });
+      ap: m.ap, fd: m.fd !== false, bird: m.bird, fpa: m.fpa, cas: m.cas, tgt: m.cas, vls: m.vls, vmax: m.vmax, vfen: m.vfen, box: (R.boxes || []).filter(function (x) { return x.until > Date.now(); }).map(function (x) { return x.col; }), fcuAlt: m.fcuAlt, fcuTop: true, vs: m.vs, hdgNow: m.hdgNow, hdgSel: m.hdgSel, hdg: m.hdgSel ? 113 : null,
+      baro: '1013', ls: m.ls && xls, dev: m.ls && xls ? { loc: m.loc, gs: m.gs, dbl: fls } : null, lsTxt: m.ls && xls ? lsTxt : null, fls: fls && m.ls, ra: m.alt < 2500 ? m.alt : null });
+    var nd = DS.renderND({ alt: m.alt }, { mode: !m.nd ? 'ARC' : xls ? 'LS' : ty === 'RNAV' ? 'NAV' : 'VOR', range: ty === 'RNAV' ? 20 : 10, cstr: false, opt: null, n1: ty === 'NPA' && m.vor ? 'VOR' : 'OFF', brg1: 143, n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(m.cas), tas: String(m.cas + 4),
+      loc: xls ? (m.ls ? m.loc : null) : ty === 'NPA' ? m.loc : null, lsTxt: xls ? [fls ? 'FLS RWY14L' : 'ILS1 109.50', 'CRS 143°'] : ['VOR1 115.10', 'CRS 143°'],
+      route: rt, to: rt && rt.length ? [rt[0][0], '143° ' + (m.dme - (rt[0][0] === 'ELBEK' ? 9.4 : rt[0][0] === 'RW14L' ? 0 : -4.5)).toFixed(1) + 'NM'] : null });
     return '<div class="np-disp" aria-label="PFD and ND">' + pfd + nd + '</div>';
   }
   function renderStage() { var el = document.getElementById('np-stage'); if (el) el.innerHTML = stageSvg(); }
