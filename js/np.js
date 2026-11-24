@@ -159,7 +159,14 @@
   function enterStep() {
     var st = step();
     R.reveal = false; R.ticks = {};
-    clearTimeout(AUTO_T); clearTimeout(SPEAK_T); if (R) { clearTimeout(R.holdT); clearTimeout(R.modeT); R.held = false; R.modeHold = false; }
+    clearTimeout(AUTO_T); clearTimeout(SPEAK_T); if (R) { clearTimeout(R.holdT); clearTimeout(R.modeT); R.held = false; R.modeHold = false; (R.sdT || []).forEach(clearTimeout); R.sdT = []; R.sd = null; }
+    // sd: [page or null for each call of the step]: the lower display shows that SD page as the call is made, and leaves it at a null
+    if (st && st.sd) {
+      var sr = R, sk = R.k;
+      st.sd.forEach(function (pg, i) {
+        if (pg) R.sdT.push(setTimeout(function () { if (R === sr && R.k === sk && VIEW === 'run') { R.sd = pg; var el = document.querySelector('.np-disp'); if (el) el.outerHTML = dispHtml(); } }, 80 + i * (st.gap || 2000)));
+      });
+    }
     // A check step (a callout or an event of the aircraft) shows its state as it comes up: the numbers glide to it, and a new FMA mode
     // (LAND at 400 ft, LOC*...) appears, boxed, once they have arrived.
     if (st && st.k === 'check' && st.sim && MODE_KEYS.some(function (k) { return k in st.sim; })) {
@@ -376,6 +383,12 @@
     for (i = 1; i <= 12; i++) { ph = i * Math.PI / 12; add(s0 + 4 + 1.2 * Math.sin(ph), 1.2 + 1.2 * Math.cos(ph)); }
     return pts;
   }
+  // The system state the SD pages need on the roll-out: both engines at idle, normal hydraulics, ground spoilers out.
+  function sdState() {
+    var eng = function (i) { return { n1: 22, egt: 430, n2: 60, ff: 380, oilP: 52 + i, oilT: 96, oilQ: 15.2 - i * 0.4, vib1: 0.6, vib2: 0.9, nacT: 120, fuelUsed: 3420 + i * 30, running: true, master: true, firePb: false }; };
+    var hy = function () { return { p: 3000, rsvr: 'ok', pump: 'on', qty: 0.9 }; };
+    return { onGround: true, spdBrk: true, ign: false, gw: 61000, eng: [eng(0), eng(1)], hyd: { G: hy(), B: hy(), Y: hy(), ptu: 'auto' }, fctl: { elac: ['ok', 'ok'], sec: ['ok', 'ok', 'ok'], law: 'NORMAL' } };
+  }
   function dispHtml() {
     var f = R.f, DS = window.ECAM_DISPLAYS;
     if (!f.sim0 || !DS) return '';
@@ -390,7 +403,7 @@
     var nd = DS.renderND({ alt: m.alt }, { mode: 'ARC', range: 20, cstr: false, opt: null, n1: ty === 'NPA' && m.vor ? 'VOR' : 'OFF', brg1: 143, n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(Math.round(m.cas) + 4 - 21), tas: String(Math.round(m.cas) + 4),
       hdgBug: m.hdgSel ? 113 : null, route: rt, hold: holdPts(m.dme, (m.loc || 0) * 0.6), ls: m.ls && xls ? { rwy: fls ? 'FLS14L' : 'ILS14L' } : null,
       to: nxt ? { name: nxt[0], brg: '143°', dist: Math.max(0, m.dme - nxt[3]).toFixed(1) } : null });
-    return '<div class="np-disp" aria-label="PFD and ND">' + pfd + nd + '</div>';
+    return '<div class="np-disp" aria-label="PFD and ND">' + pfd + (R.sd ? DS.renderSD(sdState(), R.sd) : nd) + '</div>';
   }
   function renderStage() { var el = document.getElementById('np-stage'); if (el) el.innerHTML = stageSvg(); }
 

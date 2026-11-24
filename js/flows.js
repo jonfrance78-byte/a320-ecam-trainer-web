@@ -336,6 +336,8 @@
   ];
   // The automatic callout at 20 ft RA, repeated until the thrust levers are at idle.
   var RETARD_CALL = C('About 20 ft: "Retard" — "Retard" — "Retard"', 'Automatic callout at 20 ft RA, repeated until the thrust levers are at idle.', { sim: { alt: 20, dme: 0.03 }, gap: 900 });
+  // The PM's calls on the roll-out. The lower display shows the F/CTL page at "Spoilers" and the ENG page at "Reverse green"; "Decel" leaves it (js/np.js).
+  var ROLLOUT_CALLS = C('"Spoilers" — "Reverse green" — "Decel"', 'The PM\'s calls on the roll-out. The lower display shows the F/CTL page at "Spoilers" and the ENG page at "Reverse green"; at "Decel" look at the speed tape.', { who: 'PM', sd: ['F/CTL', 'ENG', null] });
   var REVERSE = S('THR/Thrust lever 1', ['REV IDLE', 'MAX REV'], 'REV THRUST — IDLE or FULL', 'Select reverse thrust on both thrust levers: REV IDLE, or FULL if the situation needs it.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', after: [['THR/Thrust lever 2', { cur: 4 }]] });
   // The same configuration steps flown level at 3000 ft, before the final descent starts (RNAV and selected approaches).
   var LEVEL_DME = [12.0, 11.6, 11.2, 10.8, 10.4];
@@ -362,12 +364,13 @@
         C('G/S — glideslope tracking', 'Descending on the beam at about 700 ft/min. FMA: G/S, LOC green.', { sim: { vert: 'G/S', gs: 0, alt: 2900, dme: 9.1, vs: -700 }, auto: 4000 }),
       ].concat(CONFIG, [
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
-        C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 310, dme: 1.0 } }),
-        C('"Minimum" — "Continue"', '', { sim: { alt: 210, dme: 0.7 } }),
+        C('BARO 310 ft: "Hundred above"', 'Automatic callout, 100 ft above the minimum. It is called from the barometric altitude, not the radio altitude.', { sim: { alt: 310, dme: 1.0 } }),
+        C('BARO 210 ft (DA): "Minimum" — "Continue"', 'Called from the barometric altitude (the BARO minimum entered on the PERF page), not the radio altitude.', { sim: { alt: 210, dme: 0.7 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Manual landing: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 190, dme: 0.6 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD_CALL,
         RETARD,
-        REVERSE
+        REVERSE,
+        ROLLOUT_CALLS
       ])
     },
     {
@@ -400,7 +403,7 @@
         S('THR/Thrust lever 1', 'IDLE', 'RETARD — IDLE', '"RETARD" at 10 ft RA in autoland. Bring both thrust levers back to IDLE.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', sim: { alt: 10, dme: 0.05, cas: 126, thr: '' }, after: [['THR/Thrust lever 2', { cur: 3 }], ['FCU/A/THR', { lo: false }]] }),
         C('Touchdown: ROLL OUT', 'ROLL OUT green on the FMA. The AP keeps the centreline on the localiser.', { sim: { lat: 'ROLL OUT', vert: '', alt: 0, dme: 0, cas: 118, vs: 0 }, auto: 4000 }),
         REVERSE,
-        C('"Spoilers" — "Reverse green" — "Decel"', 'The PM\'s calls on the roll-out.', { who: 'PM', auto: 4000 }),
+        ROLLOUT_CALLS,
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Disconnect the AP when the crew has sufficient visual contact: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [] }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] })
       ])
     },
@@ -422,12 +425,13 @@
         S('FCU/ALT knob', 'press', 'At FINAL APP — set go-around altitude', 'The missed approach altitude on the FCU, once FINAL APP is engaged.', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('Monitor: V/DEV, XTK, GPS PRIMARY', 'Go around if XTK exceeds 0.3 NM, V/DEV is excessive (½ dot ◆) or GPS PRIMARY is lost on both NDs.', { sim: { alt: 1500, dme: 4.7 } }),
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
-        C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 510, dme: 1.6 } }),
-        C('"Minimum" — "Continue"', '', { sim: { alt: 410, dme: 1.3 } }),
+        C('BARO 510 ft: "Hundred above"', 'Automatic callout, 100 ft above the minimum. It is called from the barometric altitude, not the radio altitude.', { sim: { alt: 510, dme: 1.6 } }),
+        C('BARO 410 ft (MDA): "Minimum" — "Continue"', 'Called from the barometric altitude (the BARO minimum entered on the PERF page), not the radio altitude.', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'At or before the minimum: takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD_CALL,
         RETARD,
-        REVERSE
+        REVERSE,
+        ROLLOUT_CALLS
       ])
     },
     {
@@ -451,12 +455,13 @@
         C('F-G/S — tracking', 'FMA: F-G/S, F-LOC green.', { sim: { vert: 'F-G/S', gs: 0, alt: 2900, dme: 9.1, vs: -700 }, auto: 4000 })
       ].concat(CONFIG, [
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
-        C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 510, dme: 1.6 } }),
-        C('"Minimum" — "Continue"', '', { sim: { alt: 410, dme: 1.3 } }),
+        C('BARO 510 ft: "Hundred above"', 'Automatic callout, 100 ft above the minimum. It is called from the barometric altitude, not the radio altitude.', { sim: { alt: 510, dme: 1.6 } }),
+        C('BARO 410 ft (MDA): "Minimum" — "Continue"', 'Called from the barometric altitude (the BARO minimum entered on the PERF page), not the radio altitude.', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD_CALL,
         RETARD,
-        REVERSE
+        REVERSE,
+        ROLLOUT_CALLS
       ])
     },
     {
@@ -478,12 +483,13 @@
         S('FCU/ALT knob', 'press', 'Go-around altitude — set', 'Once descending below the missed approach altitude.', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('Distance / altitude checks', 'PM calls the check heights each mile; PF adjusts the FPA to regain the path.', { who: 'PM', sim: { alt: 1500, dme: 4.7 } }),
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
-        C('100 ft above the minimum — "Hundred above"', 'Automatic callout.', { sim: { alt: 510, dme: 1.6 } }),
-        C('"Minimum" — "Continue"', 'No level-off at the MDA: continue only with the visual reference, otherwise go around.', { sim: { alt: 410, dme: 1.3 } }),
+        C('BARO 510 ft: "Hundred above"', 'Automatic callout, 100 ft above the minimum. It is called from the barometric altitude, not the radio altitude.', { sim: { alt: 510, dme: 1.6 } }),
+        C('BARO 410 ft (MDA): "Minimum" — "Continue"', 'Called from the barometric altitude. No level-off at the MDA: continue only with the visual reference, otherwise go around.', { sim: { alt: 410, dme: 1.3 } }),
         S('CONSL/Takeover pushbutton', 'press', 'AP — OFF', 'Takeover pushbutton on the sidestick.', { who: 'PF', sim: { ap: [], alt: 400, dme: 1.25 }, after: [['FCU/AP1', { lo: false }], ['FCU/AP2', { lo: false }]] }),
         RETARD_CALL,
         RETARD,
-        REVERSE
+        REVERSE,
+        ROLLOUT_CALLS
       ])
     }
   ];
