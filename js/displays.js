@@ -408,7 +408,8 @@
   function splrLost(s) { var by = [[3, 4], [5], [1, 2]], out = []; s.fctl.sec.forEach(function (st, i) { if (st !== 'ok') out = out.concat(by[i]); }); return out; }
   function spoiler(x, y, k, ok, ext, lost) {
     if (!ok[SPL_SYS[k]] || lost && lost.indexOf(k + 1) >= 0) return t(x, y + 3, String(k + 1), 'a', 10, 'middle') + ln(x - 4, y + 5, x + 4, y + 5, 'sa', 1);
-    return ext ? '<path d="M' + (x - 5) + ' ' + y + ' l5 -8 l5 8 z" class="fg"/>' : ln(x - 7, y, x + 7, y, 'sg', 2.6);
+    // extended: a green arrow pointing up (stem and open head), as on the aircraft's F/CTL page
+    return ext ? ln(x, y, x, y - 15, 'sg', 1.6) + '<path d="M' + (x - 4.5) + ' ' + (y - 9) + ' L' + x + ' ' + (y - 16) + ' L' + (x + 4.5) + ' ' + (y - 9) + '" class="sg" fill="none" stroke-width="1.6"/>' : ln(x - 7, y, x + 7, y, 'sg', 2.6);
   }
   function sysBox(x, y, L, ok) { return fillRect(x - 5, y - 9, 10, 11, 'fb') + t(x, y, L, ok ? 'g' : 'a', 9, 'middle'); }
   function pageWHEEL(s) {
