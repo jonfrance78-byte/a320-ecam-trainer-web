@@ -389,6 +389,21 @@
     var hy = function () { return { p: 3000, rsvr: 'ok', pump: 'on', qty: 0.9 }; };
     return { onGround: true, spdBrk: true, ign: false, gw: 61000, eng: [eng(0), eng(1)], hyd: { G: hy(), B: hy(), Y: hy(), ptu: 'auto' }, fctl: { elac: ['ok', 'ok'], sec: ['ok', 'ok', 'ok'], law: 'NORMAL' } };
   }
+  // The E/WD for the landing memo (below 2000 ft RA, as the owner's reference) and for "Reverse green" (REV green in the N1 gauges).
+  var memoLine = function (a, b) { var dots = ''; for (var i = a.length + b.length; i < 21; i++) dots += '.'; return { text: a + dots + b, cls: 'g' }; };
+  var LDG_MEMO = [{ parts: [{ s: 'LDG', c: 'c', u: true }] }, memoLine('LDG GEAR', 'DN'), memoLine('SEAT BELTS', 'ON'), memoLine('CABIN', 'READY'), memoLine('SPLRS', 'ARM'), memoLine('FLAPS', 'FULL')];
+  function ewdState(rev) {
+    var eng = function () { return { n1: rev ? 30 : 46, egt: rev ? 430 : 520, n2: rev ? 62 : 68, ff: rev ? 420 : 780, running: true, rev: rev ? 'g' : null }; };
+    return { eng: [eng(), eng()], fob: 4200, onGround: !!rev, noAlt: !rev, alt: 1500, phaseLabel: '', ign: false };
+  }
+  // The lower display: the ND, or, as the step asks, an SD page (R.sd), the E/WD with REV (R.sd 'EWD') or the E/WD with the landing memo (ewd: 'ldg').
+  function lowerHtml(DS, nd) {
+    var st = R.f.steps[R.k];
+    if (R.sd === 'EWD') return DS.renderEWD(ewdState(true), { lines: [], memo: [] });
+    if (R.sd) return DS.renderSD(sdState(), R.sd);
+    if (st && st.ewd === 'ldg') return DS.renderEWD(ewdState(false), { lines: LDG_MEMO, memo: [] });
+    return nd;
+  }
   function dispHtml() {
     var f = R.f, DS = window.ECAM_DISPLAYS;
     if (!f.sim0 || !DS) return '';
@@ -403,7 +418,7 @@
     var nd = DS.renderND({ alt: m.alt }, { mode: 'ARC', range: 20, cstr: false, opt: null, n1: ty === 'NPA' && m.vor ? 'VOR' : 'OFF', brg1: 143, n2: 'OFF', hdg: m.hdgNow, crs: m.crs, gs: String(Math.round(m.cas) + 4 - 21), tas: String(Math.round(m.cas) + 4),
       hdgBug: m.hdgSel ? 113 : null, route: rt, hold: holdPts(m.dme, (m.loc || 0) * 0.6), ls: m.ls && xls ? { rwy: fls ? 'FLS14L' : 'ILS14L' } : null,
       to: nxt ? { name: nxt[0], brg: '143°', dist: Math.max(0, m.dme - nxt[3]).toFixed(1) } : null });
-    return '<div class="np-disp" aria-label="PFD and ND">' + pfd + (R.sd ? DS.renderSD(sdState(), R.sd) : nd) + '</div>';
+    return '<div class="np-disp" aria-label="PFD and ND">' + pfd + lowerHtml(DS, nd) + '</div>';
   }
   function renderStage() { var el = document.getElementById('np-stage'); if (el) el.innerHTML = stageSvg(); }
 

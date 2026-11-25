@@ -336,8 +336,10 @@
   ];
   // The automatic callout at 20 ft RA, repeated until the thrust levers are at idle.
   var RETARD_CALL = C('About 20 ft: "Retard" — "Retard" — "Retard"', 'Automatic callout at 20 ft RA, repeated until the thrust levers are at idle.', { sim: { alt: 20, dme: 0.03 }, gap: 900 });
-  // The PM's calls on the roll-out. The lower display shows the F/CTL page at "Spoilers" and the ENG page at "Reverse green"; "Decel" leaves it (js/np.js).
-  var ROLLOUT_CALLS = C('"Spoilers" — "Reverse green" — "Decel"', 'The PM\'s calls on the roll-out. The lower display shows the F/CTL page at "Spoilers" and the ENG page at "Reverse green"; at "Decel" look at the speed tape.', { who: 'PM', sd: ['F/CTL', 'ENG', null] });
+  // The landing checklist, done before 1000 ft. The E/WD shows the LDG memo below 2000 ft RA (ewd: 'ldg', js/np.js).
+  var LANDING_CL = L('LANDING', [['ECAM MEMO', 'LANDING NO BLUE']], { ewd: 'ldg' });
+  // The PM's calls on the roll-out. The lower display shows the F/CTL page at "Spoilers" and the E/WD with REV green at "Reverse green"; "Decel" leaves it (js/np.js).
+  var ROLLOUT_CALLS = C('"Spoilers" — "Reverse green" — "Decel"', 'The PM\'s calls on the roll-out. The lower display shows the F/CTL page at "Spoilers" and the E/WD with REV green in the N1 gauges at "Reverse green"; at "Decel" look at the speed tape.', { who: 'PM', sd: ['F/CTL', 'EWD', null] });
   var REVERSE = S('THR/Thrust lever 1', ['REV IDLE', 'MAX REV'], 'REV THRUST — IDLE or FULL', 'Select reverse thrust on both thrust levers: REV IDLE, or FULL if the situation needs it.', { who: 'PF', nohl: true, also: 'THR/Thrust lever 2', after: [['THR/Thrust lever 2', { cur: 4 }]] });
   // The same configuration steps flown level at 3000 ft, before the final descent starts (RNAV and selected approaches).
   var LEVEL_DME = [12.0, 11.6, 11.2, 10.8, 10.4];
@@ -363,6 +365,7 @@
         S('FCU/ALT knob', 'press', 'At G/S* — set go-around altitude', 'The missed approach altitude on the FCU, as the G/S* mode engages.', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('G/S — glideslope tracking', 'Descending on the beam at about 700 ft/min. FMA: G/S, LOC green.', { sim: { vert: 'G/S', gs: 0, alt: 2900, dme: 9.1, vs: -700 }, auto: 4000 }),
       ].concat(CONFIG, [
+        LANDING_CL,
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
         C('BARO 310 ft: "Hundred above"', 'Automatic callout, 100 ft above the minimum. It is called from the barometric altitude, not the radio altitude.', { sim: { alt: 310, dme: 1.0 } }),
         C('BARO 210 ft (DA): "Minimum" — "Continue"', 'Called from the barometric altitude (the BARO minimum entered on the PERF page), not the radio altitude.', { sim: { alt: 210, dme: 0.7 } }),
@@ -393,6 +396,7 @@
         S('FCU/ALT knob', 'press', 'At G/S* — set go-around altitude', 'The missed approach altitude on the FCU, as the G/S* mode engages.', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('G/S — glideslope tracking', 'Descending on the beam at about 700 ft/min. FMA: G/S, LOC green.', { sim: { vert: 'G/S', gs: 0, alt: 2900, dme: 9.1, vs: -700 }, auto: 4000 }),
       ].concat(CONFIG, [
+        LANDING_CL,
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
         C('400 ft RA: LAND', 'LAND green on the FMA. If LAND does not appear: no autoland ◆.', { sim: { vert: 'LAND', alt: 400, dme: 1.3 }, auto: 4000 }),
         C('150 ft: "Hundred above"', 'Automatic callout, 100 ft above the DH of 50 ft.', { sim: { alt: 150, dme: 0.47 } }),
@@ -424,6 +428,7 @@
         C('FDP: FINAL APP engages', 'FMA FINAL APP green. The aircraft starts down on the FMS vertical path.', { sim: { vert: 'FINAL APP', arm: '', alt: 2940, dme: 9.3, vs: -700 }, auto: 4000 }),
         S('FCU/ALT knob', 'press', 'At FINAL APP — set go-around altitude', 'The missed approach altitude on the FCU, once FINAL APP is engaged.', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('Monitor: V/DEV, XTK, GPS PRIMARY', 'Go around if XTK exceeds 0.3 NM, V/DEV is excessive (½ dot ◆) or GPS PRIMARY is lost on both NDs.', { sim: { alt: 1500, dme: 4.7 } }),
+        LANDING_CL,
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
         C('BARO 510 ft: "Hundred above"', 'Automatic callout, 100 ft above the minimum. It is called from the barometric altitude, not the radio altitude.', { sim: { alt: 510, dme: 1.6 } }),
         C('BARO 410 ft (MDA): "Minimum" — "Continue"', 'Called from the barometric altitude (the BARO minimum entered on the PERF page), not the radio altitude.', { sim: { alt: 410, dme: 1.3 } }),
@@ -454,6 +459,7 @@
         S('FCU/ALT knob', 'press', 'At F-G/S* — set go-around altitude', 'The missed approach altitude on the FCU, as the G/S* mode engages.', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('F-G/S — tracking', 'FMA: F-G/S, F-LOC green.', { sim: { vert: 'F-G/S', gs: 0, alt: 2900, dme: 9.1, vs: -700 }, auto: 4000 })
       ].concat(CONFIG, [
+        LANDING_CL,
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
         C('BARO 510 ft: "Hundred above"', 'Automatic callout, 100 ft above the minimum. It is called from the barometric altitude, not the radio altitude.', { sim: { alt: 510, dme: 1.6 } }),
         C('BARO 410 ft (MDA): "Minimum" — "Continue"', 'Called from the barometric altitude (the BARO minimum entered on the PERF page), not the radio altitude.', { sim: { alt: 410, dme: 1.3 } }),
@@ -482,6 +488,7 @@
         S('FCU/V/S knob', 'press', 'FPA −3.0 — pull', 'About 0.3 NM before the FDP for a 3° path ◆. FMA: FPA green. Check −3.0 in FPA, not V/S.', { who: 'PF', sim: { vert: 'FPA -3.0°', fpa: -3, alt: 2940, dme: 9.3, vs: -700 } }),
         S('FCU/ALT knob', 'press', 'Go-around altitude — set', 'Once descending below the missed approach altitude.', { who: 'PF', sim: { fcuAlt: 3000 } }),
         C('Distance / altitude checks', 'PM calls the check heights each mile; PF adjusts the FPA to regain the path.', { who: 'PM', sim: { alt: 1500, dme: 4.7 } }),
+        LANDING_CL,
         C('1000 ft — "Stabilised"', '', { sim: { alt: 1000, dme: 3.1 } }),
         C('BARO 510 ft: "Hundred above"', 'Automatic callout, 100 ft above the minimum. It is called from the barometric altitude, not the radio altitude.', { sim: { alt: 510, dme: 1.6 } }),
         C('BARO 410 ft (MDA): "Minimum" — "Continue"', 'Called from the barometric altitude. No level-off at the MDA: continue only with the visual reference, otherwise go around.', { sim: { alt: 410, dme: 1.3 } }),

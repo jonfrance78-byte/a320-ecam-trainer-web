@@ -53,7 +53,7 @@
 
   /* ------------------------------------------------------------------ E/WD */
 
-  function gaugeN1(cx, cy, v, active) {
+  function gaugeN1(cx, cy, v, active, rev) {
     var r = 30, o = '';
     o += arc(cx, cy, r, 210, -12, 'sw', 1.6);
     o += arc(cx, cy, r, -12, -30, 'sr', 2.6);
@@ -64,6 +64,8 @@
     var av = 210 - (Math.max(0, Math.min(110, v)) / 110) * 240, n = pt(cx, cy, r + 3, av);
     o += ln(cx, cy, n[0], n[1], active ? 'sg' : 'sa', 2.4);
     o += t(cx + 34, cy + 22, fmt(v, 1), active ? 'g' : 'a', 15, 'end');
+    // REV inside the gauge: green when the reverser is deployed, amber while it travels (Airbus Safety first #36, fig. 1)
+    if (rev) o += t(cx + 14, cy + 6, 'REV', rev === 'a' ? 'a' : 'g', 9, 'middle');
     return o;
   }
   function gaugeEGT(cx, cy, v, active) {
@@ -81,7 +83,7 @@
     var o = '', eng = s.eng, cx = [52, 168];
     for (var i = 0; i < 2; i++) {
       var e = eng[i], live = e.running;
-      o += gaugeN1(cx[i], 46, e.n1, live || e.n1 > 2);
+      o += gaugeN1(cx[i], 46, e.n1, live || e.n1 > 2, e.rev);
       o += gaugeEGT(cx[i], 112, e.egt, live || e.egt > 20);
       o += t(cx[i] + 12, 156, fmt(e.n2, 1), 'g', 12, 'end');
       o += t(cx[i] + 12, 174, round10(e.ff), 'g', 12, 'end');
@@ -102,7 +104,7 @@
     o += fillRect(234, 70, 8, 4, 'fw') + fillRect(296, 70, 8, 4, 'fw');
     o += t(270, 136, s.phaseLabel || '', 'g', 9, 'middle');
     o += ln(224, 150, 316, 150, 'sd', 1);
-    o += t(270, 166, s.onGround ? 'GND' : 'FL' + Math.round(s.alt / 100), 'g', 10, 'middle');
+    if (!s.noAlt) o += t(270, 166, s.onGround ? 'GND' : 'FL' + Math.round(s.alt / 100), 'g', 10, 'middle');
 
     // Lower message area
     o += ln(4, 190, 316, 190, 'sw', 1.2);
