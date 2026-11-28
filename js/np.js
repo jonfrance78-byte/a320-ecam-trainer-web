@@ -314,7 +314,7 @@
       '<div class="np-run-head">' +
       '<p class="eyebrow">' + (i >= 0 ? 'Flow ' + (i + 1) + ' of ' + D.FLOWS.length + ' · ' : 'Approach practice · ') + esc(f.phase) + '</p>' +
       (R.k === 0 && f.intro ? '<p class="np-intro">' + fmt(f.intro) + '</p>' : '') +
-      '<div class="np-prog" role="progressbar" aria-valuemin="0" aria-valuemax="' + n + '" aria-valuenow="' + k + '"><span style="width:' + (100 * k / n) + '%"></span></div>' +
+      '<div class="np-prog" role="progressbar" aria-valuemin="0" aria-valuemax="' + n + '" aria-valuenow="' + k + '"><span style="transform:scaleX(' + k / n + ')"></span></div>' +
       '<div class="np-run-meta"><span>' + k + ' / ' + n + '</span>' + modeSeg() + '</div>' +
       '</div>' +
       '<div class="np-grid"><div class="np-main"><div class="np-stagerow' + (f.sim0 ? ' has-disp' : '') + '"><div class="np-left">' + stepCard() + '<div id="np-stage">' + stageSvg() + '</div></div>' + dispHtml() + '</div></div>' +
@@ -345,7 +345,7 @@
   /* The ILS and FLS course and glidepath bars (and the heading they bring) glide to their new place at 24
    * frames a second over 2.5 s instead of jumping: R.anim holds the values on show, where they started and
    * where they are going. */
-  var FPS = 24, GLIDE_MS = 3000, GLIDE = ['loc', 'gs', 'hdgNow', 'alt', 'dme', 'cas', 'vs', 'fpa', 'vls', 'vmax', 'vfen'], ANIM_T = 0;
+  var FPS = 24, GLIDE_MS = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches ? 1 : 3000, GLIDE = ['loc', 'gs', 'hdgNow', 'alt', 'dme', 'cas', 'vs', 'fpa', 'vls', 'vmax', 'vfen'], ANIM_T = 0;
   var MODE_KEYS = ['thr', 'vert', 'lat', 'arm', 'armLat', 'cap', 'cap2'];
   // how many steps' sim is on show: those done, the one being held, and the current one when it is a check
   function shownK() { var st = R.f.steps[R.k]; return R.k + (R.held ? 1 : 0) + (st && st.k === 'check' && st.sim ? 1 : 0); }
